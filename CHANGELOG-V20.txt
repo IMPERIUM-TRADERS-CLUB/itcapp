@@ -1,0 +1,14 @@
+IMPERIUM TRADERS CLUB — VERSION 20
+
+Added a compact account balance widget to the top-right header:
+- Demo / Real account display mode selector.
+- USD / KES display currency selector.
+- Demo balance is explicitly marked simulated and is not money held in Deriv.
+- Real mode reads the balance only after the user authorizes a Deriv account in Settings.
+- USD/KES display conversion requests a current reference rate online; converted values are estimates and are not wallet currency changes.
+- If exchange-rate data is unavailable, the widget displays the wallet's native currency rather than inventing a converted amount.
+
+IMPORTANT LIMITATIONS:
+- Selecting Real does NOT itself enable live trading.
+- This website's Bot Builder and Run bot controls remain simulations and do not place Deriv orders.
+- The account token is entered locally in Settings; never paste it into chat or commit it to GitHub.

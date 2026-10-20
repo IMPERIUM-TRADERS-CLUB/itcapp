@@ -1,0 +1,6 @@
+Version 21 — Account header visual polish
+
+- Redesigned the account balance widget as a compact, aligned dark-and-gold panel.
+- Standardized Demo/Real and USD/KES selector sizing and spacing.
+- Improved hover/focus states and responsive layout for narrow mobile screens.
+- Preserved existing balance display behavior; Real mode does not enable live trading.

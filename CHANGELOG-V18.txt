@@ -1,0 +1,9 @@
+IMPERIUM TRADERS CLUB — V18
+
+- Analysis Tool now opens on Digit Circles by default; Smart Analysis remains available as the second option.
+- Moved the existing bot launcher into a compact horizontal control panel inside Digit Circles.
+- Added Fast/Slow selector and Stop control to the panel.
+- The existing Run button still starts the app's local demo simulation only. Fast/Slow is currently a UI selection and does not alter a live trading engine; Stop marks the demo panel stopped but cannot cancel a real order because live bot execution is not implemented.
+- Bumped service-worker cache to v18.
+
+Important: this package does not place live Deriv orders. Public market ticks can be live when the connection status confirms LIVE.

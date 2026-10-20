@@ -1,0 +1,21 @@
+Project 1 — Imperium Traders Club
+
+Improvements included in this build
+- Added a Signal Alert Desk to the Analysis Tool.
+- Drafts a formatted signal announcement with the selected market, contract, setup, optional stake and optional context.
+- Starts a fixed 10-minute expiry timer and retains the active timer in the same browser.
+- Shows an explicit EXPIRED state and generates a copyable expiry notice for Telegram/WhatsApp group posting.
+- Added the supplied Telegram channel and WhatsApp group links.
+- Refreshed the installed web-app title and versioned the service-worker cache so updated assets can be fetched.
+- Preserved the ITC brand and existing tools.
+
+Important limitations
+- The alert desk formats manually entered setups; it is not an AI market-prediction engine.
+- Telegram and WhatsApp buttons open the supplied destination only. The static website cannot securely post into groups or guarantee a message is sent at expiry. Automatic publishing needs a secure server-side integration and appropriately authorized bot/API access.
+- Existing Run bot controls are simulations and do not place live Deriv orders.
+
+
+Navigation update: Signal Alert Desk moved out of Analysis Tool into its own Signals tab, placed after Risk Calculator in the horizontal tools row. Analysis Tool remains dedicated to market analysis.
+
+
+Update: added My Bots / AI Bots separation in Bot Builder; removed user-facing XML download controls and the Blockly XML export button; kept personal XML upload for inspection in Blockly. This static website does not execute live trades.

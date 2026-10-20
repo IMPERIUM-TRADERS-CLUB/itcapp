@@ -1,0 +1,11 @@
+IMPERIUM TRADERS CLUB — VERSION 16
+
+- Moved shared market selection into the Digit frequency panel as a compact inline selector.
+- Kept the same #analysisMarketSelect element so existing market synchronisation with Bot Builder remains connected.
+- Contract-type tabs now show Over / Under, Even / Odd, Rise / Fall, and Matches / Differs.
+- Digit circles remain the frequency display, not a fifth contract type.
+- Added Matches / Differs descriptive counts using the selected target digit.
+- Kept the selected-market tick history isolated; no cross-market tick mixing.
+- Updated service-worker cache version to v16.
+
+Checks performed: JavaScript syntax and ZIP archive integrity. Not visually tested in a live browser; not deployed to GitHub Pages.

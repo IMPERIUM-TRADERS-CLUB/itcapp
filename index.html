@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b12">
+  <meta name="description" content="ITC Version 6.1 — Imperium Traders Club (ITC): responsive market observation, bot inspection, risk planning and 10-minute signal alert drafting.">
+  <link rel="icon" type="image/svg+xml" href="imperium-logo.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ITC">
+  <link rel="apple-touch-icon" href="icons/itc-192.png">
+  <title>ITC Version 6.1 · Imperium Traders Club</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard" data-page="dashboard" aria-label="Imperium Traders Club home">
+        <span class="brand-mark" aria-hidden="true"><span>I</span></span>
+        <span class="brand-copy"><strong>IMPERIUM</strong><small>TRADERS CLUB</small></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span> Dashboard</button>
+        <button class="nav-link" data-page="botbuilder"><span class="nav-icon">⠿</span> Bot Builder <span class="nav-tag">NEW</span></button>
+        <button class="nav-link" data-page="freebots"><span class="nav-icon">◈</span> Free Bots</button>
+        <button class="nav-link" data-page="dtrader"><span class="nav-icon">⌁</span> Trading View</button>
+        <button class="nav-link" data-page="signals"><span class="nav-icon">⌁</span> Analysis Tool</button>
+        <button class="nav-link" data-page="speedbot"><span class="nav-icon">➤</span> ITC SpeedBot <span class="nav-tag">NEW</span></button>
+        <button class="nav-link" data-page="history"><span class="nav-icon">◷</span> Trade History</button>
+      </nav>
+      <div class="sidebar-divider"></div>
+      <div class="workspace-label">PREFERENCES</div>
+      <nav class="nav">
+        <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
+        <button class="nav-link" data-page="help"><span class="nav-icon">?</span> Help centre</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="upgrade-card">
+          <div class="upgrade-spark">✦</div>
+          <strong>Build your next edge.</strong>
+          <p>Experiment with strategies in demo mode before connecting a provider.</p>
+          <button class="text-button" data-page="botbuilder">Open Bot Builder <span>↗</span></button>
+        </div>
+        <div class="profile-row">
+          <div class="avatar">IT</div>
+          <div class="profile-copy"><strong>Imperium Member</strong><small>Demo workspace</small></div>
+          <button class="dots-button" title="Profile options" aria-label="Profile options">···</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div class="crumbs"><span>Workspace</span><b>/</b><strong id="pageCrumb">Welcome</strong></div>
+        <div class="header-currency-control authenticated-only">
+          <span aria-hidden="true">⇄</span>
+          <label class="sr-only" for="headerCurrency">Display currency</label><select id="headerCurrency" aria-label="Display currency"><option value="USD">USD</option><option value="KES">KES · KSh</option></select>
+        </div>
+        <div class="topbar-actions">
+          <div class="guest-auth-actions" id="guestAuthActions">
+            <button class="button guest-login-button" id="headerLoginButton" type="button">Login</button>
+            <a class="button guest-signup-button" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Sign Up</a>
+          </div>
+          <div class="account-balance-widget authenticated-only" aria-label="Account balance; use the arrow to switch account mode">
+            <div class="account-balance-top"><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$10,000.00</strong>
+              <label class="sr-only" for="headerAccountMode">Account mode</label><select id="headerAccountMode" aria-label="Switch between demo and real account" title="Switch account mode"><option value="demo">Demo</option><option value="real">Real</option></select><button type="button" class="balance-mode-arrow" id="headerModeToggle" aria-label="Switch account mode" title="Switch Demo / Real">⌄</button>
+            </div>
+            <small id="headerBalanceNote">Simulated demo balance</small>
+          </div>
+          <span class="demo-pill market-status-pill" id="marketConnectionPill"><span class="status-dot" id="marketConnectionDot"></span> CONNECTING MARKET</span>
+          <button class="icon-button" id="helpButton" title="Help" aria-label="Help">?</button>
+          <div class="top-avatar">IT</div>
+        </div>
+      </header>
+
+      <nav class="workspace-switcher" id="workspaceSwitcher" aria-label="Trading tools">
+        <div class="switcher-tools"><button type="button" class="switcher-arrange" id="arrangeTabs" aria-pressed="false" title="Customize tab order" aria-label="Customize tab order">☷</button><label class="default-tab-label" for="defaultWorkspace">Open on</label><select id="defaultWorkspace" class="default-workspace-select" aria-label="Default page on opening"><option value="dashboard" selected>Dashboard</option><option value="botbuilder">Bot Builder</option><option value="freebots">Free Bots</option><option value="signals">Analysis Tool</option><option value="speedbot">ITC SpeedBot</option><option value="dtrader">Trading View</option><option value="manualtrader">Manual Trader</option><option value="bulktrader">Bulk Trader</option><option value="riskcalc">Risk Calculator</option><option value="signalalerts">Signals</option></select></div>
+        <button class="workspace-switch active" data-page="dashboard" aria-pressed="true"><span>▦</span> Dashboard</button>
+        <button class="workspace-switch" data-page="botbuilder" aria-pressed="false"><span>⠿</span> Bot Builder</button>
+        <button class="workspace-switch" data-page="freebots" aria-pressed="false"><span>◈</span> Free Bots</button>
+        <button class="workspace-switch" data-page="signals" aria-pressed="false"><span>⌁</span> Analysis Tool</button>
+        <button class="workspace-switch" data-page="speedbot" aria-pressed="false"><span>➤</span> ITC SpeedBot</button>
+        <button class="workspace-switch" data-page="manualtrader" aria-pressed="false"><span>⌁</span> Manual Trader</button>
+        <button class="workspace-switch" data-page="bulktrader" aria-pressed="false"><span>⇄</span> Bulk Trader</button>
+        <button class="workspace-switch" data-page="dtrader" aria-pressed="false"><span>▥</span> Trading View</button>
+        <button class="workspace-switch" data-page="riskcalc" aria-pressed="false"><span>◎</span> Risk Calculator</button>
+        <button class="workspace-switch" data-page="signalalerts" aria-pressed="false"><span>⌁</span> Signals</button>
+      </nav>
+
+      <section class="page active overview-landing" id="page-dashboard">
+        <div class="overview-hero">
+          <div class="overview-glow" aria-hidden="true"></div>
+          <div class="overview-content">
+            <img class="overview-logo" src="imperium-logo.jpg" alt="Imperium Traders Club gold crest logo">
+            <p class="overview-welcome">WELCOME TO</p>
+            <h1>Imperium Traders Club</h1>
+            <p class="overview-tagline">Learn <span>•</span> Analyse <span>•</span> Trade <span>•</span> Grow</p>
+            <p class="overview-copy">A clear workspace to monitor live public ticks, study digit behaviour, inspect bot logic and plan risk before you decide what to do next.</p>
+            <div class="overview-cta">
+              <a class="overview-button overview-button-primary" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Join Deriv / Log In <span aria-hidden="true">↗</span></a>
+              <a class="overview-button overview-button-secondary" href="https://t.deriv.link?t=8KN8YTVSRFM3" target="_blank" rel="noopener noreferrer">Become a Deriv Partner <span aria-hidden="true">↗</span></a>
+            </div>
+            <p class="overview-disclaimer">Trading involves risk. Partner eligibility and referral rewards are subject to Deriv’s terms.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="page" id="page-botbuilder">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> STRATEGY WORKSHOP</div><h1>Bot <span>Builder.</span></h1><p>Assemble a trading workflow, set risk limits, then test it in simulation.</p></div><span class="demo-pill"><span class="status-dot"></span> SIMULATION ONLY</span></div>
+        <div class="notice-bar"><span class="notice-icon">i</span><div><strong>No broker connected.</strong><span> Running this workspace only creates a local demo log; it does not place trades.</span></div></div>
+        <div class="builder-toolbar"><div class="builder-tabs"><button class="builder-tab active" data-builder-tab="blocks">Blocks</button><button class="builder-tab" data-builder-tab="workspace">Workspace</button><button class="builder-tab" data-builder-tab="parameters">Trade Parameters</button><button class="builder-tab" data-builder-tab="blockly">Blockly Editor</button></div><div class="builder-actions"><button class="button secondary" id="resetBot">Reset</button><button class="button primary" id="runBot">▶ Run simulation</button></div></div>
+        <div class="builder-layout">
+          <article class="panel block-library" id="blockLibrary"><div class="panel-heading"><div><div class="panel-overline">DRAG-AND-DROP CONCEPT</div><h2>Block library</h2></div></div><p class="muted-text">Tap a block to add it to the workspace.</p><div class="block-category">TRIGGERS</div><button class="library-block trigger-block" data-block="Start when the bot runs"><span>⚑</span><span><strong>Start</strong><small>When bot is run</small></span><b>+</b></button><button class="library-block trigger-block" data-block="On every new tick"><span>⌁</span><span><strong>On every tick</strong><small>Market update trigger</small></span><b>+</b></button><div class="block-category">CONDITIONS</div><button class="library-block condition-block" data-block="Check last digit"><span>◈</span><span><strong>Check last digit</strong><small>Compare digit condition</small></span><b>+</b></button><button class="library-block condition-block" data-block="Compare tick direction"><span>↕</span><span><strong>Compare tick direction</strong><small>Rise or fall condition</small></span><b>+</b></button><div class="block-category">ACTIONS</div><button class="library-block action-block" data-block="Purchase demo contract"><span>⚡</span><span><strong>Purchase contract</strong><small>Simulation action only</small></span><b>+</b></button><button class="library-block action-block" data-block="Check take profit / stop loss"><span>◎</span><span><strong>Check risk limits</strong><small>TP / SL guard</small></span><b>+</b></button></article>
+          <article class="panel workspace-panel" id="workspacePanel"><div class="panel-heading"><div><div class="panel-overline">VISUAL LOGIC</div><h2>My strategy <span class="draft-pill">DRAFT</span></h2></div><button class="more-button" id="clearWorkspace" aria-label="Clear workspace">⌫</button></div><div class="workspace-canvas" id="workspaceCanvas"><div class="workspace-grid"></div><div class="workspace-empty" id="workspaceEmpty"><div class="empty-icon">⠿</div><strong>Your workspace starts here</strong><p>Add a block from the library to build a flow.</p></div><div class="workspace-blocks" id="workspaceBlocks"><div class="logic-block start-logic" data-default-block="true"><span class="logic-type">START</span><strong>When bot is run</strong><button aria-label="Remove block">×</button></div><div class="logic-connector"></div><div class="logic-block condition-logic" data-default-block="true"><span class="logic-type">CONDITION</span><strong>Check last digit</strong><button aria-label="Remove block">×</button></div><div class="logic-connector"></div><div class="logic-block action-logic" data-default-block="true"><span class="logic-type">ACTION</span><strong>Purchase demo contract</strong><button aria-label="Remove block">×</button></div></div></div><div class="workspace-status"><span><i class="tiny-green-dot"></i> Local workspace</span><span id="blockCount">3 blocks</span><button class="subtle-link" id="exportStrategy">Export configuration ↗</button></div></article>
+          <article class="panel parameters-panel" id="parametersPanel"><div class="panel-heading"><div><div class="panel-overline">RISK & CONTRACT</div><h2>Trade parameters</h2></div></div><form id="parametersForm"><label for="marketSelect">Market</label><select id="marketSelect"><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select><label for="contractSelect">Contract type</label><select id="contractSelect"><option>Even / Odd</option><option>Over / Under</option><option>Rise / Fall</option><option>Matches / Differs</option></select><label for="stakeInput">Stake (demo USD)</label><div class="input-with-unit"><span>$</span><input id="stakeInput" type="number" min="0.35" step="0.01" value="2.00" required></div><div class="form-two"><div><label for="takeProfitInput">Take profit</label><div class="input-with-unit"><span>$</span><input id="takeProfitInput" type="number" min="0" step="0.01" value="10.00"></div></div><div><label for="stopLossInput">Stop loss</label><div class="input-with-unit"><span>$</span><input id="stopLossInput" type="number" min="0" step="0.01" value="10.00"></div></div></div><label for="maxRunsInput">Maximum demo runs</label><input class="regular-input" id="maxRunsInput" type="number" min="1" max="100" value="10"><div class="toggle-row"><div><strong>Martingale</strong><small>Increase next demo stake after a loss</small></div><label class="switch"><input id="martingaleToggle" type="checkbox"><span></span></label></div><div id="martingaleOptions" class="martingale-options hidden"><label for="multiplierInput">Multiplier</label><input class="regular-input" id="multiplierInput" type="number" value="2" min="1" max="10" step="0.1"></div><button class="button primary full-button" type="submit">Save parameters</button><p class="form-footnote">Risk settings are for interface testing only. No financial transaction occurs.</p></form></article>
+        </div>
+        <article class="panel blockly-panel hidden" id="blocklyPanel">
+          <div class="panel-heading"><div><div class="panel-overline">VISUAL PROGRAMMING</div><h2>Blockly strategy editor</h2><p class="muted-text">Connect logic blocks visually, similar to Deriv DBot. This editor builds a strategy draft only.</p></div><span class="template-tag" id="blocklyStatus">LOADING EDITOR</span></div>
+          <div class="blockly-actions"><button class="button secondary" id="blocklyClear">Clear blocks</button><button class="button primary" id="blocklyToLog">Validate strategy</button></div>
+          <div id="blocklyWorkspace" aria-label="Blockly visual strategy workspace"></div>
+          <div class="blockly-footnote" id="blocklyFootnote">Loaded DBot XML is shown as a visual structure for inspection. This editor does not interpret that strategy for live execution.</div>
+        </article>
+        <article class="panel run-log-panel"><div class="panel-heading"><div><div class="panel-overline">SIMULATION OUTPUT</div><h2>Run log</h2></div><button class="subtle-link" id="clearLog">Clear log</button></div><div class="log-content" id="logContent"><div class="log-empty">No simulation has been run yet. Press <b>Run simulation</b> to create a sample log.</div></div></article>
+      </section>
+
+
+      <section class="page" id="page-manualtrader">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> SINGLE CONTRACT WORKSPACE</div><h1>Manual <span>Trader.</span></h1><p>Configure one practice contract at a time and review the ticket before any future live integration.</p></div><span class="demo-pill"><span class="status-dot"></span> PRACTICE MODE</span></div>
+        <div class="notice-bar"><span class="notice-icon">i</span><div><strong>Practice interface only.</strong><span> The controls below do not send orders to Deriv or use a real account.</span></div></div>
+        <div class="manual-grid"><article class="panel manual-chart-card"><div class="panel-heading"><div><div class="panel-overline">MARKET SNAPSHOT</div><h2 id="manualMarketTitle">Volatility 75 Index</h2></div><span class="template-tag">ILLUSTRATIVE</span></div><div class="manual-price" id="manualPrice">4,582.64</div><div class="manual-chart-wrap"><canvas id="manualChart" aria-label="Illustrative practice chart"></canvas></div><p class="form-footnote">Illustrative chart only. Check Trading View or an authenticated Deriv feed for verified market data.</p></article>
+        <article class="panel manual-ticket"><div class="panel-heading"><div><div class="panel-overline">CONTRACT TICKET</div><h2>Trade setup</h2></div></div><label for="manualMarket">Market</label><select id="manualMarket" class="dark-select"><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option><option>Volatility 50 (1s) Index</option></select><label for="manualContract">Trade type</label><select id="manualContract" class="dark-select"><option>Rise / Fall</option><option>Even / Odd</option><option>Over / Under</option><option>Matches / Differs</option></select><div class="form-two"><div><label for="manualDuration">Duration (ticks)</label><input class="regular-input" id="manualDuration" type="number" min="1" max="1000" value="5"></div><div><label for="manualStake">Stake (USD)</label><input class="regular-input" id="manualStake" type="number" min="0.35" step="0.01" value="0.50"></div></div><label for="manualDirection">Contract direction</label><select id="manualDirection" class="dark-select"><option>Rise</option><option>Fall</option><option>Even</option><option>Odd</option><option>Over 5</option><option>Under 5</option></select><div class="manual-ticket-preview"><span>Practice ticket estimate</span><strong id="manualTicketSummary">Rise / Fall · Rise · 5 ticks · $0.50</strong><small>No payout is calculated until a supported contract quote is connected.</small></div><button class="button primary full-button" id="manualPreview">Preview practice ticket</button><div id="manualPreviewResult" class="log-empty">Set your contract parameters, then preview the ticket.</div></article></div>
+      </section>
+
+      <section class="page" id="page-bulktrader">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> MULTI-ORDER PLANNER</div><h1>Bulk <span>Trader.</span></h1><p>Plan a batch of practice tickets, inspect total exposure, and review the batch before execution integration.</p></div><span class="demo-pill"><span class="status-dot"></span> PRACTICE MODE</span></div>
+        <div class="notice-bar"><span class="notice-icon">i</span><div><strong>No automatic orders are sent.</strong><span> Batch controls are a local planning prototype. Live trading requires a secure, verified Deriv API connection.</span></div></div>
+        <div class="bulk-grid"><article class="panel"><div class="panel-heading"><div><div class="panel-overline">BATCH CONFIGURATION</div><h2>Trade parameters</h2></div></div><label for="bulkMarket">Market</label><select id="bulkMarket" class="dark-select"><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option><option>Volatility 50 (1s) Index</option></select><label for="bulkType">Trade type</label><select id="bulkType" class="dark-select"><option>Even / Odd</option><option>Over / Under</option><option>Rise / Fall</option><option>Matches / Differs</option></select><div class="form-two"><div><label for="bulkCount">Number of tickets</label><input class="regular-input" id="bulkCount" type="number" min="1" max="50" value="5"></div><div><label for="bulkStake">Stake per ticket (USD)</label><input class="regular-input" id="bulkStake" type="number" min="0.35" step="0.01" value="0.50"></div></div><div class="form-two"><div><label for="bulkTicks">Duration (ticks)</label><input class="regular-input" id="bulkTicks" type="number" min="1" max="1000" value="5"></div><div><label for="bulkMaxExposure">Max total stake (USD)</label><input class="regular-input" id="bulkMaxExposure" type="number" min="0.35" step="0.01" value="5.00"></div></div><div class="form-two"><div><label for="bulkStopProfit">Stop planning at profit (USD)</label><input class="regular-input" id="bulkStopProfit" type="number" min="0" step="0.01" value="2"></div><div><label for="bulkStopLoss">Stop planning at loss (USD)</label><input class="regular-input" id="bulkStopLoss" type="number" min="0" step="0.01" value="2"></div></div><button class="button primary full-button" id="bulkPreview">Build batch preview</button></article><article class="panel"><div class="panel-heading"><div><div class="panel-overline">BATCH SUMMARY</div><h2>Exposure overview</h2></div><span class="template-tag" id="bulkStatus">NOT STARTED</span></div><div class="bulk-metrics"><div><span>Planned tickets</span><strong id="bulkMetricCount">5</strong></div><div><span>Total stake</span><strong id="bulkMetricStake">$2.50</strong></div><div><span>Maximum exposure</span><strong id="bulkMetricExposure">$2.50</strong></div></div><div class="bulk-progress"><span id="bulkProgressBar"></span></div><p class="muted-text" id="bulkProgressText">Configure your batch and build a preview. Nothing will be sent to a broker.</p><div class="bulk-actions"><button class="button secondary" id="bulkPause" disabled>Pause</button><button class="button secondary" id="bulkStop" disabled>Stop</button></div><div class="table-scroll"><table><thead><tr><th>#</th><th>Market</th><th>Contract</th><th>Stake</th><th>Status</th></tr></thead><tbody id="bulkRows"><tr><td colspan="5">No batch preview yet.</td></tr></tbody></table></div></article></div>
+      </section>
+
+      <section class="page" id="page-riskcalc">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> QUICK PLANNING TOOL</div><h1>Risk <span>Calculator.</span></h1><p>Estimate take profit, stop loss and martingale exposure before testing a strategy.</p></div>
+        <div class="notice-bar"><span class="notice-icon">i</span><div><strong>Planning estimate only.</strong><span> Martingale can increase losses quickly and cannot guarantee recovery. Deriv contract payouts vary. Minimum stake is set to $0.35 as requested.</span></div></div>
+        <div class="riskcalc-grid">
+          <article class="panel riskcalc-panel"><div class="panel-heading"><div><div class="panel-overline">YOUR SETTINGS</div><h2>Quick risk setup</h2></div></div>
+            <label for="riskCapital">Available capital (USD)</label><div class="input-with-unit"><span>$</span><input id="riskCapital" type="number" min="0.35" step="0.01" value="20"></div>
+            <label for="riskStake">Base stake (USD)</label><div class="input-with-unit"><span>$</span><input id="riskStake" type="number" min="0.35" step="0.01" value="0.35"></div>
+            <div class="form-two"><div><label for="riskTP">Take profit (USD)</label><div class="input-with-unit"><span>$</span><input id="riskTP" type="number" min="0" step="0.01" value="2"></div></div><div><label for="riskSL">Stop loss (USD)</label><div class="input-with-unit"><span>$</span><input id="riskSL" type="number" min="0" step="0.01" value="3"></div></div></div>
+            <div class="toggle-row"><div><strong>Martingale</strong><small>Increase stake after a loss in the estimate</small></div><label class="switch"><input id="riskMartingale" type="checkbox" checked><span></span></label></div>
+            <div class="form-two"><div><label for="riskMultiplier">Multiplier</label><input class="regular-input" id="riskMultiplier" type="number" min="1" max="10" step="0.1" value="2"></div><div><label for="riskSteps">Loss steps</label><input class="regular-input" id="riskSteps" type="number" min="0" max="12" step="1" value="4"></div></div>
+            <button class="button primary full-button" id="calculateRisk">Calculate risk</button>
+          </article>
+          <article class="panel risk-results"><div class="panel-heading"><div><div class="panel-overline">CALCULATED SUMMARY</div><h2>Risk snapshot</h2></div><span class="template-tag">ESTIMATE</span></div>
+            <div class="risk-result-cards"><div><span>Take profit target</span><strong id="riskOutTP">$2.00</strong></div><div><span>Stop loss limit</span><strong id="riskOutSL">$3.00</strong></div><div><span>Maximum estimated exposure</span><strong id="riskOutExposure">$10.85</strong></div><div><span>Capital at risk</span><strong id="riskOutPercent">54.3%</strong></div></div>
+            <h3 class="risk-sequence-title">Stake sequence</h3><div id="riskSequence" class="risk-sequence"></div><p class="form-footnote" id="riskWarning">Estimates assume every listed stake is lost. Actual outcomes and payout rules can differ.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-freebots">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> STRATEGY LIBRARY</div><h1>Free <span>Bots.</span></h1><p>Browse starter templates, open their settings, and experiment in demo mode.</p></div>
+        <section class="mybots-panel panel" aria-label="My Bots and ITC AI Bots">
+          <div class="mybots-heading"><div><div class="panel-overline">YOUR BOT LIBRARY</div><h2>Bot collection</h2><p class="muted-text">Manage your personal bots here, or switch to ITC AI Bots to browse ready-made templates. Loading a bot takes you to Bot Builder.</p></div>
+            <div class="mybots-switch" role="tablist" aria-label="Bot library type"><button class="mybots-tab active" type="button" data-mybots-tab="mine" role="tab" aria-selected="true">My Bots <span>4</span></button><button class="mybots-tab" type="button" data-mybots-tab="ai" role="tab" aria-selected="false">ITC AI Bots</button></div></div>
+          <div class="mybots-content" id="myBotsContent"><div class="mybots-grid">
+            <article class="mybot-card"><div class="mybot-type">PERSONAL XML · 01</div><h3>Imperium Bot Version 01</h3><p>R_100 · Over / Under · original XML</p><div class="mybot-actions"><button class="button primary" type="button" data-load-personal-bot="v01">Load to Builder</button></div></article>
+            <article class="mybot-card"><div class="mybot-type">PERSONAL XML · 02</div><h3>Imperium Bot Version 02</h3><p>Even / Odd · RDBEAR · original XML</p><div class="mybot-actions"><button class="button primary" type="button" data-load-personal-bot="v02">Load to Builder</button></div></article>
+            <article class="mybot-card"><div class="mybot-type">PERSONAL XML · 03</div><h3>Imperium C4 Bot Version 03</h3><p>1HZ50V · Over / Under · TP 20 / SL 50 in settings</p><div class="mybot-actions"><button class="button primary" type="button" data-load-personal-bot="c4v03">Load to Builder</button></div></article>
+            <article class="mybot-card"><div class="mybot-type">PERSONAL XML · 04</div><h3>Imperium C4 Bot Version 04</h3><p>1HZ50V · Over / Under · original XML</p><div class="mybot-actions"><button class="button primary" type="button" data-load-personal-bot="c4v04">Load to Builder</button></div></article>
+          </div><div class="mybots-upload"><label for="personalBotUpload"><strong>Import another personal bot</strong><span>Upload a Deriv DBot .xml file. It stays in My Bots and can be loaded into Bot Builder when you choose.</span></label><input type="file" id="personalBotUpload" accept=".xml,text/xml,application/xml"></div></div>
+          <div class="mybots-content hidden" id="aiBotsContent"><div class="ai-bots-note"><strong>ITC AI Bots &amp; free templates</strong><p>Browse the ready-made strategy templates below. Select “Load into Builder” on any template to open it in Bot Builder.</p></div></div>
+        </section>
+        <div class="filter-row hidden"><div class="search-box"><span>⌕</span><input id="botSearch" placeholder="Search templates..." aria-label="Search bot templates"></div><div class="filter-chips"><button class="chip selected" data-filter="all">All templates</button><button class="chip" data-filter="digits">Digits</button><button class="chip" data-filter="trend">Trend</button><button class="chip" data-filter="risk">Risk tools</button></div></div>
+        <div class="bots-grid hidden" id="botsGrid">
+          <article class="bot-card" data-kind="digits" data-title="Even Odd Starter"><div class="bot-card-top"><span class="bot-icon purple-bg">½</span><span class="template-tag">BEGINNER</span></div><h2>Even / Odd Starter</h2><p>A simple condition-based flow for understanding digit contracts.</p><div class="bot-tags"><span>Digits</span><span>3 blocks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Even / Odd Starter">Open template ↗</button></div></article>
+          <article class="bot-card" data-kind="trend" data-title="Rise Fall Observer"><div class="bot-card-top"><span class="bot-icon blue-bg">↗</span><span class="template-tag">BEGINNER</span></div><h2>Rise / Fall Observer</h2><p>Explore a basic directional condition with demo-only actions.</p><div class="bot-tags"><span>Trend</span><span>4 blocks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Rise / Fall Observer">Open template ↗</button></div></article>
+          <article class="bot-card" data-kind="risk" data-title="TP SL Guard"><div class="bot-card-top"><span class="bot-icon amber-bg">◎</span><span class="template-tag">RISK TOOL</span></div><h2>TP / SL Guard</h2><p>A starter flow showing how profit and loss limits can stop a session.</p><div class="bot-tags"><span>Risk tools</span><span>2 checks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="TP / SL Guard">Open template ↗</button></div></article>
+          <article class="bot-card" data-kind="digits" data-title="Digit Watchlist"><div class="bot-card-top"><span class="bot-icon mint-bg">◈</span><span class="template-tag">EXPLORER</span></div><h2>Digit Watchlist</h2><p>Use a sample tick stream to watch how last digits change.</p><div class="bot-tags"><span>Digits</span><span>Monitor</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Digit Watchlist">Open template ↗</button></div></article>
+          <article class="bot-card" data-kind="risk" data-title="Flat Stake Practice"><div class="bot-card-top"><span class="bot-icon red-bg">≋</span><span class="template-tag">RISK TOOL</span></div><h2>Flat Stake Practice</h2><p>Keep a constant simulated stake while learning the interface.</p><div class="bot-tags"><span>Risk tools</span><span>Flat stake</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Flat Stake Practice">Open template ↗</button></div></article>
+          <article class="bot-card custom-card"><div class="custom-plus">+</div><h2>Build your own</h2><p>Start with an empty strategy canvas and add the blocks you need.</p><button class="button primary" data-page="botbuilder">Open Bot Builder ↗</button></article>
+        </div><div class="empty-search hidden" id="emptyBots">No templates match that search. Try another keyword.</div>
+      </section>
+
+      <section class="page" id="page-dtrader">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> ADVANCED CHARTING</div><h1>Trading <span>View.</span></h1><p>TradingView charts with symbol search, multiple timeframes, technical indicators and drawing tools.</p></div><span class="demo-pill"><span class="status-dot"></span> CHART EMBED</span></div>
+        <article class="panel tradingview-panel">
+          <div class="panel-heading"><div><div class="panel-overline">TRADINGVIEW ADVANCED CHART</div><h2>Market analysis workspace</h2></div><span class="template-tag">INDICATORS · DRAWING TOOLS</span></div>
+          <div class="tradingview-note"><strong>Choose your market inside the chart.</strong> The chart opens on EUR/USD by default. Use symbol search to look for the instruments you want; Deriv synthetic indices will appear only if TradingView provides data for those symbols. This embedded chart is for analysis and does not place trades or connect your Deriv account.</div>
+          <div class="tradingview-widget-frame">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+              <div class="tradingview-attribution"><a href="https://www.tradingview.com/" rel="noopener noreferrer" target="_blank"><span>Charts powered by TradingView</span></a></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "autosize": true,
+                "symbol": "FX:EURUSD",
+                "interval": "5",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com",
+                "details": true,
+                "hotlist": false,
+                "withdateranges": true,
+                "hide_side_toolbar": false,
+                "hide_top_toolbar": false,
+                "save_image": true,
+                "watchlist": [],
+                "studies": ["STD;EMA", "STD;RSI", "STD;MACD"],
+                "show_popup_button": true,
+                "popup_width": "1000",
+                "popup_height": "650"
+              }
+              </script>
+            </div>
+          </div>
+          <div class="tradingview-footnote">TradingView is a third-party service and requires an internet connection. Available symbols, indicators and features depend on TradingView’s data and embed capabilities. The embed does not execute Deriv trades.</div>
+        </article>
+      </section>
+
+      <section class="page" id="page-speedbot">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> LIVE TICK OBSERVER</div><h1>ITC <span>SpeedBot.</span></h1><p>Watch the latest digit move in real time and configure a tick-triggered batch for demo planning.</p></div><span class="demo-pill"><span class="status-dot"></span> OBSERVE · DEMO ONLY</span></div>
+        <article class="panel speedbot-live-panel">
+          <div class="panel-heading"><div><div class="panel-overline">LIVE MARKET TICK</div><h2 id="speedBotMarketTitle">Volatility 75 Index</h2><p class="muted-text" id="speedBotConnection">Connecting to public Deriv tick feed…</p></div><div class="speedbot-price"><small>Latest quote</small><strong id="speedBotQuote">Waiting…</strong></div></div>
+          <div class="speedbot-digit-strip" id="speedBotDigitStrip" aria-label="Recent live tick digits"><span class="speedbot-empty">Waiting for live ticks…</span></div>
+          <div class="speedbot-current-row"><div><small>LATEST LAST DIGIT</small><strong id="speedBotLastDigit">—</strong></div><div><small>PREVIOUS DIGIT</small><strong id="speedBotPreviousDigit">—</strong></div><div><small>TICK UPDATES</small><strong id="speedBotTickCount">0</strong></div></div>
+          <p class="form-footnote">The newest last digit is slightly larger and blue. Earlier digits remain smaller so you can see the sequence. The highlight reports the latest tick; it does not predict the next one.</p>
+        </article>
+        <div class="speedbot-grid">
+          <article class="panel"><div class="panel-heading"><div><div class="panel-overline">ENTRY WATCH</div><h2>Batch settings</h2></div><span class="template-tag">CONFIGURATION</span></div>
+            <div class="speedbot-form-grid"><div><label for="speedBotMarket">Market</label><select id="speedBotMarket" class="dark-select"><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select></div>
+              <div><label for="speedBotContract">Contract type</label><select id="speedBotContract" class="dark-select"><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITMATCH">Matches</option><option value="DIGITDIFF">Differs</option><option value="CALL">Rise</option><option value="PUT">Fall</option></select></div>
+              <div><label for="speedBotBarrier">Barrier / prediction digit</label><select id="speedBotBarrier" class="dark-select"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
+              <div><label for="speedBotTrades">Trades per eligible tick</label><input id="speedBotTrades" class="regular-input" type="number" min="1" max="10" step="1" value="1"></div>
+              <div><label for="speedBotStake">Stake per trade (USD)</label><input id="speedBotStake" class="regular-input" type="number" min="0.35" step="0.01" value="0.35"></div>
+              <div><label for="speedBotTP">Take profit (USD)</label><input id="speedBotTP" class="regular-input" type="number" min="0.01" step="0.01" value="2"></div>
+              <div><label for="speedBotSL">Stop loss (USD)</label><input id="speedBotSL" class="regular-input" type="number" min="0.01" step="0.01" value="3"></div>
+            </div>
+            <label class="speedbot-continuous"><span><strong>Continuous mode</strong><small>Keep watching for eligible ticks after each batch.</small></span><input id="speedBotContinuous" type="checkbox"><span class="speedbot-toggle"></span></label>
+            <div class="speedbot-rule-note" id="speedBotRuleNote">Entry rule preview: Over 2 — watch for a last digit above 2.</div>
+            <div class="speedbot-actions"><button class="button primary" id="speedBotStart">▶ Start tick watch</button><button class="button secondary" id="speedBotStop" disabled>■ Emergency stop</button></div>
+            <p class="form-footnote">This Version 5 front-end records simulated batches only. It does not submit Deriv purchases. Real trade execution needs separate authenticated API purchase/contract monitoring and verified exposure limits.</p>
+          </article>
+          <article class="panel"><div class="panel-heading"><div><div class="panel-overline">SESSION MONITOR</div><h2>Batch activity</h2></div><span class="demo-pill" id="speedBotRunState">STOPPED</span></div>
+            <div class="speedbot-stats"><div><small>Batches observed</small><strong id="speedBotBatches">0</strong></div><div><small>Simulated tickets</small><strong id="speedBotTickets">0</strong></div><div><small>Stake exposure / batch</small><strong id="speedBotExposure">$0.35</strong></div><div><small>Last-digit rule</small><strong id="speedBotRuleState">Waiting</strong></div></div>
+            <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Start tick watch to monitor live ticks and eligible entry conditions. No trades will be placed.</div></div>
+          </article>
+        </div>
+      </section>
+      <section class="page" id="page-signals">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET OBSERVATIONS</div><h1>Analysis <span>Tool.</span></h1><p>Explore live tick statistics and recent observations. Signal alerts have their own tab.</p></div>
+
+
+        <article class="panel analysis-bot-launcher"><div class="analysis-bot-launcher-copy"><div class="panel-overline">QUICK EXECUTION PANEL</div><h2>Run a loaded bot</h2><p>Choose a bot already loaded in Bot Builder, then start its current demo run without leaving Analysis Tool.</p></div><div class="analysis-bot-controls"><label for="analysisBotSelect">Loaded bot</label><select id="analysisBotSelect" class="dark-select"><option value="v01">IMPERIUM BOT VERSION 01</option><option value="c4v03">IMPERIUM C4 BOT VERSION 03</option><option value="custom">Current Builder strategy</option></select><button class="button primary" id="analysisRunBot">▶ Run bot</button><button class="button secondary" id="analysisEditBot">Edit parameters</button></div><p class="form-footnote">Runs a local simulation and logs the selected bot. It does not place live Deriv orders.</p></article>
+        <article class="panel scanner-panel"><div class="panel-heading"><div><div class="panel-overline">MARKET COMPARISON</div><h2>Smart Scanner</h2><p class="muted-text">Compare recent digit patterns across available synthetic markets.</p></div><span class="template-tag">OBSERVATION-BASED</span></div>
+          <div class="scanner-controls"><div><label for="scannerContract">Contract type</label><select id="scannerContract" class="dark-select"><option value="matches">Matches</option><option value="differs">Differs</option><option value="evenodd">Even / Odd</option><option value="overunder">Over / Under</option></select></div><div><label for="scannerSide">Over / Under side</label><select id="scannerSide" class="dark-select"><option value="over">Over</option><option value="under">Under</option></select></div><div><label for="scannerTarget">Entry digit / threshold</label><select id="scannerTarget" class="dark-select"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div><label for="scannerWindow">Ticks to compare</label><select id="scannerWindow" class="dark-select"><option value="25">25 ticks</option><option value="50" selected>50 ticks</option><option value="100">100 ticks</option><option value="500">500 ticks</option><option value="1000">1,000 ticks</option></select></div><button class="button primary" id="runScanner">⌕ Scan markets</button></div>
+          <div id="scannerResults" class="scanner-results"><div class="scanner-empty">Choose a contract and press <strong>Scan markets</strong>. The scanner needs enough observed ticks to compare markets.</div></div><p class="form-footnote">The scanner ranks recent historical observations only. It cannot know the next digit or guarantee the best trade. No market is recommended until data is available.</p>
+        </article>
+        <div class="signal-summary-grid"><article class="metric-card"><div class="metric-top"><span>Ticks observed</span><span class="metric-icon blue">⌁</span></div><div class="metric-value" id="liveTickCountTop">0</div><div class="metric-foot">This browser session</div></article><article class="metric-card"><div class="metric-top"><span>Even / odd</span><span class="metric-icon amber">◎</span></div><div class="metric-value" id="liveEvenOdd">—</div><div class="metric-foot">Recent 60 selected-market ticks</div></article><article class="metric-card"><div class="metric-top"><span>Over / under 5</span><span class="metric-icon purple">%</span></div><div class="metric-value" id="liveOverUnder">—</div><div class="metric-foot">Observed last digits only</div></article></div>
+        <article class="panel signals-table-panel"><div class="panel-heading"><div><div class="panel-overline">EXAMPLE SETUPS</div><h2>Watchlist signals</h2></div><span class="demo-pill">DEMO ONLY</span></div><div class="table-scroll"><table><thead><tr><th>Instrument</th><th>Setup</th><th>Timeframe</th><th>Illustrative bias</th><th>State</th><th></th></tr></thead><tbody><tr><td><strong>Volatility 75</strong><small>Synthetic index</small></td><td>Last digit observation</td><td>Tick stream</td><td><span class="bias-neutral">Neutral</span></td><td><span class="table-status">Example</span></td><td><button class="table-action inspect-signal" data-signal="Volatility 75 — Last digit observation">Inspect ↗</button></td></tr><tr><td><strong>Volatility 50</strong><small>Synthetic index</small></td><td>Directional watch</td><td>5m sample</td><td><span class="bias-up">Upward sample</span></td><td><span class="table-status">Example</span></td><td><button class="table-action inspect-signal" data-signal="Volatility 50 — Directional watch">Inspect ↗</button></td></tr><tr><td><strong>Volatility 100</strong><small>Synthetic index</small></td><td>Range observation</td><td>15m sample</td><td><span class="bias-neutral">Neutral</span></td><td><span class="table-status">Example</span></td><td><button class="table-action inspect-signal" data-signal="Volatility 100 — Range observation">Inspect ↗</button></td></tr><tr><td><strong>Volatility 25</strong><small>Synthetic index</small></td><td>Momentum watch</td><td>1m sample</td><td><span class="bias-down">Downward sample</span></td><td><span class="table-status">Example</span></td><td><button class="table-action inspect-signal" data-signal="Volatility 25 — Momentum watch">Inspect ↗</button></td></tr></tbody></table></div><div class="table-disclaimer">All signal descriptions above are static example content. No market feed, predictive model or signal provider is connected.</div></article>
+      </section>
+
+      <section class="page" id="page-signalalerts">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> ITC SIGNAL DESK</div><h1>Signals <span>Alert Desk.</span></h1><p>Prepare a signal alert, track its 10-minute validity, and create an expiry update for your group.</p></div>
+        <article class="panel signal-alert-panel" id="signalAlertDesk">
+          <div class="panel-heading signal-alert-heading">
+            <div><div class="panel-overline">ITC AI SIGNAL ALERT SYSTEM</div><h2>Signal Alert Desk</h2><p class="muted-text">Draft an alert, track its 10-minute validity, then prepare an expiry update for your group.</p></div>
+            <span class="template-tag">10-MINUTE EXPIRY</span>
+          </div>
+          <div class="signal-alert-note"><strong>Manual draft · ITC AI generation and automatic posting are not connected in this static build.</strong> Review live observations before sharing. This tool does not predict results or place trades.</div>
+          <form class="signal-alert-form" id="signalAlertForm">
+            <div class="signal-alert-fields">
+              <label for="signalAlertMarket">Market
+                <select id="signalAlertMarket" class="dark-select">
+                  <option value="Volatility 75 Index">Volatility 75 Index</option>
+                  <option value="Volatility 100 Index">Volatility 100 Index</option>
+                  <option value="Volatility 50 Index">Volatility 50 Index</option>
+                  <option value="Volatility 25 Index">Volatility 25 Index</option>
+                  <option value="Volatility 10 Index">Volatility 10 Index</option>
+                  <option value="Volatility 25 (1s) Index">Volatility 25 (1s) Index</option>
+                  <option value="Volatility 10 (1s) Index">Volatility 10 (1s) Index</option>
+                </select>
+              </label>
+              <label for="signalAlertContract">Contract type
+                <select id="signalAlertContract" class="dark-select">
+                  <option value="Over / Under">Over / Under</option>
+                  <option value="Even / Odd">Even / Odd</option>
+                  <option value="Rise / Fall">Rise / Fall</option>
+                  <option value="Matches / Differs">Matches / Differs</option>
+                </select>
+              </label>
+              <label for="signalAlertSetup">Entry / setup
+                <input id="signalAlertSetup" class="regular-input" maxlength="80" value="Over 5" placeholder="e.g. Over 5, Even, Rise" required>
+              </label>
+              <label for="signalAlertStake">Stake in USD (optional)
+                <input id="signalAlertStake" class="regular-input" type="number" min="0.35" max="1000000" step="0.01" value="0.35" inputmode="decimal">
+              </label>
+            </div>
+            <label class="signal-alert-context-label" for="signalAlertContext">Context / note (optional)
+              <input id="signalAlertContext" class="regular-input" maxlength="140" placeholder="e.g. reviewed against recent observed ticks">
+            </label>
+            <div class="signal-alert-form-footer"><span>Validity is fixed at 10 minutes. Drafts are stored only in this browser.</span><button type="submit" class="button primary" id="createSignalAlert">Start 10-minute alert</button></div>
+          </form>
+          <div class="signal-alert-status" id="signalAlertStatus" role="status" aria-live="polite">Ready when you are. Complete the setup and start the timer.</div>
+          <section class="active-signal-card" id="activeSignalCard" hidden aria-labelledby="activeSignalTitle">
+            <div class="active-signal-top"><div><span class="signal-state-pill" id="signalStatePill">ACTIVE</span><h3 id="activeSignalTitle">Current signal alert</h3></div><div class="signal-countdown-wrap"><span>TIME REMAINING</span><strong id="signalCountdown">10:00</strong></div></div>
+            <pre class="signal-message-preview" id="signalAlertPreview"></pre>
+            <div class="signal-alert-actions">
+              <button type="button" class="button secondary" id="copySignalAlert">Copy alert message</button>
+              <a class="button social-button telegram-button" href="https://t.me/IMPTC" target="_blank" rel="noopener noreferrer">Open Telegram ↗</a>
+              <a class="button social-button whatsapp-button" href="https://chat.whatsapp.com/GuWX2jy465cLxq3PZ" target="_blank" rel="noopener noreferrer">Open WhatsApp ↗</a>
+            </div>
+            <div class="signal-expiry-box" id="signalExpiryBox" hidden>
+              <strong>⏰ This signal has expired.</strong>
+              <p>The countdown is complete. Copy the expiry update and open your group to post it manually.</p>
+              <pre class="signal-message-preview expiry-preview" id="signalExpiryPreview"></pre>
+              <div class="signal-alert-actions"><button type="button" class="button primary" id="copySignalExpiry">Copy expiry update</button><a class="button social-button telegram-button" href="https://t.me/IMPTC" target="_blank" rel="noopener noreferrer">Open Telegram to post ↗</a><a class="button social-button whatsapp-button" href="https://chat.whatsapp.com/GuWX2jy465cLxq3PZ" target="_blank" rel="noopener noreferrer">Open WhatsApp to post ↗</a></div>
+            </div>
+            <div class="active-signal-footer"><span>Local timer only · no message is sent automatically.</span><button type="button" class="text-button" id="clearSignalAlert">Clear current alert</button></div>
+          </section>
+        </article>
+      </section>
+
+      <section class="page" id="page-history">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> ACTIVITY & RECORDS</div><h1>Trade <span>History.</span></h1><p>Local practice tickets and bot simulation logs created during this browser session.</p></div>
+        <div class="metrics-grid history-metrics"><article class="metric-card"><div class="metric-top"><span>Practice tickets</span><span class="metric-icon blue">↗</span></div><div class="metric-value" id="historyTicketCount">00</div><div class="metric-foot">This session</div></article><article class="metric-card"><div class="metric-top"><span>Realised P/L</span><span class="metric-icon purple">±</span></div><div class="metric-value">—</div><div class="metric-foot">No real trading connected</div></article><article class="metric-card"><div class="metric-top"><span>Bot runs</span><span class="metric-icon mint">⌘</span></div><div class="metric-value" id="historyRunCount">00</div><div class="metric-foot">Local simulation runs</div></article><article class="metric-card"><div class="metric-top"><span>Account state</span><span class="metric-icon amber">◉</span></div><div class="metric-value">Demo</div><div class="metric-foot">No broker connection</div></article></div>
+        <article class="panel signals-table-panel"><div class="panel-heading"><div><div class="panel-overline">SESSION RECORD</div><h2>Practice ticket history</h2></div><button class="button secondary" id="clearTickets">Clear history</button></div><div class="table-scroll"><table><thead><tr><th>Time</th><th>Instrument</th><th>Practice side</th><th>Stake</th><th>Duration</th><th>Status</th></tr></thead><tbody id="ticketHistoryBody"><tr class="empty-table-row"><td colspan="6">No practice tickets yet. Open DTrader and create a demo ticket to see it here.</td></tr></tbody></table></div></article>
+      </section>
+
+      <section class="page" id="page-settings">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> CONFIGURATION</div><h1>Workspace <span>Settings.</span></h1><p>Manage prototype preferences and review integration status.</p></div>
+        <div class="settings-grid"><article class="panel settings-panel"><div class="panel-heading"><div><div class="panel-overline">PREFERENCES</div><h2>Appearance & defaults</h2></div></div><div class="settings-row"><div><strong>Dark workspace</strong><small>High-contrast dashboard theme</small></div><span class="setting-state enabled">Enabled</span></div><div class="settings-row"><div><strong>Default market</strong><small>Used by the chart and ticket panel</small></div><select id="settingsMarket" class="dark-select"><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option><option>Volatility 50 (1s) Index</option></select></div><div class="settings-row"><div><strong>Demo stream animation</strong><small>Illustrative values may change locally</small></div><label class="switch"><input id="animationToggle" type="checkbox" checked><span></span></label></div><div class="settings-row"><div><strong>Local session data</strong><small>Ticket rows remain in this page session only</small></div><button class="button secondary" id="resetSession">Reset session</button></div></article><article class="panel settings-panel"><div class="panel-heading"><div><div class="panel-overline">INTEGRATIONS</div><h2>Connection status</h2></div></div><div class="integration-row"><span class="integration-logo deriv-logo">D</span><div><strong>Deriv API</strong><small>Market stream / account auth</small></div><span class="setting-state disconnected">Not connected</span></div><div class="integration-row"><span class="integration-logo chart-logo">⌁</span><div><strong>Live chart feed</strong><small>External chart / pricing provider</small></div><span class="setting-state disconnected">Not connected</span></div><div class="integration-row"><span class="integration-logo server-logo">▣</span><div><strong>Backend database</strong><small>Accounts / saved bots / history</small></div><span class="setting-state disconnected">Not configured</span></div><div class="integration-footnote">Public market data and private account authorization use separate connections. The token field below is memory-only and is never saved into the website files.</div></article>
+          <article class="panel settings-panel deriv-account-panel"><div class="panel-heading"><div><div class="panel-overline">PRIVATE ACCOUNT SESSION</div><h2>Connect Deriv account</h2><p class="muted-text">Sign in securely with Deriv and return here automatically. Account connection does not enable bot trading.</p></div><span id="derivAccountBadge" class="setting-state disconnected">Not connected</span></div><div class="deriv-connect-actions"><button class="button primary" id="derivOAuthButton" type="button">Login with Deriv</button></div><p class="form-footnote">Recommended: use the secure Deriv login above. If the OAuth flow is unavailable, the manual token option remains as a fallback.</p><label for="derivTokenInput">Manual API token (fallback)</label><input id="derivTokenInput" class="regular-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste token here on your device" aria-describedby="derivTokenHint"><p id="derivTokenHint" class="form-footnote">Use only the minimum required permissions. For account verification, a read-only token is preferable. Do not share it in chat, screenshots, or public repositories.</p><div class="deriv-connect-actions"><button class="button primary" id="derivConnectButton" type="button">Connect account</button><button class="button secondary" id="derivDisconnectButton" type="button" disabled>Disconnect</button></div><div class="deriv-account-summary" id="derivAccountSummary" aria-live="polite">No private account connection. Public market data can continue independently.</div><p class="integration-footnote">OAuth session tokens are handled in this browser session and removed from the address bar after callback processing. Manual tokens are cleared from the field after use. Live trade execution remains disabled until the strategy interpreter and risk controls are implemented and verified.</p></article>
+        </div>
+      </section>
+
+      <section class="page" id="page-help">
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> SUPPORT & DOCUMENTATION</div><h1>Help <span>Centre.</span></h1><p>Use the live public tick feed, inspect imported DBot XML, sync your market selection, and manage a private account session.</p></div>
+        <div class="help-grid"><article class="panel help-card"><div class="help-card-icon purple-bg">⠿</div><h2>Bot Builder</h2><p>Add logic blocks, adjust demo parameters and run a local simulation. Use Export configuration to save a JSON representation of your draft.</p><button class="subtle-link" data-page="botbuilder">Open Bot Builder ↗</button></article><article class="panel help-card"><div class="help-card-icon blue-bg">⌁</div><h2>Trading View</h2><p>Open the embedded TradingView chart for technical analysis, symbol search, indicators and drawing tools. Chart embed only; no orders are placed.</p><button class="subtle-link" data-page="dtrader">Open Trading View ↗</button></article><article class="panel help-card"><div class="help-card-icon mint-bg">⚙</div><h2>Going live</h2><p>Account authorization is available from Settings. Imported DBot XML is visual inspection/editing only in this version; Run remains a simulation until a faithful strategy interpreter, trade proposal validation and live order monitoring are implemented.</p><button class="subtle-link" data-page="settings">View integrations ↗</button></article></div><article class="panel faq-panel"><div class="panel-heading"><div><div class="panel-overline">FREQUENTLY ASKED QUESTIONS</div><h2>Before you begin</h2></div></div><details open><summary>Is the market data real?</summary><p>The public market chart and quote are live when the Deriv connection status says LIVE. Balance, performance metrics and example signal descriptions remain demo content.</p></details><details><summary>Does Run simulation place a trade?</summary><p>No. It creates a local run log only. The account connection can verify authorization separately, but it does not enable live bot trading in this version.</p></details><details><summary>Is my Deriv API token saved?</summary><p>No. The Settings token field is cleared when Connect is pressed, and this page does not save the token to localStorage, source files, or the package. Disconnect closes the authorized session. Prefer minimum permissions, and never share the token in chat or public repositories.</p></details><details><summary>Can this be hosted on GitHub Pages?</summary><p>Yes. The front-end files can be served as a static website. Any live API integration, authentication, database or private credentials should be handled separately and securely.</p></details></article>
+      </section>
+    </main>
+  </div>
+
+  <button class="circle-ai-launcher" id="circleAILauncher" aria-label="Open ITC AI trading assistant" aria-expanded="false"><span class="circle-ai-orbit">✦</span><span class="circle-ai-label">ITC AI</span></button>
+  <aside class="circle-ai-drawer" id="circleAIDrawer" aria-label="ITC AI trading assistant" aria-hidden="true">
+    <div class="circle-ai-head"><div class="circle-ai-brand"><span class="circle-ai-mini">✦</span><div><strong>ITC AI</strong><small>Market scanner & demo assistant</small></div></div><button id="circleAIClose" class="circle-ai-close" aria-label="Close ITC AI">×</button></div>
+    <div class="circle-ai-warning"><span>●</span> ANALYSIS MODE · DEMO EXECUTION ONLY</div>
+    <div class="circle-ai-section-label">01 / CHOOSE CONTRACT</div>
+    <div class="circle-ai-contracts" role="group" aria-label="Contract type">
+      <button class="circle-ai-contract active" data-ai-contract="overunder">Over / Under</button><button class="circle-ai-contract" data-ai-contract="evenodd">Even / Odd</button><button class="circle-ai-contract" data-ai-contract="matches">Matches</button><button class="circle-ai-contract" data-ai-contract="differs">Differs</button>
+    </div>
+    <div class="circle-ai-form-grid"><div><label for="circleAISide">Over / Under side</label><select id="circleAISide" class="dark-select"><option value="over">Over</option><option value="under">Under</option></select></div><div><label for="circleAITarget">Entry digit / threshold</label><select id="circleAITarget" class="dark-select"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div><label for="circleAIWindow">Tick sample</label><select id="circleAIWindow" class="dark-select"><option value="100">100 ticks</option><option value="500">500 ticks</option><option value="1000" selected>1,000 ticks</option></select></div></div>
+    <div class="circle-ai-section-label">02 / TRADE SETTINGS</div>
+    <div class="circle-ai-form-grid"><div><label for="circleAIStake">Stake (USD)</label><input id="circleAIStake" class="regular-input" type="number" min="0.35" step="0.01" value="0.35"></div><div><label for="circleAITP">Take profit (USD)</label><input id="circleAITP" class="regular-input" type="number" min="0.01" step="0.01" value="2"></div><div><label for="circleAISL">Stop loss (USD)</label><input id="circleAISL" class="regular-input" type="number" min="0.01" step="0.01" value="3"></div><div><label for="circleAIMultiplier">Martingale multiplier</label><input id="circleAIMultiplier" class="regular-input" type="number" min="1" max="10" step="0.1" value="2"></div></div>
+    <div class="circle-ai-inline-toggle"><div><strong>Martingale</strong><small>Increase next demo stake after a loss</small></div><label class="switch"><input id="circleAIMartingale" type="checkbox"><span></span></label></div>
+    <div class="circle-ai-rule-card" id="circleAIRuleCard"><strong>Current scan rule</strong><p id="circleAIRuleText">Over 2: digits 0, 1 and 2 must each be below 10% and must not be the two most frequent digits in the sample.</p></div>
+    <button class="button primary full-button circle-ai-scan" id="circleAIScan">✦ Scan for best market</button>
+    <div id="circleAIStatus" class="circle-ai-status" aria-live="polite">Waiting for your scan. The assistant needs enough real observed ticks before recommending a market.</div>
+    <div id="circleAIResult" class="circle-ai-result hidden"></div>
+    <p class="circle-ai-footnote">A scan ranks past observations; it cannot predict the next tick. “Execute” here records a simulated demo ticket only. Real trading will remain disabled until secure Deriv authorization, contract validation and explicit live-trading controls are implemented.</p>
+  </aside>
+
+  <div class="install-prompt-backdrop hidden" id="installPrompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle">
+    <div class="install-prompt-card">
+      <button class="install-prompt-close" id="installPromptClose" aria-label="Not now">×</button>
+      <img src="imperium-logo.jpg" alt="Imperium Traders Club logo" class="install-prompt-logo">
+      <div class="install-kicker">YOUR TRADING WORKSPACE</div>
+      <h2 id="installPromptTitle">Get the <span>ITC</span> App</h2>
+      <p>Install Imperium Traders Club on your device for an app-style experience. The app opens this website in its own window and uses your Imperium logo.</p>
+      <button class="button primary full-button" id="installAppYes">Yes, install ITC</button>
+      <button class="install-later" id="installAppLater">Maybe later</button>
+      <p class="install-footnote" id="installPromptNote">Installation availability depends on your browser and how the website is hosted.</p>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop hidden" id="modalBackdrop"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Close dialog">×</button><div class="eyebrow"><span class="eyebrow-line"></span> IMPERIUM TRADERS CLUB</div><h2 id="modalTitle">Workspace notice</h2><p id="modalBody">This prototype does not send trades or receive live pricing.</p><button class="button primary" id="modalOk">Understood</button></div></div>
+  <script src="config.js"></script>
+  <script src="market-live.js"></script>
+  <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
+  <script src="bots-data.js"></script>
+  <script src="app.js"></script>
+  <script src="deriv-account.js?v=6.1"></script>
+  <script src="account-display.js"></script>
+  <script src="enhancements.js"></script>
+  <script src="circle-ai.js"></script>
+  <script src="install-app.js"></script>
+  <script src="signal-alerts.js"></script>
+  <script src="speedbot.js"></script>
+</body>
+</html>

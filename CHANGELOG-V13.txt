@@ -1,0 +1,11 @@
+IMPERIUM TRADERS CLUB — VERSION 13
+Analysis Tool update (built on Version 12)
+
+- Added selectable recent tick windows: 100, 500, and 1,000 ticks.
+- Added analysis modes for digit distribution, Over/Under, Even/Odd, and Rise/Fall.
+- Added a configurable Over/Under threshold from 0 to 9.
+- Digit circles are ranked by frequency: green most frequent, blue second most frequent, red least frequent, amber outline second least frequent. Ties share ranks/styles.
+- Analysis reads only the selected market's own tick history and refreshes on market changes; the shared market selection remains synchronized with Bot Builder.
+- Updated service-worker cache version so deployed clients can fetch the new files.
+
+Important: rankings describe observed past ticks and are not predictions. This update does not enable live trade execution. Imported XML strategies are not rewritten when the shared market changes; review compatibility before running any strategy.

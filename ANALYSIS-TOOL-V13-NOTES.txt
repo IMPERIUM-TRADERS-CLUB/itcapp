@@ -1,0 +1,9 @@
+ANALYSIS TOOL — VERSION 13
+
+Use the Analysis Tool market selector to select a market. The Bot Builder market selector follows the same selection. The market's own recent tick history is used for analysis; a market switch does not intentionally carry another market's tick observations into its statistics.
+
+Choose 100, 500, or 1,000 ticks. The feed is capped by the available session/history data, so the interface shows how many observations are actually available. Choose Digits 0–9, Over/Under, Even/Odd, or Rise/Fall. Over/Under has a configurable threshold; the threshold digit itself is neither Over nor Under.
+
+Digit colours: green = most frequent rank; blue = second most frequent; red = least frequent; amber outline = second least frequent. Equal frequencies can share a colour.
+
+These are historical descriptions, not trading signals or guarantees. The Bot Builder runner remains simulation-only, and market selection does not modify imported XML strategy rules.

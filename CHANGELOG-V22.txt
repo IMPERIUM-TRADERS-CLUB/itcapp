@@ -1,0 +1,7 @@
+Version 22 — Compact header controls
+- Removed the large combined balance/currency card.
+- Kept the balance as a slim header chip with an arrow control to switch Demo/Real.
+- Moved USD/KES into a separate compact selector positioned between the page breadcrumb and right-side actions (centered into the available header space).
+- Preserved the existing balance logic, account authorization behavior, and approximate USD/KES conversion.
+- Improved small-screen sizing and spacing.
+- Account mode switching changes the balance display only; it does not enable live trade execution.

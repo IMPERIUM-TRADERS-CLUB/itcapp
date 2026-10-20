@@ -1,0 +1,8 @@
+IMPERIUM TRADERS CLUB — VERSION 17
+
+Fixes requested for Digit Circles:
+- Market selector change is handled through delegated events, so it still works after being moved dynamically into the Digit Frequency panel. Selecting a market calls the shared market-selection function and updates the rest of the app.
+- Digit labels are forced to render as actual circular badges on desktop and mobile, with fixed dimensions, centered digits, and 50% border radius.
+- Existing market-specific tick history and contract type analysis are preserved.
+
+Verification: JavaScript syntax and ZIP archive integrity checked. Live browser rendering and GitHub Pages deployment have not been verified.

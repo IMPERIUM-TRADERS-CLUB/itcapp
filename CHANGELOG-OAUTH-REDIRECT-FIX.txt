@@ -1,0 +1,9 @@
+ITC OAuth redirect fix
+
+- Corrected the public Deriv App ID to match the IMPERIUM_TRADERS_CLUB app shown in the user's Deriv dashboard.
+- Added a Login with Deriv button using the registered legacy OAuth app endpoint.
+- Added callback handling for Deriv's token1/acct1/cur1 response, state validation when returned, address-bar cleanup, and account WebSocket authorization.
+- Kept manual API-token entry as a fallback.
+- Bumped the service-worker cache name so deployed browsers fetch the updated scripts.
+
+Important limitations: This is an account authorization and balance-verification fix only. It does not enable automated/live bot trading. The OAuth callback returns session tokens in URL parameters under the legacy flow; the code removes them from the address bar immediately and does not write them to localStorage. Test with a demo account first.

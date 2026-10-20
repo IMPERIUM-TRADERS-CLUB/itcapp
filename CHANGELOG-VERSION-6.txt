@@ -1,0 +1,1 @@
+ITC Version 6: replaces legacy login URL with OAuth 2.0 authorization-code + PKCE, adds callback state validation, Worker exchange scaffold, clearer setup instructions, version label update, and cache version bump. OAuth account balance integration is not complete; no live trading is enabled.

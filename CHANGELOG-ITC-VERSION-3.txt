@@ -1,0 +1,7 @@
+ITC VERSION 3 — TOP-RIGHT AUTH BUTTONS & DASHBOARD-FIRST NAVIGATION
+
+1. Login and Sign Up remain grouped together at the far right of the top bar before Deriv authorization.
+2. Login remains the prominent red button; Sign Up retains the existing Deriv affiliate URL.
+3. Currency and balance remain hidden until the Deriv account is authorized and account data is received.
+4. Dashboard remains the first navigation item and the default opening workspace.
+5. This update adjusts layout/navigation only; it does not claim a live Deriv OAuth test or deploy the site.

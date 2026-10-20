@@ -1,0 +1,26 @@
+ITC VERSION 6.1 — LOGIN CHECKLIST
+
+WHAT CHANGED
+- Header Login launches one OAuth request only. The affiliate registration link remains the separate Sign Up action.
+- OAuth redirect_uri is fixed to https://imperium-traders-club.github.io/itcapp/ to match your Deriv application screenshot.
+- Service-worker cache name and script version are bumped.
+
+PUBLISH
+1. Extract this ZIP. Open project-1-improved-itc.
+2. Upload the CONTENTS of that folder to the root of your existing itcapp repository, replacing old files. Do not upload only the enclosing folder.
+3. Wait for GitHub Pages to finish deploying.
+4. Open Chrome Incognito and visit https://imperium-traders-club.github.io/itcapp/?v=61
+5. Tap the red Login button. It should start at https://auth.deriv.com/oauth2/auth (the address will include query parameters; do not share the whole URL).
+6. Finish login/approval. Deriv should redirect to https://imperium-traders-club.github.io/itcapp/ .
+
+EXPECTED FIRST TEST WITHOUT WORKER CONFIGURED
+- The page should return to ITC and show a setup-required message because OAUTH_WORKER_URL remains empty. This proves the authorization redirect/callback loop is running; token exchange will not complete until the Worker is deployed and OAUTH_WORKER_URL is set.
+
+IF LOGIN STILL OPENS THE NORMAL DERIV DASHBOARD
+- Check that the live page title says ITC Version 6.1. If not, the new files are not the ones being served.
+- In Incognito, tap Login and check only the domain/path. It should begin with auth.deriv.com/oauth2/auth. Do not share the full address if it contains code, state, or tokens.
+- Confirm the Deriv OAuth app still lists exactly https://imperium-traders-club.github.io/itcapp/ as its redirect URI.
+
+SECURITY
+- Never commit client secrets, authorization codes, or access tokens to GitHub.
+- The Cloudflare Worker is needed to exchange the code. Do not enable real-money trading until authentication and balance retrieval are tested end-to-end.

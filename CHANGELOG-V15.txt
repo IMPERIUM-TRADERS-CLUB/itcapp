@@ -1,0 +1,8 @@
+Version 15 — Compact, colourful Analysis Tool
+- Reduced vertical space used by the Analysis Tool heading and view chooser.
+- Kept Digit Circles and Smart Analysis buttons side-by-side on mobile.
+- Made the view chooser sticky so it stays accessible while scrolling.
+- Added distinct teal, blue, violet, amber and pink accents to market selection, analysis modes and panels.
+- Tightened digit-analysis controls and cards to bring more useful information into the first screen.
+- Bumped the service-worker cache to v15 so browsers can fetch the updated assets.
+- No trading strategy logic changed.

@@ -1,0 +1,16 @@
+ITC VERSION 5.1 — DERIV OAUTH RECOVERY NOTES
+
+This package keeps the existing ITC website and adds callback parsing for OAuth values returned in either the URL query or fragment. It also removes query and fragment values after callback processing.
+
+IMPORTANT: The website code cannot make Deriv redirect to ITC unless the registered Deriv application itself is configured with the correct redirect/callback URL.
+
+CHECK THESE SETTINGS BEFORE TESTING:
+1. Open the Deriv API application management page and select the existing app whose App ID is 342Wd4IBGzV6S7LJ8MDkH.
+2. Confirm the app's registered OAuth redirect/callback URL is exactly: https://imperium-traders-club.github.io/itcapp/
+3. The repository name should be itcapp for that GitHub Pages URL. If you created a different repository name, the URL may differ.
+4. Save the Deriv app settings. Wait for GitHub Pages deployment to finish.
+5. Open the site in a fresh browser tab (or private window), tap Login with Deriv, sign in, and approve the app if prompted.
+6. If Deriv opens app.deriv.com and never shows approval/never returns, check the registered app's redirect URL and that you are opening the expected deployed URL.
+7. If the browser returns to ITC but shows “returned from login, but account connection failed”, check the message in Settings and the browser console; do not share tokens or screenshots containing URL credentials.
+
+SECURITY/SAFETY: Use a demo account first. Do not add private tokens or secrets to GitHub. This build does not enable live bot orders; SpeedBot trade activity remains simulation-only.

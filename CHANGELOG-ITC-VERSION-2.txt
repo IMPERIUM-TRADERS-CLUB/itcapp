@@ -1,0 +1,10 @@
+ITC VERSION 2 — HEADER LOGIN / SIGN-UP FLOW
+
+- Replaced the initial top-bar currency and balance display with Login and Sign Up actions.
+- Login starts the existing Deriv OAuth authorization flow.
+- Sign Up opens the existing Deriv affiliate registration link.
+- Currency and account balance controls remain hidden until the browser session has successfully authorized a Deriv account and receives account balance data.
+- Disconnecting the Deriv account hides the account controls again.
+- Existing Settings login/manual-token fallback and trading safety limitations are retained.
+
+Test note: JavaScript syntax and ZIP integrity should be checked after packaging. The live Deriv OAuth redirect must still be tested on the deployed GitHub Pages site.

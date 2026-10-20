@@ -1,0 +1,32 @@
+ITC VERSION 6 — OAUTH 2.0 LOGIN SETUP
+
+WHAT THIS PACKAGE CHANGES
+- Updates visible version label and service-worker cache name.
+- Login uses Deriv's OAuth 2.0 authorization-code flow with PKCE and state validation.
+- Callback removes code/state from the visible URL.
+- Includes a Cloudflare Worker token-exchange bridge.
+
+IMPORTANT: THIS IS NOT YET A COMPLETE LIVE ACCOUNT/BALANCE INTEGRATION. After OAuth token exchange, the UI confirms authorization, but account/balance retrieval must be connected to Deriv's current REST API before showing a real account balance. Live trading remains disabled.
+
+PUBLISH WEBSITE
+1. Extract ZIP. Open project-1-improved-itc. Upload the CONTENTS of that folder to the root of the itcapp GitHub repository (not the enclosing folder).
+2. Keep the redirect URL registered in Deriv exactly: https://imperium-traders-club.github.io/itcapp/
+
+DEPLOY WORKER (REQUIRED FOR CODE EXCHANGE)
+1. In Cloudflare, create a Worker named itc-oauth-bridge. Copy worker/worker.js into it and deploy.
+2. Add Worker variable DERIV_CLIENT_ID with the client ID shown in the Deriv OAuth application dashboard. Do not put client secrets in GitHub.
+3. Confirm ALLOWED_ORIGIN is https://imperium-traders-club.github.io and REDIRECT_URI is https://imperium-traders-club.github.io/itcapp/ . If you change either, keep it exact.
+4. Copy the deployed Worker HTTPS URL.
+5. In config.js, set OAUTH_WORKER_URL to that URL, e.g. https://itc-oauth-bridge.<your-subdomain>.workers.dev (no trailing slash). Upload config.js to GitHub and wait for Pages deployment.
+6. Test using a demo account. Tap Login; Deriv should show its authentication screen, then return to ITC. If exchange fails, check Worker logs but never log or share authorization codes/tokens.
+
+OAUTH APPLICATION
+- Use the OAuth client ID from the Deriv OAuth application settings. Do not confuse it with any separate legacy API app ID.
+- Ensure the exact redirect URI above is allowed by the application.
+- The OAuth scope requested is trade. Change it only if your application genuinely needs additional access.
+
+SECURITY
+- Do not commit secrets, API tokens, access tokens, or Worker credentials to GitHub.
+- This Worker uses PKCE and checks the redirect URI/origin. Use only the configured redirect URI.
+- The short-lived OAuth access token is held in this browser tab's sessionStorage by this starter. Clear it by closing the tab or signing out. For production, prefer a backend-managed session and API proxy rather than exposing access tokens to page scripts.
+- This release does not place live orders. Do not enable real trading until the account API integration and security review are complete.

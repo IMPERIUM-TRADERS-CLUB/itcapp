@@ -1,0 +1,12 @@
+IMPERIUM TRADERS CLUB — COMPLETE WEBSITE (VERSION 19)
+
+This ZIP contains the full website and its supporting files.
+
+IMPORTANT: Do not open the ZIP itself as if it were an app. Extract/unzip it first.
+
+After extraction, open the folder “imperium-traders-club-v19-website”.
+The main website page is index.html. Keep all files and folders together.
+
+For best results and live market-feed features, publish the contents of this folder to GitHub Pages and open the resulting HTTPS website link. Opening index.html directly from a phone’s file manager may restrict some browser features.
+
+The bot Run control in this version is a demo/simulation, not live automated trading.

@@ -1,0 +1,9 @@
+ITC VERSION 6.1 — OAUTH LOGIN ROUTING FIX
+
+- Removed the duplicate header Login click handler. Only deriv-account.js starts OAuth.
+- Added a single-flight guard so one tap cannot launch multiple OAuth redirects.
+- Made the registered GitHub Pages redirect URI explicit in config.js.
+- Bumped the OAuth script cache query and service-worker cache name.
+- Kept Login separate from affiliate Sign Up links.
+
+This corrects a real front-end defect, but does not prove live Deriv OAuth works: the deployed page must be tested against the registered OAuth app. The Worker is still required for authorization-code exchange. No live trading is enabled.

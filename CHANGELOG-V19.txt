@@ -1,0 +1,15 @@
+IMPERIUM TRADERS CLUB — VERSION 19
+
+Whole-site visual and usability refresh
+- Created a compact actionable Dashboard with links to Digit Circles, Bot Builder, Risk Calculator and Free Bots.
+- Added market feed status on Dashboard using the same public Deriv connection status as the top bar.
+- Added a live tick-sample readout tied to the selected market and current analysis window; no numbers are fabricated.
+- Standardized visual hierarchy, spacing, gold ITC accents, card borders, focus states, form contrast, table readability, mobile breakpoints, and reduced-motion handling.
+- Reduced the full-screen welcome splash so core tools are visible sooner on desktop and mobile.
+- Added Dashboard as a valid selectable opening page so the Open on control matches the displayed default page.
+- Renamed the Analysis page heading to Analysis Tool for consistent navigation.
+
+Safety / execution
+- Public ticks are read-only market data when the status says Live public ticks.
+- Bot Run actions remain local demo simulations. This version does not place live orders or guarantee results.
+- No private Deriv token is embedded in the package.

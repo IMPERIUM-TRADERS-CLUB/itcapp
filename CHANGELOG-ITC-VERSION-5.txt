@@ -1,0 +1,7 @@
+ITC VERSION 5
+- Added ITC SpeedBot navigation item after Analysis Tool.
+- Added live read-only tick display with recent digits, highlighted latest digit, latest quote, and previous digit.
+- Added market and contract rule selection, trades-per-tick configuration, continuous watch toggle, stake, TP/SL settings, simulated batch counters, and emergency stop.
+- SpeedBot records simulated batches only; it does not submit Deriv trades.
+- Renamed visible Circle AI labels to ITC AI / ITC AI Bots.
+- Kept Dashboard as the default opening page and retained the Deriv account OAuth files from Version 3.

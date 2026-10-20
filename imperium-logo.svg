@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 460" role="img" aria-labelledby="title desc">
+  <title id="title">Imperium Traders Club</title>
+  <desc id="desc">Gold crown and shield emblem with the Imperium Traders Club wordmark.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0a8"/><stop offset=".28" stop-color="#f6c453"/><stop offset=".58" stop-color="#bd7c19"/><stop offset=".82" stop-color="#ffe18a"/><stop offset="1" stop-color="#8d5310"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path stroke-width="8" d="M258 143 L226 76 L291 111 L360 42 L429 111 L494 76 L462 143 Q360 173 258 143Z"/>
+    <path stroke-width="5" d="M240 159 Q360 203 480 159 L457 292 Q360 367 263 292Z"/>
+    <path stroke-width="4" d="M260 174 Q360 211 460 174 L441 278 Q360 338 279 278Z"/>
+    <path stroke-width="4" d="M291 217 L329 250 L360 204 L391 250 L429 217"/>
+    <path stroke-width="4" d="M305 290 Q360 312 415 290"/>
+    <path stroke-width="3" d="M214 190 Q181 245 222 297 M506 190 Q539 245 498 297"/>
+    <path stroke-width="3" d="M230 315 Q206 339 184 333 M490 315 Q514 339 536 333"/>
+  </g>
+  <text x="360" y="393" fill="url(#gold)" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="51" font-weight="700" letter-spacing="4">IMPERIUM</text>
+  <text x="360" y="432" fill="#f4d27b" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" letter-spacing="8">TRADERS CLUB</text>
+</svg>

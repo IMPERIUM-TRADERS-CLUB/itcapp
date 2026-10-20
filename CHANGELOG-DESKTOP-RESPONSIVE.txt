@@ -1,0 +1,7 @@
+ITC Desktop/Laptop Responsive Fix
+
+- Added a responsive layout patch for desktop, laptop, tablet, and mobile widths.
+- Reduced overflow risk in headers, account controls, cards, grids, and charts.
+- Rebalanced dashboard columns and tool grids for medium-width laptop screens.
+
+Deriv login note: this package still contains the existing manual API-token connection. It does not yet implement a complete Deriv OAuth redirect/callback flow. For OAuth, the registered Deriv application type, exact redirect URL, and supported auth flow must be confirmed and configured; do not publish or paste private tokens into chat.

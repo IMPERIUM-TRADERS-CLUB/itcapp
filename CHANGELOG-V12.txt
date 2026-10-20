@@ -1,0 +1,16 @@
+IMPERIUM TRADERS CLUB — VERSION 12 CHANGELOG
+
+- Bundled both original DBot XML files for use by the site and Android WebView package.
+- Added a Blockly XML import path for viewing/editing the supplied XML structure.
+- Synchronized market selection between Analysis Tool, Bot Builder and compatible market selectors.
+- Added a scanner result action to apply the chosen market and handled insufficient-tick scores.
+- Added a local Deriv account authorization screen that does not persist the token to browser storage or source files.
+- Pinned the Blockly CDN version and removed an unnecessary authorize request option.
+- Refreshed Android WebView assets and supplied density-specific ITC launcher icons.
+- Updated Android app version to 1.2.0 / versionCode 12.
+
+LIMITATIONS
+- Bot Run remains a local simulation. It does not interpret the supplied DBot program and does not place live orders.
+- Generic Blockly wrappers are for structure/field inspection and are not a faithful executable DBot runtime.
+- The Blockly library and public market feed need internet access.
+- The archive includes Android Studio source, not a compiled APK.

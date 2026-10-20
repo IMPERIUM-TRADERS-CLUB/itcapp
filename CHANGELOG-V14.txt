@@ -1,0 +1,11 @@
+IMPERIUM TRADERS CLUB — VERSION 14
+
+Analysis Tool view selector update
+
+- Added two explicit choices directly under Analysis Tool: Digit Circles and Smart Analysis.
+- Digit Circles opens the live digit-circle panel with digits 0–9, frequency percentages, rank colours, tick window and Over/Under, Even/Odd, and Rise/Fall analysis modes.
+- Smart Analysis keeps the existing scanner, summaries, bot launcher, and current analysis panels visible.
+- The shared market selector remains available in both views.
+- Updated the service-worker cache name so hosted installations can fetch the new interface.
+
+Important: Digit-circle statistics are historical observations from the selected market's available tick history, not predictions. Bot run remains simulation-only.

@@ -1,0 +1,8 @@
+name = "itc-oauth-bridge"
+main = "worker.js"
+compatibility_date = "2026-10-20"
+
+[vars]
+ALLOWED_ORIGIN = "https://imperium-traders-club.github.io"
+REDIRECT_URI = "https://imperium-traders-club.github.io/itcapp/"
+# Set DERIV_CLIENT_ID in Cloudflare Worker settings; do not put secrets in GitHub.
