@@ -14,13 +14,19 @@
   <link rel="stylesheet" href="style.css?v=72">
   <link rel="stylesheet" href="itc-theme.css?v=80">
 <link rel="preload" as="image" href="imperium-logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
 #itcSplash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 38%,#2a2008 0,#0a0804 48%,#050607 100%);color:#f5c842;font-family:Inter,Arial,sans-serif;transition:opacity .55s ease,visibility .55s}
 #itcSplash.done{opacity:0;visibility:hidden}
 #itcSplash .sp-logo{width:132px;height:132px;border-radius:50%;object-fit:cover;border:3px solid #f5c842;box-shadow:0 0 0 8px #f5c84218,0 0 46px #f5c84255;animation:spPulse 1.8s ease-in-out infinite}
 #itcSplash .sp-name{font:700 22px/1.2 "Times New Roman",Georgia,serif;letter-spacing:.32em;text-align:center;padding-left:.32em}
 #itcSplash .sp-sub{margin-top:-8px;font-size:11px;letter-spacing:.5em;color:#cdb15a;padding-left:.5em}
-#itcSplash .sp-quote{max-width:min(420px,86vw);text-align:center;font:700 clamp(17px,4.6vw,22px)/1.65 "Times New Roman",Georgia,serif;color:#f4ecd0;margin:2px 0 4px}#itcSplash .sp-quote .hl{background:#d8e21a;color:#14130a;padding:1px 9px;box-decoration-break:clone;-webkit-box-decoration-break:clone}#itcSplash .sp-bar{width:min(240px,64vw);height:4px;border-radius:4px;background:#2a2410;overflow:hidden}
+#itcSplash .sp-quote{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:min(440px,90vw);text-align:center;margin:6px 0 6px}
+#itcSplash .sp-quote .ln{display:block;opacity:0;transform:translateY(10px);animation:spLine .8s cubic-bezier(.2,.7,.2,1) forwards;font:italic 500 clamp(21px,5.6vw,28px)/1.25 "Playfair Display",Georgia,"Times New Roman",serif;color:#fff3cf;text-shadow:0 0 18px #f5c84240}
+#itcSplash .sp-quote .ln:nth-child(1){animation-delay:.25s}#itcSplash .sp-quote .ln:nth-child(2){animation-delay:.8s}#itcSplash .sp-quote .ln:nth-child(3){animation-delay:1.5s}#itcSplash .sp-quote .ln:nth-child(4){animation-delay:2.05s}
+#itcSplash .sp-quote .hl{font:700 clamp(15px,4.2vw,19px)/1.2 Cinzel,"Trajan Pro",Georgia,serif;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:#17120a;text-shadow:none;padding:6px 16px 5px;border-radius:3px;background:linear-gradient(100deg,#c8921a,#f9d765 45%,#d9a51b);box-shadow:0 0 22px #f5c84240,inset 0 0 0 1px #fff3b055}
+@keyframes spLine{to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#itcSplash .sp-quote .ln{animation:none;opacity:1;transform:none}}#itcSplash .sp-bar{width:min(240px,64vw);height:4px;border-radius:4px;background:#2a2410;overflow:hidden}
 #itcSplash .sp-bar i{display:block;width:40%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d9a51b,#f9d765);animation:spBar 1.25s ease-in-out infinite}
 #itcSplash .sp-msg{font-size:13px;color:#e9dfb8;letter-spacing:.04em}
 @keyframes spPulse{50%{transform:scale(1.045);box-shadow:0 0 0 12px #f5c84212,0 0 64px #f5c84277}}
@@ -29,7 +35,7 @@
 </style><noscript><style>#itcSplash{display:none}</style></noscript>
 </head>
 <body>
-<div id="itcSplash" role="status" aria-live="polite"><img class="sp-logo" src="imperium-logo.jpg" alt="Imperium Traders Club"><div class="sp-name">IMPERIUM</div><div class="sp-sub">TRADERS CLUB</div><div class="sp-quote"><span class="hl">The blueprint is</span><br>believing in yourself.<br><span class="hl">The cheat code is</span><br>discipline and consistency.</div><div class="sp-bar"><i></i></div><div class="sp-msg">The website is loading…</div></div>
+<div id="itcSplash" role="status" aria-live="polite"><img class="sp-logo" src="imperium-logo.jpg" alt="Imperium Traders Club"><div class="sp-name">IMPERIUM</div><div class="sp-sub">TRADERS CLUB</div><div class="sp-quote"><span class="ln hl">The blueprint is</span><span class="ln">believing in yourself.</span><span class="ln hl">The cheat code is</span><span class="ln">discipline and consistency.</span></div><div class="sp-bar"><i></i></div><div class="sp-msg">The website is loading…</div></div>
 <script>(function(){var s=document.getElementById('itcSplash');if(!s)return;var t0=Date.now(),gone=false;function hide(){if(gone)return;gone=true;setTimeout(function(){s.classList.add('done');setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s)},700)},Math.max(0,3800-(Date.now()-t0)))}if(document.readyState==='complete')hide();else window.addEventListener('load',hide);setTimeout(hide,8000)})();</script>
 
   <div class="app-shell">
@@ -55,6 +61,7 @@
       <div class="workspace-label">PREFERENCES</div>
       <nav class="nav">
         <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
+        <button class="nav-link" id="soundToggle" type="button" aria-pressed="true"><span class="nav-icon">🔔</span> Sound: On</button>
         <button class="nav-link" data-page="help"><span class="nav-icon">?</span> Help centre</button>
       </nav>
       <div class="sidebar-bottom">
@@ -576,7 +583,6 @@
   <script src="bot-runner.js?v=7.9"></script>
   <script src="copy-trading.js?v=7.8"></script>
   <script src="sound.js?v=8.4"></script>
-  <script src="quick-settings.js?v=8.4"></script>
   <script src="enhancements.js"></script>
   <script src="circle-ai.js"></script>
   <script src="install-app.js"></script>

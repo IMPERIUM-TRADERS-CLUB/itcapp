@@ -1,7 +1,7 @@
-const CACHE_NAME = 'itc-version8-5-welcome';
+const CACHE_NAME = 'itc-version8-6-fix';
 const APP_SHELL = [
   './', './index.html', './style.css', './itc-theme.css', './app.js', './config.js', './market-live.js', './charts-live.js', './signal-engine.js', './auto-signals.js', './admin-gate.js', './bots-library.js', './deriv-trader.js', './bot-maker.js', './settings-page.js', './trader-ui.js', './dbot-template.js', './speedbot.js',
-  './enhancements.js', './deriv-account.js', './account-display.js', './real-trading.js', './bot-runner.js', './copy-trading.js', './sound.js', './quick-settings.js', './circle-ai.js', './install-app.js', './signal-alerts.js', './bots-data.js', './manifest.webmanifest',
+  './enhancements.js', './deriv-account.js', './account-display.js', './real-trading.js', './bot-runner.js', './copy-trading.js', './sound.js', './circle-ai.js', './install-app.js', './signal-alerts.js', './bots-data.js', './manifest.webmanifest',
   './imperium-logo.jpg', './imperium-logo.svg', './icons/itc-192.png', './icons/itc-512.png'
 ];
 self.addEventListener('install', event => {

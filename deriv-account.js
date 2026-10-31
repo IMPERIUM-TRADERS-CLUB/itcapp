@@ -196,7 +196,15 @@
       if (!h || h.service !== 'itc-oauth-bridge') { showLoginError('Deriv token exchange failed', explainExchange(hr.status, null, null)); return; }
       if (!h.configured) { showLoginError('Deriv token exchange failed', explainExchange(500, { error: 'worker_not_configured' }, null)); return; }
       if (h.redirect_uri && h.redirect_uri !== oauthConfig.redirectUri) { showLoginError('Deriv token exchange failed', 'The redirect address differs. The site uses:\n' + oauthConfig.redirectUri + '\nbut the Worker has:\n' + h.redirect_uri + '\nMake them identical (and the same as in your Deriv app), then tap Login again.'); return; }
-    } catch (e) { showLoginError('Deriv token exchange failed', explainExchange(0, null, e)); return; }
+    } catch (e) {
+      // "Failed to fetch" hides the cause. A no-cors probe tells "address does not answer" apart from "Worker answered but refused this website".
+      let reachable = false; try { await fetch(oauthConfig.workerUrl + '/health', { mode: 'no-cors' }); reachable = true; } catch (_) {}
+      const wk = oauthConfig.workerUrl, origin = window.location.origin;
+      showLoginError('Deriv token exchange failed', reachable
+        ? 'The Worker at ' + wk + ' answered, but it refused this website. In Cloudflare open the Worker > Settings > Variables and set ALLOWED_ORIGIN to exactly:\n' + origin + '\n(no path, no slash at the end, no spaces), then Deploy. After that, tap Login again.'
+        : 'Nothing answers at ' + wk + '.\n1) Open that address in your browser. It should say "ITC backend is running".\n2) If it does not, copy the exact address from Cloudflare (Worker > Settings > Domains & Routes, workers.dev) into OAUTH_WORKER_URL in config.js, and make sure workers.dev is enabled for the Worker.\nThen tap Login again.');
+      return;
+    }
     let status = 0;
     try {
       const response = await fetch(oauthConfig.workerUrl + '/oauth/token', {

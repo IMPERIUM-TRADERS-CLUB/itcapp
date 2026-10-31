@@ -226,7 +226,7 @@ async function aiBot(request, env, headers) {
   } catch { return json({ error: 'ai_failed' }, 502, headers); }
 }
 
-export default {
+const itcWorker = {
   async scheduled(event, env, ctx) { ctx.waitUntil(runScan(env)); },
   async fetch(request, env) {
     const allowed = env.ALLOWED_ORIGIN || 'https://imperium-traders-club.github.io';
@@ -285,6 +285,17 @@ export default {
       return json(data, upstream.status, headers);
     } catch {
       return json({ error: 'exchange_failed', error_description: 'Could not reach Deriv token endpoint. Check Worker connectivity and configuration; do not share credentials.' }, 502, headers);
+    }
+  }
+};
+
+export default {
+  scheduled(event, env, ctx) { return itcWorker.scheduled(event, env, ctx); },
+  async fetch(request, env, ctx) {
+    try { return await itcWorker.fetch(request, env, ctx); }
+    catch (e) {
+      const allowed = env.ALLOWED_ORIGIN || 'https://imperium-traders-club.github.io';
+      return new Response(JSON.stringify({ error: 'worker_error', error_description: String((e && e.message) || e) }), { status: 500, headers: { 'Access-Control-Allow-Origin': allowed, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
   }
 };

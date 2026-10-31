@@ -32,4 +32,8 @@
     (Number(d.profit) > 0 ? S.win : S.loss)();
   });
   window.ITC_SOUND = S;
+  function paintBtn() { const b = document.getElementById('soundToggle'); if (b) { b.innerHTML = '<span class="nav-icon">' + (on ? '🔔' : '🔕') + '</span> Sound: ' + (on ? 'On' : 'Off'); b.setAttribute('aria-pressed', String(on)); } }
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#soundToggle')) S.setOn(!on); });
+  window.addEventListener('itc:sound-changed', paintBtn);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paintBtn); else paintBtn();
 })();
