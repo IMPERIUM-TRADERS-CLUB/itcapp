@@ -1,0 +1,30 @@
+name = "itc-oauth-bridge"
+main = "worker.js"
+compatibility_date = "2026-10-20"
+
+[vars]
+ALLOWED_ORIGIN = "https://imperium-traders-club.github.io"
+REDIRECT_URI = "https://imperium-traders-club.github.io/itcapp/"
+# Your Deriv OAuth client ID (public, not a secret). Replace it with the value from developers.deriv.com.
+DERIV_CLIENT_ID = "342Wd4IBGzV6S7LJ8MDkH"
+DERIV_APP_ID = "342Wd4IBGzV6S7LJ8MDkH"
+SITE_URL = "https://imperium-traders-club.github.io/itcapp/"
+TELEGRAM_CHAT_ID = "@IMPTC"
+SCAN_WINDOW = "100"   # ticks per market
+EO_MIN = "60"         # Even/Odd minimum dominance %
+MAX_PCT = "10"        # losing digits must be under this % for Over/Under
+COOLDOWN_MIN = "20"   # do not repeat the same signal for this many minutes
+MAX_PER_RUN = "2"     # at most this many new signals per scan
+AI_MODEL = "claude-sonnet-5-5"   # model used by the Bot Forge (add the secret ANTHROPIC_API_KEY)
+AI_PER_HOUR = "30"    # Bot Forge requests allowed per visitor per hour
+
+# Runs the scanner every 2 minutes, 24/7, without the website being open.
+[triggers]
+crons = ["*/2 * * * *"]
+
+# OPTIONAL (needed for the admin lockout, signal de-duplication and AI rate limit): create it with
+#   npx wrangler kv namespace create ITC_KV      (or Workers & Pages > KV in the dashboard)
+# then remove the # signs below and paste the id.
+# [[kv_namespaces]]
+# binding = "ITC_KV"
+# id = "PASTE_KV_NAMESPACE_ID"
