@@ -32,7 +32,7 @@
     const account = state.mode === 'real' ? state.realAccount : (authorized ? state.demoAccount : null);
     if (state.mode === 'real' && (!authorized || !account)) {
       balanceValue.textContent = authorized ? 'No real account' : 'Connect account';
-      note.textContent = authorized ? 'This Deriv login has no real Options account.' : 'Real mode selected · connect Deriv in Settings';
+      note.textContent = authorized ? 'This Deriv login has no real Options account.' : 'Real mode selected · tap Login';
       return;
     }
     if (state.mode === 'demo' && authorized && !account) {

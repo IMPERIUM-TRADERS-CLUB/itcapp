@@ -3,7 +3,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const page = $('page-settings');
-  if (!page || !$('stDeriv')) return;
+  if (!page) return;
   const worker = (() => { const u = String((window.ITC_CONFIG || {}).OAUTH_WORKER_URL || '').replace(/\/+$/, ''); return /^https:\/\//.test(u) && !/REPLACE/i.test(u) ? u : ''; })();
   const set = (id, state, text) => { const el = $(id); if (!el) return; el.textContent = text; el.className = 'setting-state ' + (state ? 'enabled' : 'disconnected'); };
   const active = () => page.classList.contains('active');

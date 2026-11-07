@@ -96,8 +96,9 @@
         <div class="topbar-actions">
           <div class="guest-auth-actions" id="guestAuthActions">
             <button class="button guest-login-button" id="headerLoginButton" type="button">Login</button>
-            <a class="button guest-signup-button" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Sign Up</a>
+                        <a class="button guest-signup-button" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Sign Up</a>
           </div>
+          <button class="button secondary authenticated-only" id="headerLogoutButton" type="button" style="padding:6px 12px">Log out</button>
           <div class="account-balance-widget authenticated-only" aria-label="Account balance; use the arrow to switch account mode">
             <div class="account-balance-top"><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$0.00</strong>
               <label class="sr-only" for="headerAccountMode">Account mode</label><select id="headerAccountMode" aria-label="Switch between demo and real account" title="Switch account mode"><option value="demo">Demo</option><option value="real">Real</option></select><button type="button" class="balance-mode-arrow" id="headerModeToggle" aria-label="Switch account mode" title="Switch Demo / Real">⌄</button>
@@ -504,8 +505,7 @@
       <section class="page" id="page-settings">
         <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> SETTINGS</div><h1>Your <span>Settings.</span></h1><p>Your account, preferences, connection status and everything the platform can do, in one place.</p></div>
         <div class="settings-grid">
-          <article class="panel settings-panel deriv-account-panel"><div class="panel-heading"><div><div class="panel-overline">YOUR ACCOUNT</div><h2>Deriv account</h2><p class="muted-text">Log in with Deriv to load your live balances and trade.</p></div><span id="derivAccountBadge" class="setting-state disconnected">Not connected</span></div><div class="deriv-connect-actions"><button class="button primary" id="derivOAuthButton" type="button">Login with Deriv</button><button class="button secondary" id="derivDisconnectButton" type="button">Log out</button></div><div class="login-test"><button class="button secondary" id="testLoginSetup" type="button">Test login setup</button><pre id="loginTestOut" class="login-test-out" aria-live="polite"></pre></div><div id="derivAccountSummary" class="deriv-account-summary" role="status" aria-live="polite"></div>
-            <details class="settings-advanced"><summary>Advanced: connect with an API token</summary><p class="form-footnote">Most people do not need this. Use only a read-only token, it stays in this tab's memory and is never saved.</p><input id="derivTokenInput" class="regular-input" type="password" placeholder="Paste a read-only Deriv API token" autocomplete="off"><button class="button secondary" id="derivConnectButton" type="button">Connect with token</button></details></article>
+          
           <article class="panel settings-panel"><div class="panel-heading"><div><div class="panel-overline">PREFERENCES</div><h2>Defaults</h2></div></div>
             <div class="settings-row"><div><strong>Starting market</strong><small>The market used first on the charts and analysis pages</small></div><select id="settingsMarket" class="dark-select"><option>Volatility 100 (1s) Index</option></select></div>
             <div class="settings-row"><div><strong>Execution speed</strong><small>Bots always start on Fast. Change it with the switch on the Run bar</small></div><span class="setting-state enabled">Fast</span></div>
@@ -513,8 +513,7 @@
             <div class="settings-row"><div><strong>Saved data on this device</strong><small>Bots you built or saved stay in this browser only</small></div><div class="settings-btns"><button class="button secondary" id="clearMyBots" type="button">Clear my saved bots</button><button class="button secondary" id="resetSession" type="button">Reset session</button></div></div>
           </article>
           <article class="panel settings-panel"><div class="panel-heading"><div><div class="panel-overline">STATUS</div><h2>Connections</h2></div></div>
-            <div class="settings-row"><div><strong>Deriv account</strong><small>Secure Deriv login</small></div><span class="setting-state disconnected" id="stDeriv">Not connected</span></div>
-            <div class="settings-row"><div><strong>Platform server</strong><small>Login, admin and signals</small></div><span class="setting-state disconnected" id="stServer">Checking…</span></div>
+                        <div class="settings-row"><div><strong>Platform server</strong><small>Login, admin and signals</small></div><span class="setting-state disconnected" id="stServer">Checking…</span></div>
             <div class="settings-row"><div><strong>Bot Forge AI</strong><small>Builds bots from your ideas</small></div><span class="setting-state disconnected" id="stAI">Checking…</span></div>
             <div class="settings-row"><div><strong>Telegram signals</strong><small>Automatic signal posting</small></div><span class="setting-state disconnected" id="stTelegram">Checking…</span></div>
           </article>
