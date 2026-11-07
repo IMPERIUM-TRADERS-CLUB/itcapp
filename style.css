@@ -627,3 +627,5 @@ img,svg,canvas,iframe{max-width:100%}
   .on-builder .circle-ai-launcher{width:42px;height:42px;right:8px;bottom:12px;box-shadow:0 4px 14px #0007}
   .on-builder .circle-ai-orbit{font-size:18px;line-height:18px}.on-builder .circle-ai-label{display:none}
 }
+
+body.itc-account-authorized .guest-auth-actions{display:none!important}

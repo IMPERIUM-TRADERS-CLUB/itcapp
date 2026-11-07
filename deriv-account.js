@@ -97,10 +97,10 @@
     });
     socket.addEventListener('close', () => {
       if (state.socket === socket) {
-        state.socket = null; state.connected = false; state.authorized = false; state.account = null; state.accounts = []; state.scope = [];
+        state.socket = null; state.connected = false;
         for (const p of state.pending.values()) { clearTimeout(p.timer); p.reject(new Error('Deriv connection closed.')); }
-        state.pending.clear(); label('Disconnected', false);
-        window.dispatchEvent(new Event('itc:deriv-disconnected'));
+        state.pending.clear();
+        if (!getAccessToken()) { state.authorized = false; state.account = null; state.accounts = []; state.scope = []; label('Disconnected', false); window.dispatchEvent(new Event('itc:deriv-disconnected')); }
       }
     });
     try {
@@ -267,8 +267,8 @@
       let body = null; try { body = await response.json(); } catch (_) {}
       if (!response.ok || !body || !body.access_token) { showLoginError('Deriv token exchange failed', explainExchange(status, body, null)); return; }
       // Keep the access token in this tab only, honouring Deriv's reported expiry.
-      await connectWithOAuth(body.access_token);
       storeAccessToken(body);
+      await connectWithOAuth(body.access_token);
       ss.del('itc_auto_login_tried');
     } catch (e) {
       clearAccessToken();
@@ -308,18 +308,28 @@
     const wanted = ls.get('itc_deriv_account_id');
     const chosen = accountInfo.find(a => a.id === wanted) || accountInfo.find(a => a.type === 'demo') || accountInfo[0];
     const accountId = chosen.id;
-    const otp = await derivRest('/trading/v1/options/accounts/' + encodeURIComponent(accountId) + '/otp', token, 'POST');
-    const wsUrl = otp && otp.data && otp.data.url;
-    if (!wsUrl) throw new Error('Deriv did not return a trading connection URL.');
-    await openSocket(wsUrl);
+    const applyAccount = () => {
+      state.authorized = true; state.accounts = accountInfo;
+      state.account = { loginid: accountId, currency: chosen.currency || '', balance: chosen.balance, account_type: chosen.type, accounts: accountInfo };
+      document.body.classList.add('itc-account-authorized');
+      window.dispatchEvent(new CustomEvent('itc:deriv-accounts', { detail: { accounts: accountInfo } }));
+      if (Number.isFinite(Number(chosen.balance))) publishBalance(chosen.balance, chosen.currency, accountId, chosen.type);
+      label('Authorized', true);
+    };
+    applyAccount();
+    let otp;
+    try { otp = await derivRest('/trading/v1/options/accounts/' + encodeURIComponent(accountId) + '/otp', token, 'POST');
+      const wsUrl = otp && otp.data && otp.data.url;
+      if (!wsUrl) throw new Error('Deriv did not return a trading connection URL.');
+      await openSocket(wsUrl);
+    } catch (err) {
+      applyAccount();
+      showLoginError('Logged in, but live balance could not load', String(err && err.message || err));
+      return;
+    }
     ls.set('itc_deriv_account_id', accountId);
-    state.connected = true; state.authorized = true;
-    state.accounts = accountInfo;
-    state.account = { loginid: accountId, currency: chosen.currency || '', balance: chosen.balance, account_type: chosen.type, accounts: accountInfo };
-    const balance = Number(chosen.balance);
-    window.dispatchEvent(new CustomEvent('itc:deriv-accounts', { detail: { accounts: accountInfo } }));
-    if (Number.isFinite(balance)) publishBalance(balance, chosen.currency, accountId, chosen.type);
-    label('Authorized', true);
+    state.connected = true;
+    applyAccount();
     summary('Logged in with Deriv · ' + accountId + (chosen.type ? ' (' + chosen.type + ')' : '') + '.');
     try {
       const liveBalance = await request({ balance: 1, subscribe: 1 }, 10000);
