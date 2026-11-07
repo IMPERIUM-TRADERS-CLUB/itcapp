@@ -11,13 +11,24 @@
     if (p.barrier !== undefined && p.barrier !== null && p.barrier !== '') r.barrier = String(p.barrier);
     return r;
   }
+  // Deriv limits how fast proposals can be requested: space them out and retry politely if limited.
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+  let slot = 0;
+  async function pace() { const now = Date.now(), t = Math.max(now, slot); slot = t + 350; if (t > now) await sleep(t - now); }
+  async function limited(fn) {
+    for (let i = 0; ; i++) {
+      await pace();
+      try { return await fn(); }
+      catch (e) { if (i < 5 && /rate ?limit/i.test(String(e && e.message || e))) { await sleep(900 * (i + 1)); continue; } throw e; }
+    }
+  }
   // Buys one contract and resolves with the final result when it settles.
   async function trade(p) {
     if (!ready()) throw new Error('Tap Login first to connect your Deriv account.');
     const A = window.ITC_DERIV_ACCOUNT, a = acct(), cur = a.currency || 'USD';
-    const prop = await A.request(proposalReq(p, cur));
+    const prop = await limited(() => A.request(proposalReq(p, cur)));
     if (!prop.proposal || !prop.proposal.id) throw new Error('No price returned for this trade.');
-    const bought = await A.request({ buy: prop.proposal.id, price: Number(prop.proposal.ask_price) });
+    const bought = await limited(() => A.request({ buy: prop.proposal.id, price: Number(prop.proposal.ask_price) }));
     if (!bought.buy) throw new Error('Purchase was not confirmed.');
     if (window.ITC_COPY) { try { window.ITC_COPY.mirror(p); } catch (_) {} }
     const info = { id: bought.buy.contract_id, price: Number(bought.buy.buy_price), ref: bought.buy.transaction_id, currency: cur, real: a.account_type === 'real', symbol: p.symbol, type: p.contract_type, barrier: p.barrier };
