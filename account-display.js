@@ -68,8 +68,8 @@
   modeSelect?.addEventListener('change', () => {
     state.mode = modeSelect.value;
     if (state.mode === 'real' && !window.ITC_DERIV_ACCOUNT?.getStatus().authorized) {
-      note.textContent = 'Select Settings → Connect account to read your real wallet.';
-      document.querySelector('[data-page="settings"]')?.click();
+      note.textContent = 'Log in with Deriv to see your real balance.';
+      window.ITC_DERIV_ACCOUNT?.beginOAuth(false).catch(() => {});
     }
     render();
     // Trades go through the connection of the selected account, so move it with the selector.

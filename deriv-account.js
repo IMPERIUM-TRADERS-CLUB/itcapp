@@ -43,11 +43,12 @@
   };
   const summary = (text) => { const el = $('#derivAccountSummary'); if (el) el.textContent = text; };
   function showLoginError(title, message) {
-    label('Needs attention', false);
+    label('Login failed', false);
     summary(`${title}: ${message}`);
-    // Keep login diagnostics in the account panel, not a blocking popup/banner.
-    const settings = $('#page-settings');
-    if (settings && !settings.classList.contains('active')) $('[data-page="settings"]')?.click();
+    // Stay on the current page; show a short toast only.
+    const short = String(message || '').split('\n')[0].slice(0, 140);
+    if (window.ITC_APP && window.ITC_APP.showToast) window.ITC_APP.showToast(title + (short ? ' — ' + short : ''));
+    try { console.warn('[ITC login]', title, message); } catch (_) {}
   }
   const publishBalance = (balance, currency, loginId, accountType = '') => window.dispatchEvent(new CustomEvent('itc:deriv-balance', { detail: { balance: Number(balance), currency: String(currency || ''), loginId: String(loginId || ''), accountType: String(accountType || '').toLowerCase() } }));
   function settle(message) {
@@ -190,7 +191,7 @@
       url.searchParams.set('utm_medium', 'affiliate');
       url.searchParams.set('utm_campaign', 'imperium-traders-club');
     }
-    summary('Redirecting to Deriv to sign in and review the requested trade access. If you already approved ITC, Deriv may skip repeating the approval screen.');
+    summary('Opening Deriv login…');
     window.location.assign(url.toString());
   }
   function readFlow() {

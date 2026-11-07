@@ -719,19 +719,17 @@
   // Workspace tabs: drag to reorder and save the user's preferred start page locally.
   const switcher = $('#workspaceSwitcher');
   const arrangeButton = $('#arrangeTabs');
-  const defaultWorkspace = $('#defaultWorkspace');
+  
   let arrangingTabs = false;
-  const validWorkspacePages = ['dashboard','botbuilder','freebots','signals','dtrader','manualtrader','bulktrader','trading','riskcalc'];
+  const validWorkspacePages = ['dashboard','botbuilder','freebots','signals','speedbot','bulktrader','manualtrader','markethunter','copytrading','riskcalc','dtrader','signalalerts'];
   const defaultWorkspaceOrder = ['dashboard','botbuilder','freebots','signals','dtrader','manualtrader','bulktrader','trading','riskcalc'];
   function restoreWorkspacePreferences() {
     try {
-      const savedOrder = JSON.parse(localStorage.getItem('imperium.workspace.order.v2') || '[]');
+      const savedOrder = JSON.parse(localStorage.getItem('imperium.workspace.order.v3') || '[]');
       if (Array.isArray(savedOrder) && savedOrder.length) {
         const tabs = new Map($$('.workspace-switch[data-page]', switcher).map(tab => [tab.dataset.page, tab]));
         savedOrder.forEach(page => { if (tabs.has(page)) switcher.insertBefore(tabs.get(page), switcher.querySelector('.switcher-tools')); });
       }
-      const savedDefault = localStorage.getItem('imperium.workspace.default.v2');
-      if (validWorkspacePages.includes(savedDefault)) defaultWorkspace.value = savedDefault;
     } catch (_) { /* Private browsing or storage restrictions: keep usable defaults. */ }
   }
   function setArrangeMode(enabled) {
@@ -748,10 +746,6 @@
   }
   restoreWorkspacePreferences();
   arrangeButton.addEventListener('click', () => setArrangeMode(!arrangingTabs));
-  defaultWorkspace.addEventListener('change', () => {
-    try { localStorage.setItem('imperium.workspace.default.v2', defaultWorkspace.value); } catch (_) {}
-    showToast('Opening page saved: ' + defaultWorkspace.options[defaultWorkspace.selectedIndex].text + '.');
-  });
   let draggedWorkspaceTab = null;
   $$('.workspace-switch', switcher).forEach(tab => {
     tab.addEventListener('dragstart', event => {
@@ -771,7 +765,7 @@
       const bounds = tab.getBoundingClientRect();
       switcher.insertBefore(draggedWorkspaceTab, event.clientX < bounds.left + bounds.width / 2 ? tab : tab.nextSibling);
       tab.classList.remove('drop-target');
-      try { localStorage.setItem('imperium.workspace.order.v2', JSON.stringify($$('.workspace-switch', switcher).map(item => item.dataset.page))); } catch (_) {}
+      try { localStorage.setItem('imperium.workspace.order.v3', JSON.stringify($$('.workspace-switch', switcher).map(item => item.dataset.page))); } catch (_) {}
       showToast('Tab order saved on this device.');
     });
     tab.addEventListener('dragend', () => {
@@ -786,8 +780,6 @@
   $('#martingaleOptions').classList.toggle('hidden', !$('#martingaleToggle').checked);
   resetWorkspace(); updateInstrumentLabels(); updatePotentialPayout(); renderTickets();
   requestAnimationFrame(redrawCharts);
-  const savedOpeningPage = (() => { try { return localStorage.getItem('imperium.workspace.default.v2'); } catch (_) { return null; } })();
-  if (validWorkspacePages.includes(savedOpeningPage)) navigate(savedOpeningPage);
   // Simulated drift disabled: live market module owns quote updates.
 
   // My Bots / AI Bots library controls; personal XML files are never overwritten.
