@@ -67,7 +67,7 @@
     if (id == null || !state.pending.has(id)) return;
     const p = state.pending.get(id);
     state.pending.delete(id); clearTimeout(p.timer);
-    if (message.error) p.reject(new Error(message.error.message || 'Deriv API request failed'));
+    if (message.error) p.reject(new Error((message.error.message || 'Deriv API request failed') + (message.error.code ? ' [' + message.error.code + ']' : '')));
     else p.resolve(message);
   }
   function request(payload, timeoutMs = 12000) {
@@ -334,6 +334,7 @@
       if (!wsUrl) throw new Error('Deriv did not return a trading connection URL.');
       await openSocket(wsUrl);
     } catch (err) {
+      state.lastConnectError = String(err && err.message || err);
       applyAccount();
       showLoginError('Logged in, but live balance could not load', String(err && err.message || err));
       return;
@@ -391,6 +392,7 @@
       const token = getAccessToken();
       if (!token) throw new Error('Your Deriv session ended. Tap Login to reconnect.');
       await connectWithOAuth(token); // fresh one-time trading URL for the same account
+      if (!state.socket || state.socket.readyState !== WebSocket.OPEN) throw new Error('Could not open the trading connection' + (state.lastConnectError ? ': ' + state.lastConnectError : '.'));
     }
     return request(payload, timeoutMs || 15000);
   }
@@ -418,7 +420,7 @@
     return o.data.url;
   }
   window.ITC_DERIV_ACCOUNT = {
-    request: tradeRequest, subscribe, switchTo, otpUrl,
+    notice: showLoginError, request: tradeRequest, subscribe, switchTo, otpUrl,
     connect,
     disconnect,
     beginOAuth,

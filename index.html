@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="ITC">
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>ITC Version 9.10 · Imperium Traders Club</title>
-  <link rel="stylesheet" href="style.css?v=9.12">
+  <link rel="stylesheet" href="style.css?v=9.13">
   <link rel="stylesheet" href="itc-theme.css?v=91">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
@@ -99,7 +99,7 @@
                         <a class="button guest-signup-button" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Sign Up</a>
           </div>
           <div class="account-balance-widget authenticated-only" aria-label="Account balance; use the arrow to switch account mode">
-            <div class="account-balance-top"><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$0.00</strong>
+            <div class="account-balance-top"><button type="button" class="mode-badge" id="headerModeBadge" aria-label="Demo account. Tap to switch to Real" title="Switch Demo / Real">D</button><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$0.00</strong>
               <label class="sr-only" for="headerAccountMode">Account mode</label><select id="headerAccountMode" aria-label="Switch between demo and real account" title="Switch account mode"><option value="demo">Demo</option><option value="real">Real</option></select><button type="button" class="balance-mode-arrow" id="headerModeToggle" aria-label="Switch account mode" title="Switch Demo / Real">⌄</button>
             </div>
             <small id="headerBalanceNote">Log in to see your Deriv balance</small>
@@ -627,9 +627,9 @@
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=89"></script>
   <script src="app.js?v=9.12"></script>
-  <script src="deriv-account.js?v=9.12"></script>
-  <script src="account-display.js?v=7.2"></script>
-  <script src="real-trading.js?v=7.2"></script>
+  <script src="deriv-account.js?v=9.13"></script>
+  <script src="account-display.js?v=7.3"></script>
+  <script src="real-trading.js?v=7.3"></script>
   <script src="bot-runner.js?v=7.9"></script>
   <script src="copy-trading.js?v=7.8"></script>
   <script src="market-hunter.js?v=9.8"></script>

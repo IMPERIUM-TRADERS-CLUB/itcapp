@@ -13,7 +13,7 @@
   }
   // Buys one contract and resolves with the final result when it settles.
   async function trade(p) {
-    if (!ready()) throw new Error('Log in with Deriv first (Settings > Connect account).');
+    if (!ready()) throw new Error('Tap Login first to connect your Deriv account.');
     const A = window.ITC_DERIV_ACCOUNT, a = acct(), cur = a.currency || 'USD';
     const prop = await A.request(proposalReq(p, cur));
     if (!prop.proposal || !prop.proposal.id) throw new Error('No price returned for this trade.');
@@ -36,7 +36,7 @@
         const c = await trade(p); done.push(c);
         toast((c.real ? 'REAL ' : 'DEMO ') + label + ' ' + (i + 1) + '/' + count + ' bought · ' + money(c.price, c.currency));
         c.settled.then(r => toast((r.won ? 'WON +' : 'LOST ') + money(r.profit, r.currency) + ' · ' + label));
-      } catch (e) { toast('Not placed: ' + (e.message || e)); break; }
+      } catch (e) { toast('Not placed: ' + (e.message || e)); try { window.ITC_DERIV_ACCOUNT.notice('Trade not placed', String(e.message || e)); } catch (_) {} break; }
       await new Promise(r => setTimeout(r, 150));
     }
     return done;

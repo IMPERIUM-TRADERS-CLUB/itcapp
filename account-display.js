@@ -28,6 +28,13 @@
   async function render() {
     if (!balanceValue || !note) return;
     widget?.classList.toggle('real-mode', state.mode === 'real');
+    const badge = $('headerModeBadge');
+    if (badge) {
+      const real = state.mode === 'real';
+      badge.classList.toggle('real', real);
+      badge.innerHTML = real ? '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="usClip"><circle cx="12" cy="12" r="12"/></clipPath></defs><g clip-path="url(#usClip)"><rect width="24" height="24" fill="#fff"/><g fill="#b22234"><rect y="0" width="24" height="3.4"/><rect y="6.9" width="24" height="3.4"/><rect y="13.7" width="24" height="3.4"/><rect y="20.6" width="24" height="3.4"/></g><rect width="12" height="13.7" fill="#3c3b6e"/><g fill="#fff"><circle cx="3" cy="3" r=".8"/><circle cx="6" cy="3" r=".8"/><circle cx="9" cy="3" r=".8"/><circle cx="4.5" cy="6" r=".8"/><circle cx="7.5" cy="6" r=".8"/><circle cx="3" cy="9" r=".8"/><circle cx="6" cy="9" r=".8"/><circle cx="9" cy="9" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="7.5" cy="12" r=".8"/></g></g></svg>' : 'D';
+      badge.setAttribute('aria-label', real ? 'Real account. Tap to switch to Demo' : 'Demo account. Tap to switch to Real');
+    }
     const authorized = Boolean(window.ITC_DERIV_ACCOUNT?.getStatus().authorized);
     const account = state.mode === 'real' ? state.realAccount : (authorized ? state.demoAccount : null);
     if (state.mode === 'real' && (!authorized || !account)) {
@@ -80,6 +87,7 @@
         .catch(err => { toast(String(err.message || err)); state.mode = wanted === 'real' ? 'demo' : 'real'; modeSelect.value = state.mode; render(); });
     }
   });
+  $('headerModeBadge')?.addEventListener('click', () => modeToggle?.click());
   currencySelect?.addEventListener('change', () => { state.currency = currencySelect.value; render(); });
   window.addEventListener('itc:deriv-accounts', event => {
     const accounts = Array.isArray(event.detail?.accounts) ? event.detail.accounts : [];
