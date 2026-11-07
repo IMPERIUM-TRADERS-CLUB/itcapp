@@ -7,7 +7,7 @@
   const ready = () => { const A = window.ITC_DERIV_ACCOUNT; return A && A.getStatus().authorized && acct(); };
 
   function proposalReq(p, currency) {
-    const r = { proposal: 1, amount: Number(p.amount), basis: 'stake', contract_type: p.contract_type, currency, symbol: p.symbol, duration: Number(p.duration) || 1, duration_unit: 't' };
+    const r = { proposal: 1, amount: Number(p.amount), basis: 'stake', contract_type: p.contract_type, currency, underlying_symbol: p.symbol, duration: Number(p.duration) || 1, duration_unit: 't' };
     if (p.barrier !== undefined && p.barrier !== null && p.barrier !== '') r.barrier = String(p.barrier);
     return r;
   }
