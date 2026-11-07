@@ -45,9 +45,20 @@
   function showLoginError(title, message) {
     label('Login failed', false);
     summary(`${title}: ${message}`);
-    // Stay on the current page; show a short toast only.
-    const short = String(message || '').split('\n')[0].slice(0, 140);
-    if (window.ITC_APP && window.ITC_APP.showToast) window.ITC_APP.showToast(title + (short ? ' — ' + short : ''));
+    // Persistent notice (a toast disappears while the splash screen is still loading).
+    try {
+      let box = document.getElementById('itcLoginNotice');
+      if (!box) {
+        box = document.createElement('div'); box.id = 'itcLoginNotice';
+        box.style.cssText = 'position:fixed;left:10px;right:10px;bottom:14px;z-index:99999;background:#2a1208;color:#ffe9c7;border:1px solid #f0a64a;border-radius:12px;padding:12px 40px 12px 14px;font:13px/1.4 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.6);white-space:pre-wrap;word-break:break-word;max-height:55vh;overflow:auto';
+        const x = document.createElement('button'); x.type = 'button'; x.textContent = '\u2715'; x.setAttribute('aria-label', 'Close');
+        x.style.cssText = 'position:absolute;top:6px;right:8px;background:none;border:0;color:#ffe9c7;font-size:18px;cursor:pointer';
+        x.onclick = () => box.remove();
+        box.appendChild(x); const t = document.createElement('div'); t.className = 'itc-login-notice-text'; box.appendChild(t);
+        document.body.appendChild(box);
+      }
+      box.querySelector('.itc-login-notice-text').textContent = title + '\n' + String(message || '');
+    } catch (_) {}
     try { console.warn('[ITC login]', title, message); } catch (_) {}
   }
   const publishBalance = (balance, currency, loginId, accountType = '') => window.dispatchEvent(new CustomEvent('itc:deriv-balance', { detail: { balance: Number(balance), currency: String(currency || ''), loginId: String(loginId || ''), accountType: String(accountType || '').toLowerCase() } }));
