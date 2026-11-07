@@ -404,7 +404,6 @@
     getStatus: () => ({ connected: state.connected, authorized: state.authorized, account: state.account ? { loginid: state.account.loginid, currency: state.account.currency, balance: state.account.balance, account_type: state.account.account_type, scopes: [...state.scope] } : null, accounts: state.accounts.map(a => ({ ...a })) })
   };
   $('#headerLoginButton')?.addEventListener('click', () => { beginOAuth(false).catch(error => { state.oauthStarting = false; showLoginError('Could not start Deriv login', error.message || String(error)); }); });
-  $('#headerLogoutButton')?.addEventListener('click', () => { disconnect(true); document.body.classList.remove('itc-account-authorized'); window.location.reload(); });
   $('#derivOAuthButton')?.addEventListener('click', () => {
     beginOAuth(false).catch(error => { state.oauthStarting = false; showLoginError('Could not start Deriv login', error.message || String(error)); });
   });
