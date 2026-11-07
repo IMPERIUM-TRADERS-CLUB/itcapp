@@ -83,10 +83,12 @@
     disconnect(false);
     const socket = new WebSocket(url);
     state.socket = socket;
+    let safeUrl = ''; try { const u = new URL(url); safeUrl = u.host + u.pathname; } catch (_) {}
     const openPromise = new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Could not open the Deriv WebSocket connection in time.')), 12000);
+      const timer = setTimeout(() => reject(new Error('Could not open the Deriv trading connection in time (' + safeUrl + ').')), 20000);
       socket.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
-      socket.addEventListener('error', () => { clearTimeout(timer); reject(new Error('Could not connect to Deriv. Check internet access and the app ID.')); }, { once: true });
+      socket.addEventListener('error', () => { clearTimeout(timer); reject(new Error('Deriv refused the trading connection (' + safeUrl + ').')); }, { once: true });
+      socket.addEventListener('close', ev => { if (socket.readyState !== WebSocket.OPEN && state.socket === socket) { clearTimeout(timer); reject(new Error('Deriv closed the trading connection (code ' + ev.code + (ev.reason ? ', ' + ev.reason : '') + ', ' + safeUrl + ').')); } }, { once: true });
     });
     socket.addEventListener('message', event => {
       try {
@@ -297,7 +299,12 @@
     if (!res.ok) throw new Error((body.errors && body.errors[0] && body.errors[0].message) || body.error_description || body.error || ('Deriv request failed (' + res.status + ')'));
     return body;
   }
-  async function connectWithOAuth(token) {
+  let connectChain = Promise.resolve();
+  function connectWithOAuth(token) {
+    const run = connectChain.catch(() => {}).then(() => connectInner(token));
+    connectChain = run; return run;
+  }
+  async function connectInner(token) {
     label('Connecting…', false); summary('Loading your Deriv accounts…');
     const list = await derivRest('/trading/v1/options/accounts', token);
     // Deriv's account-list response can contain account metadata without a balance;
@@ -328,6 +335,7 @@
       label('Authorized', true);
     };
     applyAccount();
+    if (state.socket && state.socket.readyState === WebSocket.OPEN && state.connectedAccountId === accountId) { document.body.classList.add('itc-account-authorized'); return; }
     let otp;
     try { otp = await derivRest('/trading/v1/options/accounts/' + encodeURIComponent(accountId) + '/otp', token, 'POST');
       const wsUrl = otp && otp.data && otp.data.url;
@@ -340,7 +348,7 @@
       return;
     }
     ls.set('itc_deriv_account_id', accountId);
-    state.connected = true;
+    state.connected = true; state.connectedAccountId = accountId;
     applyAccount();
     summary('Logged in with Deriv · ' + accountId + (chosen.type ? ' (' + chosen.type + ')' : '') + '.');
     try {

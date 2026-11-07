@@ -634,3 +634,4 @@ body.itc-account-authorized .guest-auth-actions{display:none!important}
 .mode-badge.real{background:#fff;border-color:#f6d77a}
 .mode-badge svg{width:100%;height:100%;display:block}
 .market-status-pill{display:none!important}
+#helpButton,.balance-mode-arrow{display:none!important}

@@ -87,7 +87,7 @@
         .catch(err => { toast(String(err.message || err)); state.mode = wanted === 'real' ? 'demo' : 'real'; modeSelect.value = state.mode; render(); });
     }
   });
-  $('headerModeBadge')?.addEventListener('click', () => modeToggle?.click());
+  $('headerModeBadge')?.addEventListener('click', () => { if (!modeSelect) return; modeSelect.value = modeSelect.value === 'demo' ? 'real' : 'demo'; modeSelect.dispatchEvent(new Event('change', { bubbles: true })); });
   currencySelect?.addEventListener('change', () => { state.currency = currencySelect.value; render(); });
   window.addEventListener('itc:deriv-accounts', event => {
     const accounts = Array.isArray(event.detail?.accounts) ? event.detail.accounts : [];
