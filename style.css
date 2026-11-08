@@ -635,3 +635,27 @@ body.itc-account-authorized .guest-auth-actions{display:none!important}
 .mode-badge svg{width:100%;height:100%;display:block}
 .market-status-pill{display:none!important}
 #helpButton,.balance-mode-arrow{display:none!important}
+
+/* ===== v9.17 header: Deposit, currency, balance; tidy badge ===== */
+#headerAccountMode,.balance-mode-arrow{display:none!important}
+.mode-badge{flex:0 0 24px!important;width:24px!important;height:24px!important;min-width:24px!important;border-radius:50%!important;border:2px solid #e6c15a!important;background:radial-gradient(circle at 30% 25%,#2c3f6b,#0e1830 72%)!important;color:#ffe08a!important;font:800 12px/1 system-ui,sans-serif!important;box-shadow:0 0 0 1px #000,0 0 8px rgba(230,193,90,.35)!important;display:inline-flex!important;align-items:center;justify-content:center;padding:0!important;margin:0 6px 0 0!important;overflow:hidden}
+.mode-badge.real{background:#fff!important}
+.mode-badge svg{width:100%;height:100%;display:block}
+body.itc-account-authorized .topbar-actions{display:flex!important;align-items:center;gap:8px!important;margin-left:auto!important;min-width:0}
+body.itc-account-authorized .deposit-button{order:1;flex:0 0 auto;height:32px;padding:0 12px;font-size:12px;white-space:nowrap}
+body.itc-account-authorized .header-currency-control{order:2;margin:0!important;display:flex!important;align-items:center;flex:0 0 auto;padding:3px 7px!important;min-height:32px;gap:3px}
+body.itc-account-authorized .header-currency-control select{font-size:12px!important;min-width:0!important;width:auto!important;max-width:54px!important;padding:0!important}
+body.itc-account-authorized .account-balance-widget{order:3;flex:0 1 auto;width:auto!important;min-width:0!important;max-width:none!important;padding:3px 8px!important}
+body.itc-account-authorized .account-balance-top{display:flex;align-items:center;gap:4px}
+body.itc-account-authorized .account-balance-top strong{font-size:13px;white-space:nowrap}
+@media(max-width:700px){
+  body.itc-account-authorized .topbar-brand .tb-itc,body.itc-account-authorized .topbar-brand .tb-sep,body.itc-account-authorized .topbar-brand .tb-name{display:none!important}
+  body.itc-account-authorized .topbar{gap:5px!important;padding-left:8px!important;padding-right:8px!important}
+  body.itc-account-authorized .topbar-actions{gap:4px!important;flex:1 1 auto;justify-content:flex-end}
+  body.itc-account-authorized .deposit-button{height:30px;padding:0 8px;font-size:11px}
+  body.itc-account-authorized .header-currency-control{min-height:30px;padding:2px 4px!important}
+  body.itc-account-authorized .header-currency-control>span{display:none!important}
+  body.itc-account-authorized .header-currency-control select{font-size:11px!important;max-width:44px!important}
+  body.itc-account-authorized .account-balance-top strong{font-size:11px}
+  .mode-badge{flex-basis:22px!important;width:22px!important;height:22px!important;min-width:22px!important;margin-right:4px!important}
+}

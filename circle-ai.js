@@ -112,6 +112,7 @@
   const entryText = p => p.entryDigits && p.entryDigits.length ? p.entryDigits.map(e => e.digit).join(' · ') : '';
   function scan() {
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), btn = $('#circleAIScan');
+    if (auto) { stopAuto('Stopped by you.'); return; }
     if (scanning) { clearInterval(scanning.timer); const s = scanning; scanning = null; btn.textContent = s.label; finish(s.last || [], s.ctx, 'Scan stopped.'); return; }
     resultBox.classList.add('hidden'); resultBox.innerHTML = '';
     const stake = Number($('#circleAIStake').value), tp = Number($('#circleAITP').value), sl = Number($('#circleAISL').value);
@@ -146,11 +147,52 @@
     const ed = entryText(pick);
     resultBox.innerHTML = `<h3>${pick.market} · ${pick.entry}</h3><p><strong>Rules met:</strong> ${pick.rules || 1}</p><p><strong>Why:</strong> ${pick.label}</p>${ed ? `<p><strong>Entry digits:</strong> ${ed}</p>` : ''}<p><strong>Sample:</strong> ${pick.sample.toLocaleString()} ticks · <strong>Win share:</strong> ${pick.score.toFixed(1)}%</p><p><strong>Stake:</strong> ${money(stake)} · <strong>TP / SL:</strong> ${money(tp)} / ${money(sl)}</p><p><strong>Markets that qualified:</strong> ${new Set(eligible.map(x => x.market)).size}</p><button class="button primary circle-ai-execute" id="circleAIExecute">▶ Trade again</button>`;
     $('#circleAIExecute')?.addEventListener('click', executePaperTrade);
-    executePaperTrade();   // trades the best setup instantly on the selected account
+    runAuto();   // trades the best market straight away and keeps going until take profit or stop loss
     const sc = $('#scannerContract'), sw = $('#scannerWindow');
     if (sc) { sc.value = state.contract; sc.dispatchEvent(new Event('change', {bubbles:true})); }
     if (sw) sw.value = String(windowSize);
     window.ITC_SCANNER?.showResults(evaluated);
+  }
+
+  // ---- automatic trading: scan -> best market -> trade repeatedly until take profit or stop loss ----
+  let auto = null;
+  const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+  const R2 = v => Math.round(v * 100) / 100;
+  function stopAuto(why, kind) {
+    if (!auto) return; auto.stop = true; auto = null;
+    const btn = $('#circleAIScan'); if (btn) btn.textContent = '\u2726 Scan for best market';
+    const st = $('#circleAIStatus'); if (st) { st.className = 'circle-ai-status ' + (kind === 'loss' ? 'error' : 'success'); st.textContent = why; }
+    const net = state.autoNet || 0;
+    if (kind && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: net, bot: 'ITC AI' }); } catch (_) {} }
+  }
+  async function runAuto() {
+    if (!state.lastPick) return;
+    const pick = state.lastPick, T = window.ITC_TRADE, st = $('#circleAIStatus'), btn = $('#circleAIScan');
+    const map = { over: 'DIGITOVER', under: 'DIGITUNDER', even: 'DIGITEVEN', odd: 'DIGITODD', matches: 'DIGITMATCH', differs: 'DIGITDIFF' };
+    const ct = map[pick.side];
+    if (!T || !ct || !T.ready || !T.ready()) { st.className = 'circle-ai-status error'; st.textContent = 'Trading is not available. Tap Login first.'; return; }
+    const run = { stop: false }; auto = run; state.autoNet = 0;
+    let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0;
+    btn.textContent = '\u25A0 Stop trading';
+    while (!run.stop) {
+      if (T.busy && T.busy()) { await sleepMs(400); continue; }
+      let s = Math.min(stake, Math.floor((pick.sl + net) * 100) / 100);
+      if (s < 0.35) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
+      st.className = 'circle-ai-status success';
+      st.textContent = 'Trading ' + pick.market + ' \u00B7 ' + pick.entry + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' (TP ' + pick.tp + ' / SL ' + pick.sl + ') \u00B7 W' + wins + ' L' + losses;
+      const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
+      let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry }); } catch (_) {}
+      if (run.stop) return;
+      if (!list.length) { if (++errors >= 3) { stopAuto('Stopped: the trade could not be placed. Check the message and try again.', 'loss'); return; } await sleepMs(1500); continue; }
+      errors = 0;
+      const res = await Promise.race([list[0].settled, sleepMs(25000).then(() => ({ profit: 0, timeout: true }))]);
+      if (run.stop) return;
+      const p = Number(res.profit) || 0; net = R2(net + p); state.autoNet = net; state.paperTrades++;
+      if (p > 0) { wins++; stake = pick.stake; } else if (p < 0) { losses++; if (pick.martingale) stake = R2(stake * (pick.multiplier || 2)); }
+      if (net >= pick.tp) { stopAuto('Take profit reached. Net +' + net.toFixed(2), 'win'); return; }
+      if (net <= -pick.sl) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
+      await sleepMs(250);
+    }
   }
   function executePaperTrade() {
     if (!state.lastPick) return;

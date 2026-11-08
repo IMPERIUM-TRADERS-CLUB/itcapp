@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="ITC">
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>ITC Version 9.10 · Imperium Traders Club</title>
-  <link rel="stylesheet" href="style.css?v=9.14">
+  <link rel="stylesheet" href="style.css?v=9.17">
   <link rel="stylesheet" href="itc-theme.css?v=91">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
@@ -89,14 +89,15 @@
         <button class="mobile-menu" id="menuToggle" aria-label="Toggle menu">☰</button>
         <a class="topbar-brand" href="#dashboard" data-page="dashboard" aria-label="Imperium Traders Club home"><img src="imperium-logo.jpg" alt=""><span class="tb-itc">ITC</span><span class="tb-sep"></span><span class="tb-name"><b>IMPERIUM</b><small>TRADERS CLUB</small></span></a>
         <div class="crumbs"><span>Workspace</span><b>/</b><strong id="pageCrumb">Welcome</strong></div>
-        <div class="header-currency-control authenticated-only">
-          <span aria-hidden="true">⇄</span>
-          <label class="sr-only" for="headerCurrency">Display currency</label><select id="headerCurrency" aria-label="Display currency"><option value="USD">USD</option><option value="KES">KES · KSh</option></select>
-        </div>
         <div class="topbar-actions">
           <div class="guest-auth-actions" id="guestAuthActions">
             <button class="button guest-login-button" id="headerLoginButton" type="button">Login</button>
                         <a class="button guest-signup-button" href="https://t.deriv.link?t=42HX8SUXWJ6G" target="_blank" rel="noopener noreferrer">Sign Up</a>
+          </div>
+          <a class="deposit-button" href="https://app.deriv.com/cashier/deposit" target="_blank" rel="noopener noreferrer">Deposit</a>
+          <div class="header-currency-control authenticated-only">
+            <span aria-hidden="true">⇄</span>
+            <label class="sr-only" for="headerCurrency">Display currency</label><select id="headerCurrency" aria-label="Display currency"><option value="USD">USD</option><option value="KES">KES</option></select>
           </div>
           <div class="account-balance-widget authenticated-only" aria-label="Account balance; use the arrow to switch account mode">
             <div class="account-balance-top"><button type="button" class="mode-badge" id="headerModeBadge" aria-label="Demo account. Tap to switch to Real" title="Switch Demo / Real">D</button><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$0.00</strong>
@@ -106,7 +107,6 @@
           </div>
           <span class="demo-pill market-status-pill" id="marketConnectionPill"><span class="status-dot" id="marketConnectionDot"></span> CONNECTING MARKET</span>
           <button class="icon-button" id="helpButton" title="Help" aria-label="Help">?</button>
-          <a class="deposit-button" href="https://app.deriv.com/cashier/deposit" target="_blank" rel="noopener noreferrer">Deposit</a>
           <div class="top-avatar">IT</div>
         </div>
       </header>
@@ -628,17 +628,17 @@
   <script src="bots-data.js?v=89"></script>
   <script src="app.js?v=9.12"></script>
   <script src="deriv-account.js?v=9.14"></script>
-  <script src="account-display.js?v=7.4"></script>
-  <script src="real-trading.js?v=7.5"></script>
+  <script src="account-display.js?v=7.5"></script>
+  <script src="real-trading.js?v=7.6"></script>
   <script src="bot-runner.js?v=7.9"></script>
   <script src="copy-trading.js?v=7.8"></script>
   <script src="market-hunter.js?v=9.8"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js"></script>
-  <script src="circle-ai.js"></script>
+  <script src="circle-ai.js?v=9.17"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
-  <script src="speedbot.js"></script>
+  <script src="speedbot.js?v=9.17"></script>
   <script src="signal-engine.js"></script>
   <script src="admin-gate.js"></script>
   <script src="auto-signals.js?v=8.8"></script>
