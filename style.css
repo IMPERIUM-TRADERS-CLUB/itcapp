@@ -680,3 +680,12 @@ body.itc-account-authorized .account-balance-top strong{font-size:13px;white-spa
 .tx-pl{font-weight:700}.tx-pl.g{color:#16a34a}.tx-pl.r{color:#dc2626}.tx-real,.tx-demo{font-style:normal;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;color:#fff}.tx-real{background:#c0763a}.tx-demo{background:#1f7aa8}
 .tx-empty{text-align:center;color:#6b7886;padding:30px 10px}.tx-empty strong{display:block;color:#1c2630;margin-bottom:4px}
 .tx-reset{display:block;margin:14px 0 4px auto;padding:7px 18px;border:1px solid #c9d1d9;border-radius:6px;background:#fff;color:#1c2630;font-weight:700;cursor:pointer}
+
+/* v9.23 dashboard: no empty area under the welcome card on wide screens */
+.page.overview-landing,.overview-hero{min-height:0!important}
+@media(min-width:701px){.overview-hero{padding:48px 22px 56px}}
+/* run bar: small chip in the builder toolbar; compact dock elsewhere */
+.dbot-speed{height:32px;padding:0 10px;margin-left:6px;border:1px solid #c9d1d9;border-radius:4px;background:#fff;color:#1c2630;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px}.dbot-speed i{font-style:normal;color:#e8a317}.dbot-speed.slow i{color:#8a97a5}
+.bot-dock{padding:6px 84px 6px 10px!important;gap:8px!important}
+.dock-run{min-width:74px!important;height:34px!important;padding:0 12px!important;font-size:13px!important;border-radius:8px!important;gap:6px!important}.dock-run-icon{font-size:13px!important}
+.dock-speed{height:34px!important;max-width:170px!important;padding:0 8px!important;gap:6px!important;border-radius:8px!important}.dock-speed-text small{display:none!important}.dock-speed-text b{font-size:12px!important}.dock-switch{width:34px!important;height:20px!important}.dock-switch i{width:14px!important;height:14px!important}.dock-speed.is-fast .dock-switch i{transform:translateX(14px)!important}

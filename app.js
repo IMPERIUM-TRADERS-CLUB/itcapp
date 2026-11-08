@@ -901,9 +901,15 @@
   function symbolFromMarket(name) { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } }
   function startBot() {
     const R = window.ITC_RUNNER; if (!R || R.running()) return;
-    const id = R.forced || loadedImportedBot, bot = importedBots[id] || {}, ui = currentUi(), forged = Boolean(R.forced);
+    let id = R.forced || loadedImportedBot, canvas = null;
+    if (!(R.specs[id] || R.custom[id])) {   // not a library bot: run what is on the canvas
+      const cs = window.ITC_CANVAS_SPEC ? window.ITC_CANVAS_SPEC() : null;
+      if (cs && cs.error) { showToast(cs.error); return; }
+      if (cs) { R.custom.__canvas = cs; id = '__canvas'; canvas = cs; }
+    }
+    const bot = importedBots[id] || (canvas ? { name: 'Canvas bot' } : {}), ui = currentUi(), forged = Boolean(R.forced) || Boolean(canvas);
     const res = R.start({
-      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: Number($('#stakeInput').value), runs: Number($('#maxRunsInput').value),
+      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: canvas ? canvas.stake : Number($('#stakeInput').value), runs: Number($('#maxRunsInput').value),
       tp: Number($('#takeProfitInput').value || 0), sl: Number($('#stopLossInput').value || 0),
       martingale: forged ? undefined : $('#martingaleToggle').checked, multiplier: forged ? bot.multiplier : (Number($('#multiplierInput').value) || 2),
       contract: $('#contractSelect').value, side: ui.includes('side') ? $('#xSide').value : undefined, digit: ui.includes('digit') ? Number($('#xDigit').value) : undefined,
@@ -927,7 +933,7 @@
   function placeDock() {
     const dock = $('#botDock'), main = $('.main-area'); if (!dock || !main) return;
     dock.style.left = main.getBoundingClientRect().left + 'px';
-    const show = ['#page-signals', '#page-botbuilder', '#page-bulktrader', '#page-dtrader'].some(s => $(s).classList.contains('active'));
+    const show = ['#page-signals', '#page-dtrader'].some(s => $(s).classList.contains('active'));
     dock.classList.toggle('hidden', !show);
     document.body.classList.toggle('has-dock', show);
   }
