@@ -90,7 +90,8 @@
     if (state.busy && recOn()) return;   // with recovery on, wait for the last batch's result before the next one
     const n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)), stake = stakeNow();
     if (stake < 0.35) { finish('Stop loss reached', 'loss'); return; }
-    if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) return;   // Deriv allows about 220 trade calls a minute; skip this signal rather than queue it
+    if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) { $('speedBotRuleState').textContent = 'Pacing (Deriv limit)'; return; }
+    // Deriv allows about 220 trade calls a minute; skip this signal rather than queue it
     state.batches++; state.tickets += n; state.busy = true;
     $('speedBotBatches').textContent = state.batches; $('speedBotTickets').textContent = state.tickets; $('speedBotRuleState').textContent = 'Matched';
     $('speedBotExposure').textContent = '$' + (n * stake).toFixed(2);

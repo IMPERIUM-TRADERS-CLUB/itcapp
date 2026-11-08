@@ -11,9 +11,30 @@
   const CT = { risefall: ['CALL', 'PUT'], evenodd: ['DIGITEVEN', 'DIGITODD'], overunder: ['DIGITOVER', 'DIGITUNDER'], matchesdiffers: ['DIGITMATCH', 'DIGITDIFF'] };
   const LBL = { CALL: 'Rise', PUT: 'Fall', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITOVER: 'Over', DIGITUNDER: 'Under', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs' };
   const needsDigit = t => t === 'overunder' || t === 'matchesdiffers';
+  // ---- Accumulators: buy, watch the live profit, sell any time (or let take profit close it) ----
+  function accPanel() {
+    let el = $('mtAccOpen');
+    if (!el) { el = document.createElement('div'); el.id = 'mtAccOpen'; el.style.cssText = 'margin-top:10px;padding:8px 10px;border:1px solid #5e4a18;border-radius:10px;background:#120f05;color:#ffe9c7;font-size:12px;display:none;align-items:center;justify-content:space-between;gap:8px';
+      $('mtBuy').insertAdjacentElement('afterend', el);
+      el.addEventListener('click', e => { const b = e.target.closest('[data-sell]'); if (!b) return; b.disabled = true; window.ITC_TRADE.sell(b.dataset.sell).then(() => toast('Accumulator sold.')).catch(err => { b.disabled = false; toast('Sell failed: ' + (err.message || err)); try { window.ITC_DERIV_ACCOUNT.notice('Sell failed', String(err.message || err)); } catch (_) {} }); }); }
+    return el;
+  }
+  function placeAccumulator() {
+    const T = window.ITC_TRADE; if (!T) { toast('Trading module did not load. Reload the page.'); return; }
+    const sym = $('mtMarket').value, tp = $('mtTP').checked ? Number($('mtTPValue').value) : 0, panel = accPanel();
+    const params = { symbol: sym, symbolName: bySym[sym], contract_type: 'ACCU', amount: Number($('mtStake').value), growth_rate: (Number($('mtGrowth').value) || 3) / 100, take_profit: tp > 0 ? tp : undefined,
+      onUpdate: c => {
+        const p = Number(c.profit) || 0, f = p >= 0 ? '+' : '';
+        if (c.is_sold || c.status === 'won' || c.status === 'lost') { panel.style.display = 'flex'; panel.innerHTML = '<span>Accumulator closed \u00B7 ' + f + p.toFixed(2) + '</span>'; return; }
+        panel.style.display = 'flex'; panel.innerHTML = '<span>Accumulator open \u00B7 profit ' + f + p.toFixed(2) + (c.tick_count ? ' \u00B7 ' + c.tick_count + ' ticks' : '') + '</span><button type="button" class="button secondary" data-sell="' + c.contract_id + '" style="padding:4px 12px">Sell now</button>';
+      } };
+    T.execute(params, { count: 1, label: 'Accumulator ' + $('mtGrowth').value + '%', priority: true });
+  }
   function place(kind, side, count) {
     if (!window.ITC_TRADE) { toast('Trading module did not load. Reload the page.'); return; }
-    const man = kind === 'man', type = man ? $('mtType').value : $('tbType').value, ct = CT[type] && CT[type][side];
+    const man = kind === 'man', type = man ? $('mtType').value : $('tbType').value;
+    if (man && type === 'accumulator') { placeAccumulator(); return; }
+    const ct = CT[type] && CT[type][side];
     if (!ct) { toast('Accumulators are not available for trading in this version.'); return; }
     const sym = man ? $('mtMarket').value : $('tbMarket').value;
     const params = {
@@ -23,7 +44,7 @@
     };
     if (needsDigit(type)) params.barrier = man ? $('mtPred').value : $('tbPredict').value;
     const label = LBL[ct] + (params.barrier !== undefined ? ' ' + params.barrier : '');
-    window.ITC_TRADE.execute(params, { count, label });
+    window.ITC_TRADE.execute(params, { count, label, priority: true });
   }
   const active = () => bulk.classList.contains('active') ? 'bulk' : man.classList.contains('active') ? 'man' : '';
   const wantedSymbol = () => active() === 'bulk' ? $('tbMarket').value : $('mtMarket').value;

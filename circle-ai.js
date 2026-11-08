@@ -175,13 +175,12 @@
     let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0;
     btn.textContent = '\u25A0 Stop trading';
     while (!run.stop) {
-      if (T.busy && T.busy()) { await sleepMs(400); continue; }
-      let s = Math.min(stake, Math.floor((pick.sl + net) * 100) / 100);
+            let s = Math.min(stake, Math.floor((pick.sl + net) * 100) / 100);
       if (s < 0.35) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
       st.className = 'circle-ai-status success';
       st.textContent = 'Trading ' + pick.market + ' \u00B7 ' + pick.entry + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' (TP ' + pick.tp + ' / SL ' + pick.sl + ') \u00B7 W' + wins + ' L' + losses;
       const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
-      let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry }); } catch (_) {}
+      let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry, priority: true }); } catch (_) {}
       if (run.stop) return;
       if (!list.length) { if (++errors >= 3) { stopAuto('Stopped: the trade could not be placed. Check the message and try again.', 'loss'); return; } await sleepMs(1500); continue; }
       errors = 0;
@@ -203,7 +202,7 @@
     const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: pick.stake, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
     state.paperTrades++;
     st.className = 'circle-ai-status success'; st.textContent = 'Placing live trade on ' + pick.market + ' · ' + pick.entry + '…';
-    T.execute(params, { count: 1, label: pick.entry });
+    T.execute(params, { count: 1, label: pick.entry, priority: true });
   }
   $('#circleAIScan').addEventListener('click', scan);
   // Validate minimum stake and maintain shared rule copy from the initial state.

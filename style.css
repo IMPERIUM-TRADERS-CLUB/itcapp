@@ -659,3 +659,5 @@ body.itc-account-authorized .account-balance-top strong{font-size:13px;white-spa
   body.itc-account-authorized .account-balance-top strong{font-size:11px}
   .mode-badge{flex-basis:22px!important;width:22px!important;height:22px!important;min-width:22px!important;margin-right:4px!important}
 }
+
+.top-avatar{display:none!important}
