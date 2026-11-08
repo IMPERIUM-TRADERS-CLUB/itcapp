@@ -15,6 +15,7 @@ MAX_PCT = "10"        # losing digits must be under this % for Over/Under
 COOLDOWN_MIN = "20"   # do not repeat the same signal for this many minutes
 MAX_PER_RUN = "2"     # at most this many new signals per scan
 AI_MODEL = "claude-sonnet-5-5"   # model used by the Bot Forge (add the secret ANTHROPIC_API_KEY)
+CF_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"   # free Workers AI model, used when no ANTHROPIC_API_KEY is set (add an AI binding named AI)
 AI_PER_HOUR = "30"    # Bot Forge requests allowed per visitor per hour
 
 # Runs the scanner every 2 minutes, 24/7, without the website being open.

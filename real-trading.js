@@ -48,20 +48,30 @@
   // Sells an open contract at the market price (used by Accumulators).
   async function sell(id) { const A = window.ITC_DERIV_ACCOUNT; return limited(() => A.request({ sell: Number(id), price: 0 }), true); }
   // Buys one contract and resolves with the final result when it settles.
+  let directOk = true;
   async function trade(p, manual) {
     if (!ready()) throw new Error('Tap Login first to connect your Deriv account.');
     const A = window.ITC_DERIV_ACCOUNT, a = acct(), cur = a.currency || 'USD';
-    const prop = await limited(() => A.request(proposalReq(p, cur)), manual);
-    if (!prop.proposal || !prop.proposal.id) throw new Error('No price returned for this trade.');
-    const bought = await limited(() => A.request({ buy: prop.proposal.id, price: Number(prop.proposal.ask_price) }), manual);
+    let bought = null;
+    if (directOk) {   // fastest path: buy straight away without asking for a price first
+      const prm = { ...proposalReq(p, cur) }; delete prm.proposal;
+      try { bought = await limited(() => A.request({ buy: 1, price: Number(p.amount), parameters: prm }), manual); if (!bought || !bought.buy) bought = null; }
+      catch (e) { const m = String(e && e.message || e); if (/rate ?limit|balance|insufficient/i.test(m)) throw e; if (/validation|invalid|parameter|schema|unexpected|required|unrecognis/i.test(m)) directOk = false; bought = null; }
+    }
+    if (!bought) {
+      const prop = await limited(() => A.request(proposalReq(p, cur)), manual);
+      if (!prop.proposal || !prop.proposal.id) throw new Error('No price returned for this trade.');
+      bought = await limited(() => A.request({ buy: prop.proposal.id, price: Number(prop.proposal.ask_price) }), manual);
+    }
     if (!bought.buy) throw new Error('Purchase was not confirmed.');
     if (window.ITC_COPY) { try { window.ITC_COPY.mirror(p); } catch (_) {} }
-    const info = { id: bought.buy.contract_id, price: Number(bought.buy.buy_price), ref: bought.buy.transaction_id, currency: cur, real: a.account_type === 'real', symbol: p.symbol, type: p.contract_type, barrier: p.barrier };
+    const info = { id: bought.buy.contract_id, payout: Number(bought.buy.payout) || 0, time: Date.now(), price: Number(bought.buy.buy_price), ref: bought.buy.transaction_id, currency: cur, real: a.account_type === 'real', symbol: p.symbol, type: p.contract_type, barrier: p.barrier };
+    try { window.dispatchEvent(new CustomEvent('itc:trade-placed', { detail: { ...info } })); } catch (_) {}
     await pace(manual);
     const settled = new Promise(res => A.subscribe({ proposal_open_contract: 1, contract_id: info.id, subscribe: 1 }, m => {
       const c = m.proposal_open_contract; if (c && p.onUpdate) { try { p.onUpdate(c); } catch (_) {} }
       if (!c || !(c.is_sold || c.is_expired || c.status === 'won' || c.status === 'lost')) return false;
-      const out = { ...info, profit: Number(c.profit), won: Number(c.profit) > 0, exitTick: c.exit_tick_display_value || c.exit_tick };
+      const out = { ...info, sell: Number(c.sell_price) || 0, profit: Number(c.profit), won: Number(c.profit) > 0, exitTick: c.exit_tick_display_value || c.exit_tick };
       window.dispatchEvent(new CustomEvent('itc:trade-result', { detail: out })); res(out); return true;
     }));
     info.settled = settled; return info;

@@ -198,12 +198,20 @@ Examples:
 "under 7 8 or 9 randomly, recovery under 6, run 30 times" -> {"contract":"overunder","side":"UNDER","barrier":8,"randomBarrier":{"from":7,"to":9},"recovery":{"barrier":6},"runs":30}
 "wait for 3 odd digits then an even digit and trade even" -> {"contract":"evenodd","side":"EVEN","entry":{"kind":"streak","count":3,"test":"odd","then":"even"}}`;
 async function aiBot(request, env, headers) {
-  if (!isSet(env.ANTHROPIC_API_KEY)) return json({ error: 'ai_not_configured' }, 503, headers);
-  if (!env.ITC_KV) return json({ error: 'ai_needs_kv' }, 503, headers);
+  if (!isSet(env.ANTHROPIC_API_KEY) && !env.AI) return json({ error: 'ai_not_configured' }, 503, headers);
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown', key = 'ai:' + ip + ':' + Math.floor(Date.now() / 3600000);
-  const used = Number(await env.ITC_KV.get(key)) || 0;
-  if (used >= (Number(env.AI_PER_HOUR) || 30)) return json({ error: 'rate_limited' }, 429, headers);
-  await env.ITC_KV.put(key, String(used + 1), { expirationTtl: 4000 });
+  const limit = Number(env.AI_PER_HOUR) || 30;
+  if (env.ITC_KV) {
+    const used = Number(await env.ITC_KV.get(key)) || 0;
+    if (used >= limit) return json({ error: 'rate_limited' }, 429, headers);
+    await env.ITC_KV.put(key, String(used + 1), { expirationTtl: 4000 });
+  } else {   // no KV bound: simple in-memory limit (resets when the Worker restarts)
+    globalThis.__aiUse = globalThis.__aiUse || new Map();
+    const used = globalThis.__aiUse.get(key) || 0;
+    if (used >= limit) return json({ error: 'rate_limited' }, 429, headers);
+    globalThis.__aiUse.set(key, used + 1);
+    if (globalThis.__aiUse.size > 5000) globalThis.__aiUse.clear();
+  }
   let body = {}; try { body = await request.json(); } catch { return json({ error: 'bad_request' }, 400, headers); }
   const msgs = (Array.isArray(body.messages) ? body.messages : []).slice(-10)
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
@@ -211,6 +219,15 @@ async function aiBot(request, env, headers) {
   while (msgs.length && msgs[0].role !== 'user') msgs.shift();
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return json({ error: 'bad_request' }, 400, headers);
   const cur = body.currentSpec && typeof body.currentSpec === 'object' ? JSON.stringify(body.currentSpec).slice(0, 3000) : '';
+  if (!isSet(env.ANTHROPIC_API_KEY) && env.AI) {   // free option: Cloudflare Workers AI (no API key needed)
+    try {
+      const out = await env.AI.run(env.CF_AI_MODEL || '@cf/meta/llama-3.1-8b-instruct-fp8-fast', { messages: [{ role: 'system', content: FORGE_PROMPT + (cur ? '\nCurrent bot spec: ' + cur : '') }, ...msgs], max_tokens: 900 });
+      const text = typeof out === 'string' ? out : String((out && (out.response || (out.result && out.result.response))) || '');
+      const s = text.indexOf('{'), e = text.lastIndexOf('}');
+      let parsed; try { parsed = s >= 0 && e > s ? JSON.parse(text.slice(s, e + 1)) : { reply: text.slice(0, 400), spec: null }; } catch { parsed = { reply: text.slice(0, 400), spec: null }; }
+      return json({ reply: String(parsed.reply || '').slice(0, 600), spec: parsed.spec && typeof parsed.spec === 'object' ? parsed.spec : null }, 200, headers);
+    } catch { return json({ error: 'ai_failed' }, 502, headers); }
+  }
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -252,7 +269,7 @@ const itcWorker = {
     const url = new URL(request.url);
     if (url.pathname === '/' && request.method === 'GET') return json({ ok: true, service: 'itc-oauth-bridge', message: 'ITC backend is running. Open /health for details.' }, 200, headers);
     if (url.pathname === '/health' && request.method === 'GET') {
-      return json({ ok: true, service: 'itc-oauth-bridge', version: 7, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) && Boolean(env.ITC_KV) }, 200, headers);
+      return json({ ok: true, service: 'itc-oauth-bridge', version: 7, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) || Boolean(env.AI) }, 200, headers);
     }
     if (url.pathname === '/ai/bot' && request.method === 'POST') return aiBot(request, env, headers);
     if (url.pathname === '/deriv/accounts' && request.method === 'GET') return derivProxy(request, headers, 'accounts');

@@ -108,7 +108,7 @@
   $('#scannerSide')?.addEventListener('change', () => { $('#circleAISide').value = $('#scannerSide').value; updateRuleText(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
   let scanning = null;
-  const SCAN_MS = 30000, SCAN_STEP = 1500, ENOUGH = 3;
+  const SCAN_MS = 30000, SCAN_STEP = 500, ENOUGH = 1;
   const entryText = p => p.entryDigits && p.entryDigits.length ? p.entryDigits.map(e => e.digit).join(' · ') : '';
   function scan() {
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), btn = $('#circleAIScan');

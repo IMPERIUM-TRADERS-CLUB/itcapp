@@ -74,7 +74,7 @@
     while (S.running) {
       if (!authed()) { stop('Log in with Deriv first.'); return; }
       const setup = pick();
-      if (!setup) { status('Looking for a good market…'); S.current = null; await sleep(1500); continue; }
+      if (!setup) { status('Looking for a good market…'); S.current = null; await sleep(400); continue; }
       if (!S.current || S.current.key !== setup.key) status('Hunting · switched market'); else status('Hunting…');
       S.current = setup; $('mhNow').textContent = setup.market + ' · ' + setup.entry;
       let results;

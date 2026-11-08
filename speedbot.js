@@ -136,10 +136,11 @@
     if (!Number.isFinite(n) || n < 1 || n > 10) { addLog('Trades per tick must be 1 to 10.'); return; }
     if (!Number.isFinite(stake) || stake < 0.35) { addLog('Stake must be at least 0.35.'); return; }
     if (!(tp > 0) || !(sl > 0)) { addLog('Take profit and stop loss must be above 0.'); return; }
-    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Log in with Deriv first', 'Settings → Connect account'); return; }
+    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Tap Login first', 'Connect your Deriv account to trade.'); return; }
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
     $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('WATCHING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}`);
+    if (state.last !== null) fire(state.last, 'start-' + Date.now());   // do not wait for the next tick: trade now if the current digit already qualifies
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });
   [market, $('speedBotContract'), $('speedBotBarrier'), $('speedBotRecContract'), $('speedBotRecBarrier'), $('speedBotRecovery'), $('speedBotRecMult'), $('speedBotRecSteps'), $('speedBotTrades'), $('speedBotStake'), $('speedBotSL')].forEach(el => {

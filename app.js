@@ -590,6 +590,7 @@
   function setBuilderMode() { setTimeout(fitDbot, 80); }
   window.addEventListener('resize', () => setTimeout(fitDbot, 60));
   function updateRunSummary() {
+    if (window.ITC_RUNPANEL) return;   // run-panel.js keeps the Summary numbers
     $('#sumStake').textContent = Number($('#stakeInput').value || 0).toFixed(2);
     $('#sumRuns').textContent = String(Number($('#historyRunCount')?.textContent || 0));
   }

@@ -40,7 +40,7 @@
   function start(o) {
     const T = window.ITC_TRADE, A = window.ITC_DERIV_ACCOUNT;
     if (run) return { error: 'A bot is already running.' };
-    if (!T || !T.ready()) return { error: 'Log in with Deriv first (Settings > Connect account).' };
+    if (!T || !T.ready()) return { error: 'Tap Login first.' };
     const base = SPECS[o.botId] || custom[o.botId];
     const spec = base ? { ...base } : null;
     if (!spec) return { error: 'This bot is imported XML. It can be viewed but not executed. Use a library bot or build one with the AI bot maker.' };
