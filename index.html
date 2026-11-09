@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="ITC">
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>ITC Version 9.10 · Imperium Traders Club</title>
-  <link rel="stylesheet" href="style.css?v=9.23">
+  <link rel="stylesheet" href="style.css?v=9.25">
   <link rel="stylesheet" href="itc-theme.css?v=91">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
@@ -142,6 +142,7 @@
               <a class="overview-button overview-button-secondary" href="https://t.deriv.link?t=8KN8YTVSRFM3" target="_blank" rel="noopener noreferrer">Become a Deriv Partner <span aria-hidden="true">↗</span></a>
             </div>
             <p class="overview-disclaimer">Trading involves risk. Partner eligibility and referral rewards are subject to Deriv’s terms.</p>
+            <div class="overview-account" id="heroAccount" aria-live="polite"><span class="mode-badge" id="heroBadge">D</span><div class="overview-account-text"><small id="heroAccType">DEMO ACCOUNT</small><strong id="heroAccId">—</strong></div></div>
           </div>
         </div>
 
@@ -199,7 +200,7 @@
           <div class="builder-layout">
           <article class="panel block-library" id="blockLibrary"><div class="panel-heading"><div><div class="panel-overline">DRAG-AND-DROP CONCEPT</div><h2>Block library</h2></div></div><p class="muted-text">Tap a block to add it to the workspace.</p><div class="block-category">TRIGGERS</div><button class="library-block trigger-block" data-block="Start when the bot runs"><span>⚑</span><span><strong>Start</strong><small>When bot is run</small></span><b>+</b></button><button class="library-block trigger-block" data-block="On every new tick"><span>⌁</span><span><strong>On every tick</strong><small>Market update trigger</small></span><b>+</b></button><div class="block-category">CONDITIONS</div><button class="library-block condition-block" data-block="Check last digit"><span>◈</span><span><strong>Check last digit</strong><small>Compare digit condition</small></span><b>+</b></button><button class="library-block condition-block" data-block="Compare tick direction"><span>↕</span><span><strong>Compare tick direction</strong><small>Rise or fall condition</small></span><b>+</b></button><div class="block-category">ACTIONS</div><button class="library-block action-block" data-block="Purchase demo contract"><span>⚡</span><span><strong>Purchase contract</strong><small>Simulation action only</small></span><b>+</b></button><button class="library-block action-block" data-block="Check take profit / stop loss"><span>◎</span><span><strong>Check risk limits</strong><small>TP / SL guard</small></span><b>+</b></button></article>
           <article class="panel workspace-panel" id="workspacePanel"><div class="panel-heading"><div><div class="panel-overline">VISUAL LOGIC</div><h2>My strategy <span class="draft-pill">DRAFT</span></h2></div><button class="more-button" id="clearWorkspace" aria-label="Clear workspace">⌫</button></div><div class="workspace-canvas" id="workspaceCanvas"><div class="workspace-grid"></div><div class="workspace-empty" id="workspaceEmpty"><div class="empty-icon">⠿</div><strong>Your workspace starts here</strong><p>Add a block from the library to build a flow.</p></div><div class="workspace-blocks" id="workspaceBlocks"><div class="logic-block start-logic" data-default-block="true"><span class="logic-type">START</span><strong>When bot is run</strong><button aria-label="Remove block">×</button></div><div class="logic-connector"></div><div class="logic-block condition-logic" data-default-block="true"><span class="logic-type">CONDITION</span><strong>Check last digit</strong><button aria-label="Remove block">×</button></div><div class="logic-connector"></div><div class="logic-block action-logic" data-default-block="true"><span class="logic-type">ACTION</span><strong>Purchase demo contract</strong><button aria-label="Remove block">×</button></div></div></div><div class="workspace-status"><span><i class="tiny-green-dot"></i> Local workspace</span><span id="blockCount">3 blocks</span><button class="subtle-link" id="exportStrategy">Save to My Bots ↗</button></div></article>
-          <article class="panel parameters-panel" id="parametersPanel"><div class="panel-heading"><div><div class="panel-overline">RISK & CONTRACT</div><h2>Trade parameters</h2></div></div><form id="parametersForm"><label for="marketSelect">Market</label><select id="marketSelect"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select><label for="contractSelect">Contract type</label><select id="contractSelect"><option>Even / Odd</option><option>Over / Under</option><option>Rise / Fall</option><option>Matches / Differs</option></select><div id="botExtras" class="hidden"><div class="x-field hidden" data-x="side"><label for="xSide">Side</label><select id="xSide"></select></div><div class="x-field hidden" data-x="digit"><label for="xDigit">Prediction digit</label><select id="xDigit"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div class="x-field hidden" data-x="entry"><label for="xEntry">Entry digit (trading starts when this digit appears)</label><select id="xEntry"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option></select></div></div><label for="stakeInput">Stake (USD)</label><div class="input-with-unit"><span>$</span><input id="stakeInput" type="number" min="0.35" step="0.01" value="2.00" required></div><div class="form-two"><div><label for="takeProfitInput">Take profit</label><div class="input-with-unit"><span>$</span><input id="takeProfitInput" type="number" min="0" step="0.01" value="10.00"></div></div><div><label for="stopLossInput">Stop loss</label><div class="input-with-unit"><span>$</span><input id="stopLossInput" type="number" min="0" step="0.01" value="10.00"></div></div></div><div class="toggle-row x-field hidden" data-x="bulk"><div><strong>Bulk trading</strong><small>Place several trades at once on every run. Switch on or off.</small></div><label class="switch"><input id="xBulk" type="checkbox"><span></span></label></div><div class="x-field hidden" data-x="bulkn"><label for="xBulkN">Number of bulk trades</label><input class="regular-input" id="xBulkN" type="number" min="1" max="10" value="3"></div><label for="maxRunsInput">Maximum runs</label><input class="regular-input" id="maxRunsInput" type="number" min="1" max="100" value="10"><div class="toggle-row"><div><strong>Martingale</strong><small>Increase next stake after a loss</small></div><label class="switch"><input id="martingaleToggle" type="checkbox"><span></span></label></div><div id="martingaleOptions" class="martingale-options hidden"><label for="multiplierInput">Multiplier</label><input class="regular-input" id="multiplierInput" type="number" value="2" min="1" max="10" step="0.1"></div><button class="button primary full-button" type="submit">Save parameters</button><p class="form-footnote">These settings apply when you press Run. Trades are placed live on the selected account.</p></form></article>
+          <article class="panel parameters-panel" id="parametersPanel"><div class="panel-heading"><div><div class="panel-overline">RISK & CONTRACT</div><h2>Trade parameters</h2></div></div><form id="parametersForm"><label for="marketSelect">Market</label><select id="marketSelect"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select><label for="contractSelect">Contract type</label><select id="contractSelect"><option>Even / Odd</option><option>Over / Under</option><option>Rise / Fall</option><option>Matches / Differs</option></select><div id="botExtras" class="hidden"><div class="x-field hidden" data-x="side"><label for="xSide">Side</label><select id="xSide"></select></div><div class="x-field hidden" data-x="digit"><label for="xDigit">Prediction digit</label><select id="xDigit"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div class="x-field hidden" data-x="entry"><label for="xEntry">Entry digit (trading starts when this digit appears)</label><select id="xEntry"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option></select></div></div><label for="stakeInput">Stake (USD)</label><div class="input-with-unit"><span>$</span><input id="stakeInput" type="number" min="0.35" step="0.01" value="2.00" required></div><div class="form-two"><div><label for="takeProfitInput">Take profit</label><div class="input-with-unit"><span>$</span><input id="takeProfitInput" type="number" min="0" step="0.01" value="10.00"></div></div><div><label for="stopLossInput">Stop loss</label><div class="input-with-unit"><span>$</span><input id="stopLossInput" type="number" min="0" step="0.01" value="10.00"></div></div></div><div class="toggle-row x-field hidden" data-x="bulk"><div><strong>Bulk trading</strong><small>Place several trades at once on every run. Switch on or off.</small></div><label class="switch"><input id="xBulk" type="checkbox"><span></span></label></div><div class="x-field hidden" data-x="bulkn"><label for="xBulkN">Number of bulk trades</label><input class="regular-input" id="xBulkN" type="number" min="1" max="10" value="3"></div><label for="maxRunsInput">Stop after consecutive losses</label><input class="regular-input" id="maxRunsInput" type="number" min="1" max="20" value="3"><div class="toggle-row"><div><strong>Martingale</strong><small>Increase next stake after a loss</small></div><label class="switch"><input id="martingaleToggle" type="checkbox"><span></span></label></div><div id="martingaleOptions" class="martingale-options hidden"><label for="multiplierInput">Multiplier</label><input class="regular-input" id="multiplierInput" type="number" value="2" min="1" max="10" step="0.1"></div><button class="button primary full-button" type="submit">Save parameters</button><p class="form-footnote">These settings apply when you press Run. Trades are placed live on the selected account.</p></form></article>
         </div>
         </div>
       </section>
@@ -346,58 +347,43 @@
       </section>
 
       <section class="page" id="page-speedbot">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> TICK TRADER</div><h1>ITC <span>SpeedBot.</span></h1><p>Watch every tick. The moment your rule is met, it buys. If a batch loses, recovery mode takes over until you win.</p></div>
-
-        <article class="panel sb-live">
-          <div class="digit-hero sb-hero">
-            <div class="big-digit" id="sbBig">–</div>
-            <div class="hero-info">
-              <div class="sb-market"><strong id="speedBotMarketTitle">Volatility 100 (1s) Index</strong><span class="live-pill wait" id="speedBotLive">CONNECTING</span></div>
-              <div class="hero-price" id="speedBotQuote">Waiting…</div>
-              <div class="hero-chips" id="sbChips"></div>
-              <div class="hero-trail" id="speedBotDigitStrip" aria-label="Recent live tick digits"></div>
-              <p class="muted-text sb-conn" id="speedBotConnection">Connecting to public Deriv tick feed…</p>
+        <article class="panel sb-sheet">
+          <h1 class="sb-title">ITC SPEEDBOT</h1>
+          <div class="sb-row1"><label for="speedBotMarket">Market</label><select id="speedBotMarket" class="dark-select"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select></div>
+          <div class="sb-row">
+            <div class="sb-f"><label for="speedBotContract">Contract</label><select id="speedBotContract" class="dark-select"><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITMATCH">Matches</option><option value="DIGITDIFF">Differs</option><option value="CALL">Rise</option><option value="PUT">Fall</option></select></div>
+            <div class="sb-f" id="sbBarrierWrap"><label for="speedBotBarrier">Digit</label><select id="speedBotBarrier" class="dark-select"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
+          </div>
+          <div class="sb-row">
+            <div class="sb-f"><label for="speedBotTrades">Trades per tick</label><input id="speedBotTrades" class="regular-input" type="number" min="1" max="10" step="1" value="3"></div>
+            <div class="sb-f"><label for="speedBotStake">Stake</label><input id="speedBotStake" class="regular-input" type="number" min="0.35" step="0.01" value="5"></div>
+          </div>
+          <div class="sb-row">
+            <div class="sb-f"><label for="speedBotTP">Take profit</label><input id="speedBotTP" class="regular-input" type="number" min="0.01" step="0.01" value="10"></div>
+            <div class="sb-f"><label for="speedBotSL">Stop loss</label><input id="speedBotSL" class="regular-input" type="number" min="0.01" step="0.01" value="20"></div>
+          </div>
+          <div class="sb-row">
+            <div class="sb-f"><label for="speedBotRecMult">Martingale</label><input id="speedBotRecMult" class="regular-input" type="number" min="1" max="5" step="0.1" value="1.8"></div>
+            <div class="sb-f sb-sw"><label for="speedBotContinuous">Repeat trades</label><label class="sb-switch"><input id="speedBotContinuous" type="checkbox" checked><span></span></label></div>
+          </div>
+          <div class="sb-row sb-recrow">
+            <div class="sb-f sb-sw"><label for="speedBotRecovery">Recovery</label><label class="sb-switch"><input id="speedBotRecovery" type="checkbox"><span></span></label></div>
+            <div id="sbRecBody" class="sb-recfields">
+              <div class="sb-f"><label for="speedBotRecContract">Contract</label><select id="speedBotRecContract" class="dark-select"><option value="SAME">Same as main</option><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITDIFF">Differs</option><option value="DIGITMATCH">Matches</option></select></div>
+              <div class="sb-f" id="sbRecBarrierWrap"><label for="speedBotRecBarrier">Digit</label><select id="speedBotRecBarrier" class="dark-select"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
             </div>
           </div>
-          <div class="sb-mini"><div><small>Previous digit</small><strong id="speedBotPreviousDigit">—</strong></div><div><small>Ticks seen</small><strong id="speedBotTickCount">0</strong></div><div><small>Latest digit</small><strong id="speedBotLastDigit">—</strong></div></div>
-        </article>
-
-        <div class="sb-grid">
-          <article class="panel sb-card">
-            <h2 class="sb-h">1 · Trade</h2>
-            <label class="sb-l" for="speedBotMarket">Market</label>
-            <select id="speedBotMarket" class="dark-select"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select>
-            <label class="sb-l">Contract</label>
-            <div class="sb-chips" id="sbContractChips"></div>
-            <select id="speedBotContract" hidden><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITMATCH">Matches</option><option value="DIGITDIFF">Differs</option><option value="CALL">Rise</option><option value="PUT">Fall</option></select>
-            <div id="sbBarrierWrap"><label class="sb-l">Prediction digit</label><div class="sb-chips sb-digits" id="sbBarrierChips"></div></div>
-            <select id="speedBotBarrier" hidden><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select>
-            <div class="sb-two"><div><label class="sb-l" for="speedBotTrades">Trades per tick</label><input id="speedBotTrades" class="regular-input" type="number" min="1" max="10" step="1" value="1"></div><div><label class="sb-l" for="speedBotStake">Stake (USD)</label><input id="speedBotStake" class="regular-input" type="number" min="0.35" step="0.01" value="0.35"></div></div>
-            <div class="sb-two"><div><label class="sb-l" for="speedBotTP">Take profit (USD)</label><input id="speedBotTP" class="regular-input" type="number" min="0.01" step="0.01" value="2"></div><div><label class="sb-l" for="speedBotSL">Stop loss (USD)</label><input id="speedBotSL" class="regular-input" type="number" min="0.01" step="0.01" value="3"></div></div>
-            <label class="speedbot-continuous"><span><strong>Continuous mode</strong><small>Keep watching after each batch.</small></span><input id="speedBotContinuous" type="checkbox" checked><span class="speedbot-toggle"></span></label>
-          </article>
-
-          <article class="panel sb-card sb-rec">
-            <h2 class="sb-h">2 · Recovery mode</h2>
-            <label class="speedbot-continuous"><span><strong>Switch to recovery after a loss</strong><small>You choose the recovery contract. A win returns to your main trade.</small></span><input id="speedBotRecovery" type="checkbox"><span class="speedbot-toggle"></span></label>
-            <div id="sbRecBody">
-              <label class="sb-l">Recovery contract</label>
-              <div class="sb-chips" id="sbRecChips"></div>
-              <select id="speedBotRecContract" hidden><option value="SAME">Same as main</option><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITDIFF">Differs</option><option value="DIGITMATCH">Matches</option></select>
-              <div id="sbRecBarrierWrap"><label class="sb-l">Recovery prediction digit</label><div class="sb-chips sb-digits" id="sbRecBarrierChips"></div></div>
-              <select id="speedBotRecBarrier" hidden><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select>
-              <div class="sb-two"><div><label class="sb-l" for="speedBotRecMult">Stake multiplier</label><input id="speedBotRecMult" class="regular-input" type="number" min="1" max="5" step="0.1" value="2"></div><div><label class="sb-l" for="speedBotRecSteps">Max recovery steps</label><input id="speedBotRecSteps" class="regular-input" type="number" min="1" max="6" step="1" value="3"></div></div>
-            </div>
-            <div class="speedbot-rule-note" id="speedBotRuleNote">Entry rule preview: Over 2.</div>
-            <div class="speedbot-actions"><button class="button primary" id="speedBotStart">▶ Start</button><button class="button secondary" id="speedBotStop" disabled>■ Stop</button></div>
-            <p class="form-footnote">Trades are placed on the account selected in the top bar. Recovery raises stakes after losses and can lose more quickly; results are not guaranteed.</p>
-          </article>
-        </div>
-
-        <article class="panel sb-card sb-session">
-          <div class="sb-sess-head"><div><div class="panel-overline">SESSION</div><div class="sb-pl" id="speedBotPL">+0.00</div></div><div class="sb-pills"><span class="demo-pill" id="speedBotRunState">STOPPED</span><span class="sb-mode" id="speedBotMode">MAIN</span></div></div>
-          <div class="speedbot-stats"><div><small>Batches</small><strong id="speedBotBatches">0</strong></div><div><small>Contracts bought</small><strong id="speedBotTickets">0</strong></div><div><small>Stake / batch</small><strong id="speedBotExposure">$0.35</strong></div><div><small>Rule</small><strong id="speedBotRuleState">Waiting</strong></div></div>
-          <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Press Start. Every matched tick and every result will be listed here.</div></div>
+          <div class="sb-runrow">
+            <div class="sb-btns"><button class="button primary" id="speedBotStart" type="button">Run</button><button class="button secondary" id="speedBotStop" type="button" disabled>Stop</button></div>
+            <div class="sb-tick"><span class="sb-tick-l">Tick movement <i class="live-pill wait" id="speedBotLive">…</i></span><div class="sb-tick-v" id="sbTickPrice">–</div></div>
+          </div>
+          <div class="sb-runrow sb-counts">
+            <div class="sb-f"><label>Batches</label><div class="sb-box" id="speedBotBatches">0</div></div>
+            <div class="sb-f"><label>Contracts bought</label><div class="sb-box" id="speedBotTickets">0</div></div>
+          </div>
+          <div class="sb-sess"><span class="demo-pill" id="speedBotRunState">STOPPED</span> <span class="sb-pl" id="speedBotPL">+0.00</span> <span class="sb-mode" id="speedBotMode">MAIN</span></div>
+          <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Press Run. Every matched tick and result will be listed here.</div></div>
+          <p class="form-footnote">Trades are placed on the account chosen in the top bar. Martingale raises the stake after a losing batch and can lose more quickly; results are not guaranteed.</p>
         </article>
       </section>
       <section class="page" id="page-signals">
@@ -627,19 +613,19 @@
   <script src="charts-live.js?v=8.8"></script>
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=89"></script>
-  <script src="app.js?v=9.23"></script>
+  <script src="app.js?v=9.27"></script>
   <script src="deriv-account.js?v=9.14"></script>
-  <script src="account-display.js?v=7.5"></script>
+  <script src="account-display.js?v=7.6"></script>
   <script src="real-trading.js?v=8.0"></script>
   <script src="bot-runner.js?v=7.9"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.23"></script>
+  <script src="market-hunter.js?v=9.26"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js"></script>
   <script src="circle-ai.js?v=9.21"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
-  <script src="speedbot.js?v=9.21"></script>
+  <script src="speedbot.js?v=9.24"></script>
   <script src="quick-strategy.js?v=9.20"></script>
   <script src="run-panel.js?v=9.22"></script>
   <script src="canvas-spec.js?v=9.23"></script>

@@ -40,7 +40,8 @@
     stopScan(owner) { scanners.delete(owner); syncScan(); if (!scanners.size) { clearInterval(scanTimer); scanTimer = null; } },
     startTicking(gate) { S.startScan('legacy', gate); },
     stopTicking() { S.stopScan('legacy'); },
-    win() { if (on) seq([523.25, 659.25, 783.99, 1046.5], 0.09, 0.28, 'triangle', 0.28); },
+    // "money earned": a bright coin / cash-register ka-ching
+    win() { if (!on) return; tone(1318.5, 0, 0.12, 'square', 0.12); tone(1760, 0.07, 0.5, 'triangle', 0.3); tone(2637, 0.07, 0.35, 'sine', 0.16); tone(3520, 0.12, 0.45, 'sine', 0.1); tone(2093, 0.2, 0.4, 'triangle', 0.12); },
     loss() { if (on) seq([392, 311.13, 246.94], 0.14, 0.34, 'sine', 0.24); },
     fanfare() { if (on) seq([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5], 0.11, 0.34, 'triangle', 0.3); },
     sad() { if (on) seq([329.63, 293.66, 261.63, 220], 0.2, 0.42, 'sine', 0.24); },

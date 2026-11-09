@@ -689,3 +689,27 @@ body.itc-account-authorized .account-balance-top strong{font-size:13px;white-spa
 .bot-dock{padding:6px 84px 6px 10px!important;gap:8px!important}
 .dock-run{min-width:74px!important;height:34px!important;padding:0 12px!important;font-size:13px!important;border-radius:8px!important;gap:6px!important}.dock-run-icon{font-size:13px!important}
 .dock-speed{height:34px!important;max-width:170px!important;padding:0 8px!important;gap:6px!important;border-radius:8px!important}.dock-speed-text small{display:none!important}.dock-speed-text b{font-size:12px!important}.dock-switch{width:34px!important;height:20px!important}.dock-switch i{width:14px!important;height:14px!important}.dock-speed.is-fast .dock-switch i{transform:translateX(14px)!important}
+
+/* v9.24 SpeedBot sheet (matches the paper design) */
+.sb-sheet{max-width:640px;margin:8px auto;border:1.5px solid #3a3f4d;border-radius:6px;padding:16px 16px 12px}
+.sb-title{font-size:22px;letter-spacing:.14em;text-align:center;margin:0 0 14px;font-weight:800}
+.sb-row1,.sb-row{display:grid;gap:12px;margin-bottom:12px}.sb-row1{grid-template-columns:1fr}.sb-row{grid-template-columns:1fr 1fr}
+.sb-f{display:flex;flex-direction:column;gap:4px;min-width:0}.sb-f label,.sb-row1>label{font-size:12px;color:#aab3c2;font-weight:600}
+.sb-f select,.sb-f input[type=number],.sb-row1 select{width:100%;min-height:40px;border:1.5px solid #4a5163;border-radius:4px;background:#0d111a;color:#fff;padding:0 10px;font-size:15px}
+.sb-sw{flex-direction:row;align-items:center;justify-content:space-between;border:1.5px solid #4a5163;border-radius:4px;padding:0 12px;min-height:40px}.sb-sw>label:first-child{margin:0}
+.sb-switch{position:relative;width:46px;height:24px;flex:0 0 46px;display:inline-block}.sb-switch input{opacity:0;width:100%;height:100%;position:absolute;inset:0;margin:0;cursor:pointer;z-index:2}.sb-switch span{position:absolute;inset:0;border-radius:999px;border:1.5px solid #6b7488;background:#161b27}.sb-switch span::after{content:"";position:absolute;top:2px;left:3px;width:16px;height:16px;border-radius:50%;background:#8b94a7;transition:.15s}.sb-switch input:checked+span{background:#14532d;border-color:#22c55e}.sb-switch input:checked+span::after{left:25px;background:#22c55e}
+.sb-recrow{grid-template-columns:1fr;gap:10px}.sb-recfields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sb-runrow{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;margin:14px 0 10px}
+.sb-btns{display:flex;gap:8px}.sb-btns .button{min-height:42px;padding:0 20px;font-size:15px}
+.sb-tick{display:flex;flex-direction:column;align-items:flex-end}.sb-tick-l{font-size:12px;color:#aab3c2}.sb-tick-v{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:700;line-height:1.1;white-space:nowrap}.sb-tick-v b{font-size:48px;color:#ffd24d;margin-left:1px}
+.sb-counts{grid-template-columns:1fr 1fr;margin-top:4px}.sb-box{min-height:40px;border:1.5px solid #4a5163;border-radius:4px;display:flex;align-items:center;padding:0 12px;font-size:18px;font-weight:700}
+.sb-sess{display:flex;align-items:center;gap:10px;margin:8px 0 6px}.sb-sess .sb-pl{font-size:20px;font-weight:800}
+.sb-sheet .speedbot-log{max-height:200px;overflow:auto}
+@media(max-width:420px){.sb-sheet{padding:12px 10px}.sb-tick-v{font-size:20px}.sb-tick-v b{font-size:38px}}
+
+/* v9.25 dashboard: after login hide the Deriv join buttons and show the active account code */
+body.itc-account-authorized .overview-cta{display:none!important}
+.overview-account{display:none;align-items:center;gap:10px;margin:16px auto 0;padding:8px 16px 8px 10px;border:1px solid #5e4a18;border-radius:999px;background:rgba(18,15,5,.7);justify-content:center}
+body.itc-account-authorized .overview-account{display:inline-flex!important}
+.overview-account .mode-badge{margin:0!important;width:30px!important;height:30px!important;min-width:30px!important;flex-basis:30px!important;font-size:15px!important}
+.overview-account-text{display:flex;flex-direction:column;text-align:left;line-height:1.2}.overview-account-text small{font-size:10px;letter-spacing:.12em;color:#c9b27a}.overview-account-text strong{font-size:16px;color:#ffe9b0;letter-spacing:.04em}

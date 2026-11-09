@@ -330,12 +330,12 @@
   function runSimulation(cycle = 1, total = 1) {
     if (typeof cycle !== 'number') { cycle = 1; total = 1; }
     const stake = Number($('#stakeInput').value);
-    const maxRuns = Number($('#maxRunsInput').value);
+    const maxLosses = Number($('#maxRunsInput').value);
     const tp = Number($('#takeProfitInput').value || 0);
     const sl = Number($('#stopLossInput').value || 0);
     const count = (window.ITC_BLOCKLY?.getWorkspace()?.getAllBlocks(false).length) || $$('.logic-block', $('#workspaceBlocks')).length;
     if (!Number.isFinite(stake) || stake < 0.35) { showToast('Enter a demo stake of at least $0.35.'); return false; }
-    if (!Number.isInteger(maxRuns) || maxRuns < 1 || maxRuns > 100) { showToast('Maximum demo runs must be between 1 and 100.'); return false; }
+    if (!Number.isInteger(maxLosses) || maxLosses < 1 || maxLosses > 20) { showToast('Consecutive losses must be between 1 and 20.'); return false; }
     if (!count) { showToast('Add at least one block before running a simulation.'); return false; }
     demoRunStake = stake; runCount++;
     $('#historyRunCount').textContent = String(runCount).padStart(2, '0');
@@ -343,7 +343,7 @@
     const activeBot = importedBots[loadedImportedBot];
     addLog(`Simulation started · ${activeBot ? activeBot.name : 'Current Builder strategy'} · ${$('#marketSelect').value} · ${$('#contractSelect').value} · stake ${money(stake)} · ${count} summary blocks`, 'STARTED');
     if (activeBot) addLog(`Imported XML is displayed for inspection; this simulation does not interpret or execute the original DBot program.`, 'NOTICE');
-    addLog(`Risk guards loaded · take profit ${money(tp)} · stop loss ${money(sl)} · cap ${maxRuns} demo runs`, 'READY');
+    addLog(`Risk guards loaded · take profit ${money(tp)} · stop loss ${money(sl)} · stop after ${maxLosses} losses in a row`, 'READY');
     if ($('#martingaleToggle').checked) {
       addLog(`Martingale enabled for interface test; multiplier ${Number($('#multiplierInput').value || 2)} · not executed against a broker`, 'NOTICE');
     }
@@ -365,7 +365,7 @@
         stake: Number($('#stakeInput').value),
         takeProfit: Number($('#takeProfitInput').value),
         stopLoss: Number($('#stopLossInput').value),
-        maxRuns: Number($('#maxRunsInput').value),
+        maxRuns: Number($('#maxRunsInput').value),   // now means: stop after this many losses in a row
         martingaleEnabled: $('#martingaleToggle').checked,
         martingaleMultiplier: Number($('#multiplierInput').value || 2)
       }
@@ -402,7 +402,7 @@
     $('#stakeInput').value = bot.stake;
     $('#takeProfitInput').value = bot.tp;
     $('#stopLossInput').value = bot.sl;
-    $('#maxRunsInput').value = bot.runs;
+    $('#maxRunsInput').value = 3;
     $('#martingaleToggle').checked = bot.martingale;
     $('#martingaleOptions').classList.toggle('hidden', !bot.martingale);
     $('#multiplierInput').value = bot.multiplier;
@@ -422,7 +422,7 @@
     $('#stakeInput').value = bot.stake;
     $('#takeProfitInput').value = bot.tp;
     $('#stopLossInput').value = bot.sl;
-    $('#maxRunsInput').value = bot.runs;
+    $('#maxRunsInput').value = 3;
     $('#martingaleToggle').checked = bot.martingale;
     $('#martingaleOptions').classList.toggle('hidden', !bot.martingale);
     $('#multiplierInput').value = bot.multiplier;
@@ -909,7 +909,7 @@
     }
     const bot = importedBots[id] || (canvas ? { name: 'Canvas bot' } : {}), ui = currentUi(), forged = Boolean(R.forced) || Boolean(canvas);
     const res = R.start({
-      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: canvas ? canvas.stake : Number($('#stakeInput').value), runs: Number($('#maxRunsInput').value),
+      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: canvas ? canvas.stake : Number($('#stakeInput').value), maxLosses: Number($('#maxRunsInput').value) || 3,
       tp: Number($('#takeProfitInput').value || 0), sl: Number($('#stopLossInput').value || 0),
       martingale: forged ? undefined : $('#martingaleToggle').checked, multiplier: forged ? bot.multiplier : (Number($('#multiplierInput').value) || 2),
       contract: $('#contractSelect').value, side: ui.includes('side') ? $('#xSide').value : undefined, digit: ui.includes('digit') ? Number($('#xDigit').value) : undefined,
@@ -926,7 +926,7 @@
   $('#dockSpeed').addEventListener('click', () => {
     execSpeed = execSpeed === 'fast' ? 'slow' : 'fast';
     paintSpeedUi();
-    if (botTimer) { clearInterval(botTimer); const total = Math.max(1, Math.min(100, Number($('#maxRunsInput').value) || 10)); botTimer = setInterval(() => { botCycles++; runSimulation(botCycles, total); if (botCycles >= total) stopBot('finished'); }, speedMs()); }
+    if (botTimer) { clearInterval(botTimer); const total = 20; botTimer = setInterval(() => { botCycles++; runSimulation(botCycles, total); if (botCycles >= total) stopBot('finished'); }, speedMs()); }
     showToast(`Execution speed: ${execSpeed.toUpperCase()}`);
   });
   paintSpeedUi();

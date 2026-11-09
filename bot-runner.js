@@ -52,14 +52,14 @@
     const bulkN = o.bulk ? Math.max(2, Math.min(10, Math.floor(o.bulkN) || 3)) : 1;
     const rb = spec.randomBarrier; if (rb && !Array.isArray(rb)) spec.randomBarrier = [rb.from, rb.to];
     const sym = o.symbol || spec.symbol || '1HZ100V';
-    const st = { spec, base: Math.max(0.35, Number(o.stake) || 1), mult: o.martingale === false ? 1 : (Number(o.multiplier) || spec.martingale || 2), entered: false, runs: Number(o.runs) || 50, tp: Number(o.tp) || 0, sl: Number(o.sl) || 0, stake: 0, profit: 0, n: 0, recovering: false, busy: false, stopped: false, digits: [] };
+    const st = { spec, base: Math.max(0.35, Number(o.stake) || 1), mult: o.martingale === false ? 1 : (Number(o.multiplier) || spec.martingale || 2), entered: false, maxLosses: Math.max(1, Math.floor(Number(o.maxLosses)) || 3), lossRun: 0, tp: Number(o.tp) || 0, sl: Number(o.sl) || 0, stake: 0, profit: 0, n: 0, recovering: false, busy: false, stopped: false, digits: [] };
     st.stake = st.base;
     const log = (m, s) => o.log && o.log(m, s || 'LIVE');
     const finish = why => {
       if (st.stopped) return; st.stopped = true; run = null;
       if (st.subId) try { A.request({ forget: st.subId }); } catch (_) {}
       log(why + ' · ' + st.n + ' runs · P/L ' + st.profit.toFixed(2), 'STOPPED'); o.done && o.done(why);
-      const kind = /^Take profit/.test(why) ? 'win' : /^Stop loss/.test(why) ? 'loss' : (/^Number of runs/.test(why) ? (st.profit > 0 ? 'win' : st.profit < 0 ? 'loss' : '') : '');
+      const kind = /^Take profit/.test(why) ? 'win' : /^Stop loss/.test(why) ? 'loss' : (/^Consecutive losses/.test(why) ? 'loss' : '');
       if (kind && window.ITC_BOTMSG) window.ITC_BOTMSG.show({ kind, why, profit: st.profit, bot: o.name || '' });
     };
     const pick = () => {
@@ -91,11 +91,11 @@
         const runProfit = results.reduce((s, x) => s + x.profit, 0), won = runProfit > 0;
         st.n++; st.profit += runProfit;
         log((won ? 'WIN ' : 'LOSS ') + runProfit.toFixed(2) + ' · ' + side + (sp.contract === 'evenodd' || sp.contract === 'risefall' ? '' : ' ' + barrier) + (bulkN > 1 ? ' · bulk ' + placed.length + '/' + bulkN : '') + ' · stake ' + st.stake.toFixed(2) + ' · total ' + st.profit.toFixed(2) + ' · run ' + st.n, won ? 'WON' : 'LOST');
-        if (won) { st.stake = st.base; st.recovering = false; } else { st.stake = Math.round(st.stake * st.mult * 100) / 100; st.recovering = Boolean(sp.recovery) || st.recovering; }
+        if (won) { st.stake = st.base; st.recovering = false; st.lossRun = 0; } else { st.lossRun++; st.stake = Math.round(st.stake * st.mult * 100) / 100; st.recovering = Boolean(sp.recovery) || st.recovering; }
         o.onResult && o.onResult(results[0], st);
         if (st.tp && st.profit >= st.tp) return finish('Take profit reached'), true;
         if (st.sl && st.profit <= -st.sl) return finish('Stop loss reached'), true;
-        if (st.n >= st.runs) return finish('Number of runs reached'), true;
+        if (st.lossRun >= st.maxLosses) return finish('Consecutive losses limit reached (' + st.maxLosses + ' in a row)'), true;
       } catch (err) { log('Error: ' + (err.message || err), 'ERROR'); finish('Stopped on error'); return true; }
       st.busy = false; return false;
     }
@@ -123,7 +123,7 @@
   function show(d) {
     const A = window.ITC_DERIV_ACCOUNT, acc = A && A.getStatus().account, cur = (acc && acc.currency) || 'USD';
     const win = d.kind === 'win', amt = (d.profit >= 0 ? '+' : '-') + Math.abs(d.profit).toFixed(2) + ' ' + cur;
-    const title = win ? (/^Take profit/.test(d.why) ? 'Take profit reached!' : 'Run complete: you are in profit!') : (/^Stop loss/.test(d.why) ? 'Stop loss reached' : 'Run complete');
+    const title = win ? (/^Take profit/.test(d.why) ? 'Take profit reached!' : 'Run complete: you are in profit!') : (/^Stop loss/.test(d.why) ? 'Stop loss reached' : /^Consecutive losses/.test(d.why) ? 'Stopped after ' + (d.why.match(/\((\d+)/) || [0, 3])[1] + ' losses in a row' : 'Run complete');
     const lines = win ? WIN : LOSS, msg = lines[Math.floor(Math.random() * lines.length)];
     if (window.ITC_APP && window.ITC_APP.addLog) window.ITC_APP.addLog(title + ' ' + amt, win ? 'WON' : 'LOST');
     if (document.getElementById('itcBotMsg')) document.getElementById('itcBotMsg').remove();
