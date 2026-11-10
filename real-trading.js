@@ -4,7 +4,10 @@
   const toast = t => window.ITC_APP && window.ITC_APP.showToast ? window.ITC_APP.showToast(t) : console.log(t);
   const money = (v, c) => (Number.isFinite(Number(v)) ? Number(v).toFixed(2) : '-') + (c ? ' ' + c : '');
   const acct = () => (window.ITC_DERIV_ACCOUNT && window.ITC_DERIV_ACCOUNT.getStatus().account) || null;
-  const ready = () => { const A = window.ITC_DERIV_ACCOUNT; return A && A.getStatus().authorized && acct(); };
+  const authed = () => { const A = window.ITC_DERIV_ACCOUNT; return Boolean(A && A.getStatus().authorized && acct()); };
+  // PRACTICE MODE: with no Deriv account connected, Run still works. Trades are simulated on the live public ticks (clearly labelled PRACTICE).
+  const simulated = () => !authed();
+  const ready = () => authed() || Boolean(window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.onTick);
 
   function proposalReq(p, currency) {
     if (p.contract_type === 'ACCU') {
@@ -21,7 +24,7 @@
   // Two lanes: YOUR manual trades (Deriv Trader, Bulk, ITC AI run) go first and may use up to 220 calls a minute;
   // bots (SpeedBot, Market Hunter, bot runner) use at most 150, so a manual trade never waits behind a bot.
   const sleep = ms => new Promise(res => setTimeout(res, ms));
-  const HARD = 220, BOT = 150, hi = [], lo = [], stamps = []; let slot = 0, pumping = false;
+  const HARD = 220, BOT = 180, hi = [], lo = [], stamps = []; let slot = 0, pumping = false;
   const trim = now => { while (stamps.length && stamps[0] <= now - 60000) stamps.shift(); };
   async function pump() {
     if (pumping) return; pumping = true;
@@ -37,7 +40,7 @@
   }
   const pace = manual => new Promise(res => { (manual ? hi : lo).push(res); pump(); });
   // true when a bot's new trade would have to wait: bots skip the signal instead of queueing stale trades
-  function busy() { const now = Date.now(); trim(now); return stamps.length >= BOT - 9 || lo.length > 3 || slot - now > 2000; }
+  function busy() { if (simulated()) return false; const now = Date.now(); trim(now); return stamps.length >= BOT - 9 || lo.length > 3 || slot - now > 2000; }
   async function limited(fn, manual) {
     for (let i = 0; ; i++) {
       await pace(manual);
@@ -49,7 +52,46 @@
   async function sell(id) { const A = window.ITC_DERIV_ACCOUNT; return limited(() => A.request({ sell: Number(id), price: 0 }), true); }
   // Buys one contract and resolves with the final result when it settles.
   let directOk = true;
+  let simSeq = 0;
+  function simMult(p) {   // payout multiplier from the winning probability, about 95% return like Deriv
+    const t = p.contract_type, b = Number(p.barrier);
+    const pr = t === 'DIGITOVER' ? (9 - b) / 10 : t === 'DIGITUNDER' ? b / 10 : (t === 'DIGITEVEN' || t === 'DIGITODD') ? 0.5 : t === 'DIGITMATCH' ? 0.1 : t === 'DIGITDIFF' ? 0.9 : 0.5;
+    return Math.max(1.01, 0.95 / Math.max(0.05, pr));
+  }
+  function simWon(p, tk, entryPrice) {
+    const t = p.contract_type, b = Number(p.barrier), d = tk.digit;
+    switch (t) { case 'DIGITOVER': return d > b; case 'DIGITUNDER': return d < b; case 'DIGITEVEN': return d % 2 === 0; case 'DIGITODD': return d % 2 === 1;
+      case 'DIGITMATCH': return d === b; case 'DIGITDIFF': return d !== b; case 'CALL': return tk.price > entryPrice; case 'PUT': return tk.price < entryPrice; }
+    return false;
+  }
+  async function simTrade(p) {
+    const M = window.ITC_MARKET_DATA;
+    if (!M || !M.getStatus().connected) throw new Error('The market feed is still connecting. Try again in a moment.');
+    const last = (M.getTicks(p.symbol, 1) || [])[0]; if (!last) throw new Error('No ticks yet for this market. Try again in a moment.');
+    const stake = Number(p.amount), dur = Math.max(1, Number(p.duration) || 1), payout = Math.round(stake * simMult(p) * 100) / 100;
+    const info = { id: 'practice-' + (++simSeq) + '-' + Date.now(), payout, time: Date.now(), price: stake, ref: 'practice', currency: 'USD', real: false, sim: true, symbol: p.symbol, type: p.contract_type, barrier: p.barrier };
+    try { window.dispatchEvent(new CustomEvent('itc:trade-placed', { detail: { ...info } })); } catch (_) {}
+    info.settled = new Promise(res => {
+      let n = 0, off = null;
+      const timer = setTimeout(() => { if (off) off(); res({ ...info, sell: 0, profit: 0, won: false, timeout: true }); }, 20000 + dur * 5000);
+      off = M.onTick(tk => {
+        if (tk.symbol !== p.symbol || ++n < dur) return;
+        off(); clearTimeout(timer);
+        const won = simWon(p, tk, last.price), out = { ...info, sell: won ? payout : 0, profit: won ? Math.round((payout - stake) * 100) / 100 : -stake, won, exitTick: tk.price };
+        try { window.dispatchEvent(new CustomEvent('itc:trade-result', { detail: out })); } catch (_) {}
+        res(out);
+      });
+    });
+    return info;
+  }
+  // Tick stream for bots: the authorised Deriv socket normally, the public feed in practice mode.
+  function simTicks(sym, handler, stopFn) {
+    const M = window.ITC_MARKET_DATA; if (!M || !M.onTick) return { error: 'The market feed is not available yet.' };
+    let off = null; off = M.onTick(t => { if (stopFn()) { off(); return; } if (t.symbol === sym) handler({ tick: { quote: t.price, pip_size: t.pip, epoch: t.epoch, symbol: t.symbol } }); });
+    return { off };
+  }
   async function trade(p, manual) {
+    if (simulated()) return simTrade(p);
     if (!ready()) throw new Error('Tap Login first to connect your Deriv account.');
     const A = window.ITC_DERIV_ACCOUNT, a = acct(), cur = a.currency || 'USD';
     let bought = null;
@@ -82,12 +124,12 @@
     for (let i = 0; i < count; i++) {
       try {
         const c = await trade(p, Boolean(opts.priority)); done.push(c);
-        toast((c.real ? 'REAL ' : 'DEMO ') + label + ' ' + (i + 1) + '/' + count + ' bought · ' + money(c.price, c.currency));
+        toast((c.sim ? 'PRACTICE ' : c.real ? 'REAL ' : 'DEMO ') + label + ' ' + (i + 1) + '/' + count + ' bought · ' + money(c.price, c.currency));
         c.settled.then(r => toast((r.won ? 'WON +' : 'LOST ') + money(r.profit, r.currency) + ' · ' + label));
       } catch (e) { toast('Not placed: ' + (e.message || e)); try { window.ITC_DERIV_ACCOUNT.notice('Trade not placed', String(e.message || e)); } catch (_) {} break; }
       await new Promise(r => setTimeout(r, 150));
     }
     return done;
   }
-  window.ITC_TRADE = { execute, trade, sell, ready, proposalReq, busy, budgetPerMinute: HARD };
+  window.ITC_TRADE = { execute, trade, sell, ready, simulated, simTicks, proposalReq, busy, budgetPerMinute: HARD };
 })();

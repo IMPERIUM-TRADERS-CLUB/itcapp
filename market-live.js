@@ -40,17 +40,28 @@
     selectMarket(name) { selectMarket(name); },
     // Put the Digit Circles on a market and setup (e.g. Under 7): market, mode, side and prediction digit.
     setAnalysis(o) { setAnalysis(o || {}); },
-    getMarkets() {
+    // getMarkets(limit): only the latest `limit` ticks of each market (Market Hunter reads 1000, the SpeedBot reads 500 of one market).
+    getMarkets(limit) {
+      const lim = Number(limit) > 0 ? Math.floor(Number(limit)) : 0;
       return Object.entries(markets).map(([name, info]) => ({
         name, symbol: info.symbol,
-        ticks: (state.tickHistory[info.symbol] || []).map(item => ({
+        ticks: (lim ? (state.tickHistory[info.symbol] || []).slice(-lim) : (state.tickHistory[info.symbol] || [])).map(item => ({
           price: Number(item.price),
           digit: getDigit(Number(item.price), info.decimals),
           epoch: Number(item.epoch || 0)
         }))
       }));
     },
-    getStatus() { return { connected: state.connected, selected: state.selected }; }
+    getStatus() { return { connected: state.connected, selected: state.selected }; },
+    // Latest n ticks of ONE market (by name or symbol). Much lighter than getMarkets().
+    getTicks(nameOrSymbol, n) {
+      const entry = Object.entries(markets).find(([name, info]) => name === nameOrSymbol || info.symbol === nameOrSymbol); if (!entry) return [];
+      const info = entry[1], h = state.tickHistory[info.symbol] || [], lim = Math.max(1, Math.floor(Number(n) || 1));
+      return h.slice(-lim).map(item => ({ price: Number(item.price), digit: getDigit(Number(item.price), info.decimals), epoch: Number(item.epoch || 0) }));
+    },
+    symbolOf(name) { const m = markets[name]; return m ? m.symbol : null; },
+    // Calls fn({symbol, price, epoch, digit, pip}) the moment each live tick arrives. Returns a function that stops listening.
+    onTick(fn) { tickListeners.add(fn); return () => tickListeners.delete(fn); }
   };
 
   function setStatus(connected, message) {
@@ -166,6 +177,7 @@
     return Number(digits.slice(-1));
   }
 
+  const tickListeners = new Set();
   function handleTick(tick) {
     const sym = tick.symbol;
     const info = Object.values(markets).find(m => m.symbol === sym);
@@ -179,6 +191,7 @@
     const arr = state.tickHistory[sym] || (state.tickHistory[sym] = []);
     arr.push({price, epoch:Number(tick.epoch || Date.now()/1000)});
     if (arr.length > MAX_TICKS) arr.splice(0, arr.length - MAX_TICKS);
+    if (tickListeners.size) { const ev = { symbol: sym, price, epoch: Number(tick.epoch || Date.now() / 1000), digit: getDigit(price, tick.pip_size ?? info.decimals), pip: tick.pip_size ?? info.decimals }; tickListeners.forEach(fn => { try { fn(ev); } catch (_) {} }); }
     if (sym === symbol()) {
       const d = getDigit(price, tick.pip_size ?? info.decimals);
       state.counts[d]++; state.totalTicks++;

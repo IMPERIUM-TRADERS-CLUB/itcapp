@@ -7,7 +7,7 @@
   if (!market) return;
   const NEEDS_DIGIT = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
   const NAMES = { DIGITOVER: 'Over', DIGITUNDER: 'Under', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs', CALL: 'Rise', PUT: 'Fall', SAME: 'Same as main' };
-  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [] };
+  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], win: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [] };
   const R2 = v => Math.round(v * 100) / 100;
   const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 8 });
   const stamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -45,7 +45,8 @@
     const sl = Number($('speedBotSL').value); if (sl > 0) s = Math.min(s, Math.floor((sl + state.profit) / n * 100) / 100);   // never risk more than the room left before the stop loss
     return s;
   }
-  const symbolOf = () => { const f = window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.getMarkets().find(m => m.name === market.value); return f && f.symbol ? f.symbol : '1HZ100V'; };
+  const WINDOW = 500;   // the SpeedBot reads only the latest 500 ticks of the chosen market
+  const symbolOf = () => (window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.symbolOf && window.ITC_MARKET_DATA.symbolOf(market.value)) || '1HZ100V';
 
   // ---- display ----
   function paintRuleUi() {
@@ -109,23 +110,39 @@
     if (state.running && sl > 0 && state.profit <= -sl) { finish('Stop loss reached', 'loss'); return; }
     if (state.running && !$('speedBotContinuous').checked) finish('One batch done');
   }
-  function processMarketData() {
+  // Every live tick is handled the moment it arrives (no polling), so trading follows the tick movement continuously.
+  function onLiveTick(t) {
+    if (t.symbol !== symbolOf()) return;
+    const d = Number(t.digit), p = Number(t.price), ep = Number(t.epoch) || 0;
+    if (!state.count) { seedFromFeed(); return; }
+    if (ep <= state.seen) return;
+    state.delta = state.lastPrice === null ? 0 : p - state.lastPrice; state.lastPrice = p;
+    state.previous = state.last; state.last = d; state.digits.push(d); state.digits = state.digits.slice(-14);
+    state.win.push(d); if (state.win.length > WINDOW) state.win.shift();
+    state.count++; state.seen = Math.max(state.seen, ep);
+    paintTick(t.price, d); paintDigit(); fire(d, ep);
+  }
+  function seedFromFeed() {
+    const bridge = window.ITC_MARKET_DATA; if (!bridge || !bridge.getTicks) return;
+    const ticks = bridge.getTicks(market.value, WINDOW); if (!ticks.length) return;
+    const latest = ticks[ticks.length - 1];
+    state.win = ticks.map(x => Number(x.digit)); state.digits = state.win.slice(-14); state.last = Number(latest.digit);
+    state.previous = ticks.length > 1 ? Number(ticks[ticks.length - 2].digit) : null; state.count = ticks.length; state.seen = Number(latest.epoch) || 0; state.lastPrice = Number(latest.price);
+    paintTick(latest.price, latest.digit); paintDigit();
+  }
+  function paintTick(price, digit) {
+    const ps = String(price), dg = String(digit); $('sbTickPrice').innerHTML = (ps.endsWith(dg) ? ps.slice(0, -1) : ps) + '<b>' + dg + '</b>';
+    $('speedBotQuote').innerHTML = `${fmt(price)} <small class="${state.delta >= 0 ? 'up' : 'down'}">${state.delta >= 0 ? '▲' : '▼'} ${Math.abs(state.delta).toFixed(Math.max(2, (String(price).split('.')[1] || '').length))}</small>`;
+  }
+  function processMarketData() {   // light status refresh only
     const bridge = window.ITC_MARKET_DATA;
     if (!bridge) { $('speedBotConnection').textContent = 'Market feed unavailable. Check the public Deriv connection.'; return; }
-    const status = bridge.getStatus(), found = bridge.getMarkets().find(m => m.name === market.value);
+    const status = bridge.getStatus();
     $('speedBotMarketTitle').textContent = market.value; $('speedBotConnection').textContent = status.connected ? 'Connected to public Deriv ticks' : 'Waiting for the public Deriv tick connection…';
     const live = $('speedBotLive'); live.className = 'live-pill ' + (status.connected ? 'on' : 'wait'); live.textContent = status.connected ? 'LIVE' : 'CONNECTING';
-    if (!found || !found.ticks.length) return;
-    const ticks = found.ticks.slice(-60), latest = ticks[ticks.length - 1];
-    { const ps = String(latest.price), dg = String(latest.digit); $('sbTickPrice').innerHTML = (ps.endsWith(dg) ? ps.slice(0, -1) : ps) + '<b>' + dg + '</b>'; }
-    $('speedBotQuote').innerHTML = `${fmt(latest.price)} <small class="${state.delta >= 0 ? 'up' : 'down'}">${state.delta >= 0 ? '▲' : '▼'} ${Math.abs(state.delta).toFixed(Math.max(2, (String(latest.price).split('.')[1] || '').length))}</small>`;
-    if (!state.count) { state.last = Number(latest.digit); state.previous = ticks.length > 1 ? Number(ticks[ticks.length - 2].digit) : null; state.digits = ticks.slice(-14).map(t => Number(t.digit)); state.count = ticks.length; state.seen = Number(latest.epoch) || 0; state.lastPrice = Number(latest.price); paintDigit(); return; }
-    ticks.filter(t => Number(t.epoch) > state.seen).forEach(t => {
-      const d = Number(t.digit), p = Number(t.price); state.delta = state.lastPrice === null ? 0 : p - state.lastPrice; state.lastPrice = p;
-      state.previous = state.last; state.last = d; state.digits.push(d); state.digits = state.digits.slice(-14); state.count++; state.seen = Math.max(state.seen, Number(t.epoch) || 0);
-      paintDigit(); fire(d, Number(t.epoch));
-    });
+    if (!state.count) seedFromFeed();
   }
+  if (window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.onTick) window.ITC_MARKET_DATA.onTick(onLiveTick);
 
   // ---- controls ----
   $('speedBotStart').addEventListener('click', () => {
@@ -133,16 +150,16 @@
     if (!Number.isFinite(n) || n < 1 || n > 10) { addLog('Trades per tick must be 1 to 10.'); return; }
     if (!Number.isFinite(stake) || stake < 0.35) { addLog('Stake must be at least 0.35.'); return; }
     if (!(tp > 0) || !(sl > 0)) { addLog('Take profit and stop loss must be above 0.'); return; }
-    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Tap Login first', 'Connect your Deriv account to trade.'); return; }
+    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Market feed not ready', 'Wait a moment for live ticks, then tap Start again.'); return; }
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
-    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('WATCHING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}`);
+    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('WATCHING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}${window.ITC_TRADE.simulated && window.ITC_TRADE.simulated() ? ' · PRACTICE (simulated on live ticks)' : ''}`);
     fire(state.last, 'start-' + Date.now());   // trade immediately, do not wait for a tick or a digit
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });
   [market, $('speedBotContract'), $('speedBotBarrier'), $('speedBotRecContract'), $('speedBotRecBarrier'), $('speedBotRecovery'), $('speedBotRecMult'), $('speedBotTrades'), $('speedBotStake'), $('speedBotSL')].forEach(el => {
-    el.addEventListener('change', () => { if (el === market) { const b = window.ITC_MARKET_DATA; if (b) b.selectMarket(market.value); Object.assign(state, { digits: [], last: null, previous: null, count: 0, seen: 0, lastPrice: null }); } paintRuleUi(); paintDigit(); });
+    el.addEventListener('change', () => { if (el === market) { const b = window.ITC_MARKET_DATA; if (b) b.selectMarket(market.value); Object.assign(state, { digits: [], win: [], last: null, previous: null, count: 0, seen: 0, lastPrice: null }); } paintRuleUi(); paintDigit(); });
     el.addEventListener('input', () => paintRuleUi());
   });
-  paintRuleUi(); paintDigit(); paintPL(); setInterval(processMarketData, 300);
+  paintRuleUi(); paintDigit(); paintPL(); setInterval(processMarketData, 1000);
 })();

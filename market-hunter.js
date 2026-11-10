@@ -7,10 +7,10 @@
   const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
   const money = (v, c) => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + (c ? ' ' + c : '');
   const R2 = v => Math.round(v * 100) / 100;
-  const CT = { over: 'DIGITOVER', under: 'DIGITUNDER', differs: 'DIGITDIFF' };   // Over 2, Under 7 and Differs
-  const NOMINAL = { over: 0.7, under: 0.7, differs: 0.9 };
-  const RATIO = { over: 0.35, under: 0.35, differs: 0.06 };   // typical profit per 1.00 staked on a win; replaced by the real figure after the first win
-  const MIN_PROB = 0.75, MIN_PROB_DIFFERS = 0.93;           // a market must show at least this winning probability before the hunter trades it
+  const CT = { over: 'DIGITOVER', under: 'DIGITUNDER' };   // Over 2 and Under 7 only (no Differs)
+  const NOMINAL = { over: 0.7, under: 0.7 };
+  const RATIO = { over: 0.35, under: 0.35 };   // typical profit per 1.00 staked on a win; replaced by the real figure after the first win
+  const MIN_PROB = 0.75;           // a market must show at least this winning probability before the hunter trades it
   const MARTINGALE = 2, MAX_LOSSES = 3;                      // stake x2 after a loss; stop after 3 losses in a row
   const RISK = { low: 0.10, medium: 0.15, high: 0.20 };      // target profit as a share of the amount you are willing to risk
   const S = { running: false, level: store.get('itc_mh_level', 'medium'), plan: null, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, cool: new Map(), dots: [], errors: 0, currency: 'USD', ratio: {}, lastEpoch: {} };
@@ -26,12 +26,13 @@
   const stakeFor = (side, plan) => baseStake(side, plan);
   const acct = () => (window.ITC_DERIV_ACCOUNT && window.ITC_DERIV_ACCOUNT.getStatus().account) || null;
   const authed = () => Boolean(window.ITC_DERIV_ACCOUNT && window.ITC_DERIV_ACCOUNT.getStatus().authorized && acct());
+  const canTrade = () => Boolean(window.ITC_TRADE && window.ITC_TRADE.ready && window.ITC_TRADE.ready());   // a Deriv account, or practice mode on live ticks
   let balance = NaN;
   window.addEventListener('itc:deriv-balance', e => { if (e.detail && Number.isFinite(Number(e.detail.balance))) balance = Number(e.detail.balance); paintAcct(); });
 
   function paintAcct() {
     const el = $('mhAcct'); if (!el) return; const a = acct();
-    if (!authed()) { el.className = 'mh-acct off'; el.textContent = 'Tap Login to start hunting'; return; }
+    if (!authed()) { el.className = 'mh-acct demo'; el.innerHTML = '<b>PRACTICE</b> mode · simulated on live ticks · log in to trade your Deriv account'; return; }
     const real = a.account_type === 'real'; S.currency = a.currency || 'USD';
     el.className = 'mh-acct ' + (real ? 'real' : 'demo'); el.innerHTML = '<b>' + (real ? 'REAL' : 'DEMO') + '</b> account · ' + a.loginid + (Number.isFinite(balance) ? ' · balance ' + balance.toFixed(2) + ' ' + S.currency : '');
   }
@@ -59,32 +60,30 @@
   function candidates() {
     const md = window.ITC_MARKET_DATA; if (!md) return [];
     const out = [];
-    for (const mk of md.getMarkets()) {
+    for (const mk of md.getMarkets(1000)) {   // Market Hunter reads a 1,000-tick window
       if (/^Jump /.test(mk.name || '')) continue;   // Jump indices are slow and make recovery hard, so the hunt skips them
       const t = mk.ticks || []; if (t.length < 100) continue;
-      const digits = t.map(x => x.digit), epoch = t[t.length - 1].epoch;
+      const digits = t.slice(-1000).map(x => x.digit), epoch = t[t.length - 1].epoch;
       const share = (w, ok) => { const s = digits.slice(-w); return s.filter(ok).length / s.length; };
       const blend = ok => { const p1 = share(100, ok), p3 = share(300, ok), p10 = share(1000, ok); return { p: 0.5 * p1 + 0.3 * p3 + 0.2 * p10, recent: p1 }; };
       const add = (side, target, entry, ok, min) => { const b = blend(ok); out.push({ market: mk.name, symbol: mk.symbol, side, target, entry, prob: b.p, score: b.p - NOMINAL[side], epoch, eligible: b.p >= min && b.recent >= min - 0.03, key: mk.name + '|' + entry }); };
       add('over', 2, 'Over 2', d => d > 2, MIN_PROB);
       add('under', 7, 'Under 7', d => d < 7, MIN_PROB);
-      const cnt = Array(10).fill(0); digits.slice(-1000).forEach(d => cnt[d]++); const low = cnt.indexOf(Math.min(...cnt));
-      add('differs', low, 'Differs ' + low, d => d !== low, MIN_PROB_DIFFERS);
     }
     return out;
   }
-  function pick() {   // best Over 2 / Under 7 market first; Differs only when no Over/Under market reaches the threshold
+  function pick() {   // best Over 2 / Under 7 market, switching markets as the numbers change
     const R = window.ITC_AI_RULES, now = Date.now(), all = candidates().filter(x => x.eligible && !(S.cool.get(x.key) > now));
     if (!all.length) return null;
     const one = x => (R && R.is1s && R.is1s(x.market)) ? 1 : 0, rank = (a, b) => b.score - a.score || one(b) - one(a);
-    const main = all.filter(x => x.side !== 'differs').sort(rank), pool = main.length ? main : all.sort(rank);
+    const pool = all.sort(rank);
     if (S.current) { const cur = pool.find(x => x.key === S.current.key); if (cur && cur.score >= pool[0].score - 0.02) return cur; }   // stay while it is still among the best
     return pool[0];
   }
   async function round(setup) {
     const T = window.ITC_TRADE, n = 1, stake = Math.min(R2(baseStake(setup.side) * Math.pow(MARTINGALE, S.lossRun)), Math.floor((S.plan.sl + S.net) * 100) / 100);   // never risk more than the room left before the stop loss
     if (stake < 0.35) { const e = new Error('Stop loss reached'); e.stopLoss = true; throw e; }
-    const params = { symbol: setup.symbol, symbolName: setup.market, contract_type: CT[setup.side], amount: stake, duration: 1, barrier: setup.side === 'differs' || setup.side === 'over' || setup.side === 'under' ? setup.target : undefined };
+    const params = { symbol: setup.symbol, symbolName: setup.market, contract_type: CT[setup.side], amount: stake, duration: 1, barrier: setup.target };
     const placed = await Promise.allSettled(Array.from({ length: n }, () => T.trade(params)));
     const ok = placed.filter(p => p.status === 'fulfilled').map(p => p.value);
     if (!ok.length) throw placed[0].reason || new Error('Trade not placed');
@@ -92,7 +91,7 @@
   }
   async function loop() {
     while (S.running) {
-      if (!authed()) { stop('Tap Login first.'); return; }
+      if (!canTrade()) { stop('The market feed is not ready yet.'); return; }
       const setup = pick();
       if (!setup) { status('Scanning for a market at 75% or better…'); S.current = null; await sleep(400); continue; }
       if (!S.current || S.current.key !== setup.key) status('Hunting · switched market'); else status('Hunting…');
@@ -125,7 +124,7 @@
   }
   function start() {
     if (S.running) return;
-    if (!authed()) { status('Tap Login first.', 'warn'); return; }
+    if (!canTrade()) { status('The market feed is not ready yet. Try again in a moment.', 'warn'); return; }
     let budget = Number($('mhBudget').value) || 0; if (Number.isFinite(balance) && budget > balance) { budget = Math.floor(balance); $('mhBudget').value = budget; status('Amount reduced to your balance.', 'warn'); }
     store.set('itc_mh_budget', budget); store.set('itc_mh_level', S.level);
     S.plan = planFor(budget, S.level); if (budget < 5 || !S.plan.ok) { status('Increase the amount to risk.', 'warn'); return; }

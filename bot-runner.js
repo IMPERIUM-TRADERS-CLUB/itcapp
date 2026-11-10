@@ -40,7 +40,7 @@
   function start(o) {
     const T = window.ITC_TRADE, A = window.ITC_DERIV_ACCOUNT;
     if (run) return { error: 'A bot is already running.' };
-    if (!T || !T.ready()) return { error: 'Tap Login first.' };
+    if (!T || !T.ready()) return { error: 'The market feed is not ready yet. Try again in a moment.' };
     const base = SPECS[o.botId] || custom[o.botId];
     const spec = base ? { ...base } : null;
     if (!spec) return { error: 'This bot is imported XML. It can be viewed but not executed. Use a library bot or build one with the AI bot maker.' };
@@ -100,9 +100,12 @@
       st.busy = false; return false;
     }
     run = { stop: () => finish('Stopped by you') };
-    try { A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; }); }
+    try {
+      if (T.simulated()) { const r = T.simTicks(sym, onTick, () => st.stopped); if (r.error) { run = null; return { error: r.error }; } }
+      else A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
+    }
     catch (e) { run = null; return { error: e.message || String(e) }; }
-    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (window.ITC_DERIV_ACCOUNT.getStatus().account.account_type === 'real' ? 'REAL' : 'DEMO') + ' account · stake ' + st.base, 'LIVE');
+    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (T.simulated() ? 'PRACTICE (simulated on live ticks, no Deriv login needed)' : (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account')) + ' · stake ' + st.base, 'LIVE');
     return { ok: true };
   }
   window.ITC_RUNNER = { start, stop: () => run && run.stop(), running: () => Boolean(run), specs: SPECS, custom };
