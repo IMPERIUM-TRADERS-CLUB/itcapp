@@ -13,7 +13,7 @@
   const MIN_PROB = 0.75, MIN_PROB_DIFFERS = 0.93;           // a market must show at least this winning probability before the hunter trades it
   const MARTINGALE = 2, MAX_LOSSES = 3;                      // stake x2 after a loss; stop after 3 losses in a row
   const RISK = { low: 0.10, medium: 0.15, high: 0.20 };      // target profit as a share of the amount you are willing to risk
-  const S = { running: false, level: store.get('itc_mh_level', 'medium'), plan: null, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, dots: [], errors: 0, currency: 'USD', ratio: {}, lastEpoch: {} };
+  const S = { running: false, level: store.get('itc_mh_level', 'medium'), plan: null, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, cool: new Map(), dots: [], errors: 0, currency: 'USD', ratio: {}, lastEpoch: {} };
 
   function planFor(budget, level) {
     const tp = R2(budget * RISK[level]), sl = R2(budget);
@@ -73,7 +73,7 @@
     return out;
   }
   function pick() {   // best Over 2 / Under 7 market first; Differs only when no Over/Under market reaches the threshold
-    const R = window.ITC_AI_RULES, all = candidates().filter(x => x.eligible);
+    const R = window.ITC_AI_RULES, now = Date.now(), all = candidates().filter(x => x.eligible && !(S.cool.get(x.key) > now));
     if (!all.length) return null;
     const one = x => (R && R.is1s && R.is1s(x.market)) ? 1 : 0, rank = (a, b) => b.score - a.score || one(b) - one(a);
     const main = all.filter(x => x.side !== 'differs').sort(rank), pool = main.length ? main : all.sort(rank);
@@ -100,7 +100,17 @@
       S.current = setup; $('mhNow').textContent = setup.market + ' · ' + setup.entry + ' · ' + (setup.prob * 100).toFixed(0) + '% win';
       let results;
       try { results = await round(setup); S.errors = 0; }
-      catch (e) { if (e.stopLoss) { stop('Stop loss reached', 'loss'); return; } S.errors++; status('Retrying… ' + (e.message || e), 'warn'); if (S.errors >= 4) { stop('Stopped: ' + (e.message || e)); return; } await sleep(1200); continue; }
+      catch (e) {
+        if (e.stopLoss) { stop('Stop loss reached', 'loss'); return; }
+        const msg = String(e.message || e);
+        if (/no return|ContractBuyValidation|not offered|not available|suspended|market is closed|unavailable/i.test(msg)) {   // Deriv will not sell this contract right now: skip it and try the next best market
+          S.cool.set(setup.key, Date.now() + 120000); S.current = null; S.errors++;
+          status('Skipped ' + setup.entry + ' on ' + setup.market + ': ' + msg, 'warn');
+          if (S.errors >= 12) { stop('Stopped: Deriv refused the available contracts. ' + msg); return; }
+          await sleep(300); continue;
+        }
+        S.errors++; status('Retrying… ' + msg, 'warn'); if (S.errors >= 4) { stop('Stopped: ' + msg); return; } await sleep(1200); continue;
+      }
       const net = results.reduce((s, r) => s + (Number(r.profit) || 0), 0), won = net > 0;
       S.net = R2(S.net + net); S.trades += results.length; results.forEach(r => { if (r.profit > 0) S.wins++; else S.losses++; }); S.dots.push(won);
       results.forEach(r => { if (r.profit > 0 && r.price > 0) S.ratio[setup.side] = R2(r.profit / r.price * 1000) / 1000; });   // learn the real payout

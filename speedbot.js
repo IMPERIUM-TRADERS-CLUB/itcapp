@@ -82,7 +82,7 @@
   async function fire(d, epoch) {
     if (!state.running) return;
     const r = rule();
-    if (!qualifies(r, d, state.delta)) { $('speedBotRuleState').textContent = 'Waiting'; return; }
+    // no entry rule: Run trades straight away and then on every tick, it never waits for a particular digit
     if (state.lastEligibleEpoch === epoch) return; state.lastEligibleEpoch = epoch;
     if (state.busy && recOn()) return;   // with recovery on, wait for the last batch's result before the next one
     const n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)), stake = stakeNow();
@@ -92,7 +92,7 @@
     state.batches++; state.tickets += n; state.busy = true;
     $('speedBotBatches').textContent = state.batches; $('speedBotTickets').textContent = state.tickets; $('speedBotRuleState').textContent = 'Matched';
     $('speedBotExposure').textContent = '$' + (n * stake).toFixed(2);
-    addLog(`${label(r)} · digit ${d}`, `Buying ${n} contract${n === 1 ? '' : 's'} · $${stake.toFixed(2)} each${state.steps ? ' · martingale step ' + state.steps : ''}${state.mode === 'recovery' && recOn() ? ' · recovery' : ''}`);
+    addLog(`${label(r)} · digit ${d === null || d === undefined ? '–' : d}`, `Buying ${n} contract${n === 1 ? '' : 's'} · $${stake.toFixed(2)} each${state.steps ? ' · martingale step ' + state.steps : ''}${state.mode === 'recovery' && recOn() ? ' · recovery' : ''}`);
     const T = window.ITC_TRADE; if (!T) { state.busy = false; return; }
     const params = { symbol: symbolOf(), contract_type: r.type, amount: stake, duration: (r.type === 'CALL' || r.type === 'PUT') ? 5 : 1, barrier: NEEDS_DIGIT.includes(r.type) ? r.barrier : undefined };
     let list = []; try { list = await T.execute(params, { count: n, label: label(r) }); } catch (_) {}
@@ -137,7 +137,7 @@
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
     $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('WATCHING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}`);
-    if (state.last !== null) fire(state.last, 'start-' + Date.now());   // do not wait for the next tick: trade now if the current digit already qualifies
+    fire(state.last, 'start-' + Date.now());   // trade immediately, do not wait for a tick or a digit
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });
   [market, $('speedBotContract'), $('speedBotBarrier'), $('speedBotRecContract'), $('speedBotRecBarrier'), $('speedBotRecovery'), $('speedBotRecMult'), $('speedBotTrades'), $('speedBotStake'), $('speedBotSL')].forEach(el => {

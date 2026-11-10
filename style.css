@@ -713,3 +713,12 @@ body.itc-account-authorized .overview-cta{display:none!important}
 body.itc-account-authorized .overview-account{display:inline-flex!important}
 .overview-account .mode-badge{margin:0!important;width:30px!important;height:30px!important;min-width:30px!important;flex-basis:30px!important;font-size:15px!important}
 .overview-account-text{display:flex;flex-direction:column;text-align:left;line-height:1.2}.overview-account-text small{font-size:10px;letter-spacing:.12em;color:#c9b27a}.overview-account-text strong{font-size:16px;color:#ffe9b0;letter-spacing:.04em}
+
+/* v9.28 dashboard: card fills the screen; account pill sits under the welcome text, risk note at the bottom */
+.page.overview-landing{min-height:calc(100dvh - 176px)!important}
+.page.overview-landing:not(.active){display:none!important}
+.page.overview-landing.active{display:flex;flex-direction:column}
+.overview-hero{flex:1;display:flex!important;min-height:calc(100dvh - 190px)!important}
+.overview-hero .overview-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.overview-account{margin:22px auto 0!important}
+.overview-hero .overview-disclaimer{margin-top:auto!important;padding-top:26px}

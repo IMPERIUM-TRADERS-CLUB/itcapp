@@ -14,9 +14,9 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50,
       "section": "ai",
-      "icon": "🎲"
+      "icon": "🎲",
+      "losses": 3
     },
     {
       "id": "itc_under",
@@ -31,9 +31,9 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50,
       "section": "ai",
-      "icon": "🛡️"
+      "icon": "🛡️",
+      "losses": 3
     },
     {
       "id": "itc_over",
@@ -48,9 +48,9 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50,
       "section": "ai",
-      "icon": "🚀"
+      "icon": "🚀",
+      "losses": 3
     },
     {
       "id": "itc_over_recovery",
@@ -65,9 +65,9 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50,
       "section": "ai",
-      "icon": "🎯"
+      "icon": "🎯",
+      "losses": 3
     },
     {
       "id": "signal_autobot",
@@ -82,9 +82,9 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50,
       "section": "ai",
-      "icon": "⚡"
+      "icon": "⚡",
+      "losses": 3
     },
     {
       "id": "my_phoenix",
@@ -100,7 +100,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_over1",
@@ -116,7 +116,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_under8",
@@ -132,7 +132,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_evenodd",
@@ -148,7 +148,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_entry",
@@ -164,7 +164,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_markettype",
@@ -180,7 +180,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 50
+      "losses": 3
     },
     {
       "id": "my_scannerbot",
@@ -196,7 +196,7 @@
       "stake": 1,
       "tp": 5,
       "sl": 20,
-      "runs": 100
+      "losses": 3
     }
   ]
 }

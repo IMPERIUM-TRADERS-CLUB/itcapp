@@ -348,12 +348,13 @@
     const a = total ? Math.round(digits.filter(top.hit).length / total * 1000) / 10 : 0, b = total ? Math.round((100 - a) * 10) / 10 : 0;
     const dir = a > b ? 'top-strong' : (b > a ? 'bot-strong' : 'even');
     const row = (o, pct, cls) => `<div class="str-row ${cls}"><div class="str-label"><b>${o.name}</b>${o.sub ? `<small>${o.sub}</small>` : ''}${o.mine ? '<em>your side</em>' : ''}</div><div class="str-track"><i style="width:${pct}%"></i></div><div class="str-pct">${total ? pct.toFixed(1) + '%' : '--'}</div></div>`;
-    const n = window.innerWidth < 700 ? 16 : 30, last = digits.slice(-n);
+    const phone = window.innerWidth < 700, avail = (box.clientWidth || (window.innerWidth - 56)) - 24 - 62;   // room left of the Digits / arrows label
+    const n = phone ? Math.max(6, Math.min(8, Math.floor(avail / 30))) : 30, last = digits.slice(-n);   // newest digits only, as many as fit
     const cells = last.map((x, i) => `<span class="${i === last.length - 1 ? 'new' : ''}">${x}</span>`).join('');
     const marks = last.map((x, i) => { const w = top.hit(x); return `<span class="${w ? 'g' : 'r'} ${i === last.length - 1 ? 'new' : ''}">${w ? top.k : bot.k}</span>`; }).join('');
     box.innerHTML = `<div class="str-title">Strength <small>${total ? 'last ' + total + ' ticks · totals 100%' : 'waiting for ticks'}</small></div>` +
       row(top, a, dir === 'top-strong' ? 'strong' : (dir === 'even' ? 'tie' : 'weak')) + row(bot, b, dir === 'bot-strong' ? 'strong' : (dir === 'even' ? 'tie' : 'weak')) +
-      `<div class="str-strings"><div class="str-line"><span class="str-tag">Digits</span><div class="str-cells">${cells || '<small>Waiting for ticks…</small>'}</div></div><div class="str-line"><span class="str-tag">${top.k}/${bot.k}</span><div class="str-cells marks">${marks}</div></div></div>`;
+      `<div class="str-strings"><div class="str-line"><span class="str-tag">Digits</span><div class="str-cells" style="--n:${n}">${cells || '<small>Waiting for ticks…</small>'}</div></div><div class="str-line"><span class="str-tag">${top.k}/${bot.k}</span><div class="str-cells marks" style="--n:${n}">${marks}</div></div></div>`;
   }
   window.addEventListener('itc:analysis-choice', () => { try { updateDigitStats(); } catch (_) {} });
 
@@ -505,12 +506,11 @@
       if(copy) copy.innerHTML='<div class="panel-overline">BOT CONTROL</div><strong>Run the bot</strong>';
       const controls=botLauncher.querySelector('.analysis-bot-controls');
       if(controls){
-        const speed=document.createElement('label');speed.className='analysis-speed-control';speed.innerHTML='Demo pace <select id="analysisBotSpeed" class="dark-select" aria-label="Demo simulation pace" title="Display preference only; Run currently records one local demo cycle"><option value="slow">Slow</option><option value="fast" selected>Fast</option></select>';
-        controls.appendChild(speed);
+        
         const run=controls.querySelector('#analysisRunBot');if(run)run.textContent='▶ Run bot';
         const stop=document.createElement('button');stop.type='button';stop.className='button secondary';stop.id='analysisStopBot';stop.textContent='■ Stop';stop.disabled=true;controls.appendChild(stop);
       }
-      const note=botLauncher.querySelector('.form-footnote');if(note)note.textContent='Demo simulation only — no live Deriv orders are placed. Stop ends the demo session indicator.';
+      const note=botLauncher.querySelector('.form-footnote');if(note)note.textContent='Runs the selected bot with real trades on your selected account (Login first). Stop ends the run.';
       panel.appendChild(botLauncher);
     }
     const summary=signalPage.querySelector(".signal-summary-grid");
@@ -561,11 +561,6 @@
     @media(max-width:560px){#digitCircleAnalysisPanel .analysis-bot-compact{gap:7px;padding:8px}#digitCircleAnalysisPanel .analysis-bot-compact .analysis-bot-launcher-copy{width:100%}#digitCircleAnalysisPanel .analysis-bot-compact .analysis-bot-controls{gap:5px}#digitCircleAnalysisPanel .analysis-bot-compact .analysis-bot-controls select{max-width:135px}#digitCircleAnalysisPanel .analysis-bot-compact .button{padding:6px 8px}}
   `;
   document.head.appendChild(botPanelCss);
-  const botRunButton=document.querySelector('#analysisRunBot');
-  const botStopButton=document.querySelector('#analysisStopBot');
-  const botStatus=document.querySelector('#digitCircleAnalysisPanel .analysis-bot-compact .panel-overline');
-  botRunButton?.addEventListener('click',()=>{if(botStopButton)botStopButton.disabled=false;if(botStatus)botStatus.textContent='DEMO RUN REQUESTED';});
-  botStopButton?.addEventListener('click',()=>{if(botStopButton)botStopButton.disabled=true;if(botStatus)botStatus.textContent='BOT CONTROL · STOPPED';});
   liveCss.textContent=`
     .analysis-view-chooser{margin:16px 0;display:grid;gap:12px;padding:16px;border:1px solid #293143;border-radius:14px;background:linear-gradient(135deg,#121a28,#0d121c)}
     .analysis-view-intro{display:flex;flex-direction:column;gap:4px}.analysis-view-intro strong{font-size:15px;color:#f1f4fb}.analysis-view-intro span{font-size:11px;color:#8e9ab0}

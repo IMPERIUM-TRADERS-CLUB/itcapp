@@ -36,7 +36,7 @@
     const out = {
       name: String(sp.name || '').replace(/[<>&"]/g, '').slice(0, 40) || 'My ITC Bot', contract, side, symbol, barrier,
       stake, takeProfit: num(sp.takeProfit, 0.1, 100000, 5), stopLoss: num(sp.stopLoss, 0.1, 100000, 20),
-      martingale: num(sp.martingale, 1, 10, 2), runs: int(sp.runs, 1, 10000, 50),
+      martingale: num(sp.martingale, 1, 10, 2), losses: int(sp.losses, 1, 20, 3),
       duration: contract === 'risefall' ? int(sp.duration, 5, 10, 5) : int(sp.duration, 1, 10, 1),
       recovery: null, randomBarrier: null, entry: cleanEntry(sp.entry), recoveryEntry: null
     };
@@ -105,19 +105,18 @@
       ? [iff([[cmp('EQ', get('Recovery'), num_(0)), gate(sp.entry, code)]], gate(sp.recoveryEntry, recCode))]
       : gate(sp.entry, code);
 
-    const init = [set('Initial Stake', num_(sp.stake)), set('Stake', get('Initial Stake')), set('Target Profit', num_(sp.takeProfit)), set('Stop Loss', num_(sp.stopLoss)), set('Number of Runs', num_(sp.runs)), set('Runs Done', num_(0)), set('Multiplier', num_(sp.martingale))];
+    const init = [set('Initial Stake', num_(sp.stake)), set('Stake', get('Initial Stake')), set('Target Profit', num_(sp.takeProfit)), set('Stop Loss', num_(sp.stopLoss)), set('Consecutive Loss Limit', num_(sp.losses)), set('Consecutive Losses', num_(0)), set('Multiplier', num_(sp.martingale))];
     if (sp.recovery) init.push(set('Recovery', num_(0)));
     if (hasBarrier) init.push(set('Prediction', mainBarrier()));
     if (nDigits) { init.push(set('Ticks Seen', num_(0))); for (let i = 1; i <= nDigits; i++) init.push(set('Digit ' + i, num_(0))); }
-    const resetToMain = [set('Stake', get('Initial Stake'))].concat(sp.recovery ? [set('Recovery', num_(0))] : [], hasBarrier ? [set('Prediction', mainBarrier())] : []);
-    const lose = [];
+    const resetToMain = [set('Consecutive Losses', num_(0)), set('Stake', get('Initial Stake'))].concat(sp.recovery ? [set('Recovery', num_(0))] : [], hasBarrier ? [set('Prediction', mainBarrier())] : []);
+    const lose = [set('Consecutive Losses', arith('ADD', get('Consecutive Losses'), num_(1)))];
     if (sp.recovery) { lose.push(set('Recovery', num_(1))); if (hasBarrier && sp.recovery.barrier !== null) lose.push(set('Prediction', num_(sp.recovery.barrier))); }
     lose.push(set('Stake', arith('MULTIPLY', get('Stake'), get('Multiplier'))), notify('warn', sp.recovery ? 'Loss. Recovery mode.' : 'Loss. Martingale applied.'));
     const after = [iff([[B('contract_check_result', f('CHECK_RESULT', 'win')), resetToMain.concat([notify('success', 'Win.')])]], lose),
-      set('Runs Done', arith('ADD', get('Runs Done'), num_(1))),
       iff([[cmp('GTE', B('total_profit'), get('Target Profit')), [notify('success', 'Target profit reached. Bot stopped.')]],
            [cmp('LTE', B('total_profit'), arith('MINUS', num_(0), get('Stop Loss'))), [notify('warn', 'Stop loss reached. Bot stopped.')]],
-           [cmp('GTE', get('Runs Done'), get('Number of Runs')), [notify('success', 'Number of runs reached. Bot stopped.')]]], [S('trade_again')])];
+           [cmp('GTE', get('Consecutive Losses'), get('Consecutive Loss Limit')), [notify('warn', 'Consecutive losses limit reached. Bot stopped.')]]], [S('trade_again')])];
     const sub = MARKETS.find(m => m[1] === sp.symbol)[0].startsWith('Jump') ? 'jump_index' : 'random_index';
     const top = '<block type="trade_definition" id="' + id() + '" deletable="false" x="0" y="110"><statement name="TRADE_OPTIONS">' + chain([
       S('trade_definition_market', f('MARKET_LIST', 'synthetic_index') + f('SUBMARKET_LIST', sub) + f('SYMBOL_LIST', sp.symbol)),
@@ -182,7 +181,7 @@
     grab(/stake\s*(?:of|is|=|at|to)?\s*\$?(\d+(?:\.\d+)?)/, 'stake'); grab(/(?:take profit|target profit|tp)\s*(?:of|is|=|at|to)?\s*\$?(\d+(?:\.\d+)?)/, 'takeProfit');
     grab(/(?:stop loss|sl)\s*(?:of|is|=|at|to)?\s*\$?(\d+(?:\.\d+)?)/, 'stopLoss'); grab(/(?:martingale|multiplier)\s*(?:of|is|=|x|at|to)?\s*(\d+(?:\.\d+)?)/, 'martingale');
     if (/no martingale/.test(t)) sp.martingale = 1;
-    const rn = t.match(/(?:number of runs|runs|trades)\s*(?:of|is|=|to|at)?\s*(\d+)/) || t.match(/(\d+)\s*(?:runs|trades|times)\b/); if (rn) sp.runs = Number(rn[1]);
+    const rn = t.match(/(?:consecutive losses|losses in a row|max losses)\s*(?:of|is|=|to|at)?\s*(\d+)/) || t.match(/(\d+)\s*(?:consecutive\s+)?losses(?:\s+in a row)?\b/); if (rn) sp.losses = Number(rn[1]);
     const dur = t.match(/(\d+)\s*ticks?\b/); if (dur && !/last\s*\d+\s*ticks?/.test(t)) sp.duration = Number(dur[1]);
     const clean = sanitize(sp);
     clean.name = (sp.name && base) ? clean.name : (clean.side[0] + clean.side.slice(1).toLowerCase() + (clean.barrier !== null ? ' ' + clean.barrier : '') + (clean.recovery ? ' Recovery' + (clean.recovery.barrier !== null ? ' ' + clean.recovery.barrier : '') : '') + (clean.entry ? ' Entry' : '') + ' Bot');
@@ -194,7 +193,7 @@
     const cond = e => !e ? '' : e.kind === 'digit' ? 'when the digit ' + e.digit + ' appears' : 'after the last ' + e.count + ' digits are ' + (e.test === 'above' ? 'above ' + e.threshold : e.test === 'below' ? 'below ' + e.threshold : e.test) + (e.then ? ' and the next digit is ' + e.then : '');
     if (sp.entry) bits.push('It only enters ' + cond(sp.entry) + '.');
     if (sp.recovery) { const rs = sp.recovery.side[0] + sp.recovery.side.slice(1).toLowerCase(); bits.push('After a loss it switches to recovery ' + rs + (sp.recovery.barrier !== null ? ' ' + sp.recovery.barrier : '') + (sp.recoveryEntry ? ', and only trades ' + cond(sp.recoveryEntry) : '') + ', then returns after a win.'); }
-    bits.push('Stake ' + sp.stake + ', take profit ' + sp.takeProfit + ', stop loss ' + sp.stopLoss + ', martingale ×' + sp.martingale + ', ' + sp.runs + ' runs.');
+    bits.push('Stake ' + sp.stake + ', take profit ' + sp.takeProfit + ', stop loss ' + sp.stopLoss + ', martingale ×' + sp.martingale + ', stop after ' + sp.losses + ' losses in a row.');
     return bits.join(' ');
   }
   const api = { sanitize, compile, localParse, describe, MARKETS, LABEL };

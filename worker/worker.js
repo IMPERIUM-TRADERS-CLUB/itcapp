@@ -190,12 +190,12 @@ Spec fields (omit anything the user did not mention):
 - recovery: {"side": optional, "barrier": optional digit}: after a loss, trade this side/digit until a win, then go back to the normal trade. The side may differ from the normal side (for example normal OVER, recovery UNDER; or EVEN then recovery ODD). Works for overunder, evenodd and matchesdiffers.
 - entry: when the bot is allowed to trade. {"kind":"digit","digit":0-9} = only when the latest digit equals it. {"kind":"streak","count":2-6,"test":"above"|"below"|"even"|"odd","threshold":0-9,"then":"even"|"odd" (optional)} = the last "count" digits all pass the test; with "then", the latest digit must be even/odd right after "count" digits that pass the test.
 - recoveryEntry: same shape as entry, used only while in recovery mode (for example "wait for 3 digits above 4 before recovery").
-- stake, takeProfit, stopLoss (money amounts), martingale (stake multiplier after a loss, 1 = off, default 2), runs (number of trades before the bot stops, default 50), duration (ticks)
-Defaults when unspecified: stake 1, takeProfit 5, stopLoss 20, martingale 2, runs 50.
+- stake, takeProfit, stopLoss (money amounts), martingale (stake multiplier after a loss, 1 = off, default 2), losses (number of consecutive losses before the bot stops, default 3), duration (ticks)
+Defaults when unspecified: stake 1, takeProfit 5, stopLoss 20, martingale 2, losses 3.
 Examples:
 "over 1 recovery over 3" -> {"contract":"overunder","side":"OVER","barrier":1,"recovery":{"barrier":3}}
 "even, and if I lose go odd" -> {"contract":"evenodd","side":"EVEN","recovery":{"side":"ODD"}}
-"under 7 8 or 9 randomly, recovery under 6, run 30 times" -> {"contract":"overunder","side":"UNDER","barrier":8,"randomBarrier":{"from":7,"to":9},"recovery":{"barrier":6},"runs":30}
+"under 7 8 or 9 randomly, recovery under 6, stop after 2 losses in a row" -> {"contract":"overunder","side":"UNDER","barrier":8,"randomBarrier":{"from":7,"to":9},"recovery":{"barrier":6},"losses":2}
 "wait for 3 odd digits then an even digit and trade even" -> {"contract":"evenodd","side":"EVEN","entry":{"kind":"streak","count":3,"test":"odd","then":"even"}}`;
 async function aiBot(request, env, headers) {
   if (!isSet(env.ANTHROPIC_API_KEY) && !env.AI) return json({ error: 'ai_not_configured' }, 503, headers);

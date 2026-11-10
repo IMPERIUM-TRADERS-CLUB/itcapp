@@ -31,16 +31,16 @@
   let demoRunStake = 2;
   let loadedImportedBot = null;
   const importedBots = {
-    itc_diff: { name: "ITC Differs Smart Cycle", market: "Volatility 100 (1s) Index", contract: "Matches / Differs", stake: 1, tp: 5, sl: 20, runs: 50, martingale: false, multiplier: 1, symbol: "1HZ100V", prediction: "Trades Differs. Each contract picks a new random digit 0\u20139 and wins if the last digit is anything else.", xml: "bots/ITC Differs Smart Cycle.xml" },
-    itc_under: { name: "ITC Under Shield", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.8, symbol: "1HZ100V", prediction: "Trades Under with a random 7, 8 or 9. After a loss it switches to recovery Under 6 until it wins.", xml: "bots/ITC Under Shield.xml" },
-    itc_over: { name: "ITC Over Shield", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Over with a random 0, 1 or 2. After a loss it switches to recovery Over 4 until it wins.", xml: "bots/ITC Over Shield.xml" },
-    itc_over_recovery: { name: "ITC Over Recovery Sniper", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Over 2. After a loss it waits until the last 3 digits are all above 4, then trades recovery Over 4, and checks again after every recovery loss.", xml: "bots/ITC Over Recovery Sniper.xml" },
-    signal_autobot: { name: "Signal Autobot Even Odd", market: "Volatility 100 (1s) Index", contract: "Even / Odd", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Fast 1-tick bot. Waits for 3 odd digits then an even digit and trades Even (set Side to Odd for the reverse). Has take profit, stop loss and martingale.", xml: "bots/Signal Autobot Even Odd.xml" },
-    my_normal: { name: "ITC Normal Bot", market: "Volatility 100 (1s) Index", contract: "Rise / Fall", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2, symbol: "1HZ100V", prediction: "A simple bot with take profit, stop loss and martingale. Works with any market and any contract type: pick them in the first blocks.", xml: "bots/ITC Normal Bot.xml" },
-    my_over1: { name: "ITC Over 1 Recovery 3", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.5, symbol: "1HZ100V", prediction: "Trades Over 1. The moment it loses, it switches to recovery Over 3, then goes back to Over 1 after a win. No conditions.", xml: "bots/ITC Over 1 Recovery 3.xml" },
-    my_under8: { name: "ITC Under 8 Recovery 7", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 3, symbol: "1HZ100V", prediction: "Trades Under 8. The moment it loses, it switches to recovery Under 7, then goes back to Under 8 after a win. No conditions.", xml: "bots/ITC Under 8 Recovery 7.xml" },
-    my_evenodd: { name: "ITC Even Odd Bot", market: "Volatility 100 (1s) Index", contract: "Even / Odd", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Even or Odd, your choice. Press run and it trades straight away. No conditions.", xml: "bots/ITC Even Odd Bot.xml" },
-    my_entry: { name: "ITC Entry Digit Bot", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, runs: 50, martingale: true, multiplier: 2.5, symbol: "1HZ100V", prediction: "Set your own entry digit. The bot waits for that digit, then trades Over or Under. Choose the side and the digit in the first blocks.", xml: "bots/ITC Entry Digit Bot.xml" }
+    itc_diff: { name: "ITC Differs Smart Cycle", market: "Volatility 100 (1s) Index", contract: "Matches / Differs", stake: 1, tp: 5, sl: 20, losses: 3, martingale: false, multiplier: 1, symbol: "1HZ100V", prediction: "Trades Differs. Each contract picks a new random digit 0\u20139 and wins if the last digit is anything else.", xml: "bots/ITC Differs Smart Cycle.xml" },
+    itc_under: { name: "ITC Under Shield", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.8, symbol: "1HZ100V", prediction: "Trades Under with a random 7, 8 or 9. After a loss it switches to recovery Under 6 until it wins.", xml: "bots/ITC Under Shield.xml" },
+    itc_over: { name: "ITC Over Shield", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Over with a random 0, 1 or 2. After a loss it switches to recovery Over 4 until it wins.", xml: "bots/ITC Over Shield.xml" },
+    itc_over_recovery: { name: "ITC Over Recovery Sniper", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Over 2. After a loss it waits until the last 3 digits are all above 4, then trades recovery Over 4, and checks again after every recovery loss.", xml: "bots/ITC Over Recovery Sniper.xml" },
+    signal_autobot: { name: "Signal Autobot Even Odd", market: "Volatility 100 (1s) Index", contract: "Even / Odd", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Fast 1-tick bot. Waits for 3 odd digits then an even digit and trades Even (set Side to Odd for the reverse). Has take profit, stop loss and martingale.", xml: "bots/Signal Autobot Even Odd.xml" },
+    my_normal: { name: "ITC Normal Bot", market: "Volatility 100 (1s) Index", contract: "Rise / Fall", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2, symbol: "1HZ100V", prediction: "A simple bot with take profit, stop loss and martingale. Works with any market and any contract type: pick them in the first blocks.", xml: "bots/ITC Normal Bot.xml" },
+    my_over1: { name: "ITC Over 1 Recovery 3", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.5, symbol: "1HZ100V", prediction: "Trades Over 1. The moment it loses, it switches to recovery Over 3, then goes back to Over 1 after a win. No conditions.", xml: "bots/ITC Over 1 Recovery 3.xml" },
+    my_under8: { name: "ITC Under 8 Recovery 7", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 3, symbol: "1HZ100V", prediction: "Trades Under 8. The moment it loses, it switches to recovery Under 7, then goes back to Under 8 after a win. No conditions.", xml: "bots/ITC Under 8 Recovery 7.xml" },
+    my_evenodd: { name: "ITC Even Odd Bot", market: "Volatility 100 (1s) Index", contract: "Even / Odd", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.1, symbol: "1HZ100V", prediction: "Trades Even or Odd, your choice. Press run and it trades straight away. No conditions.", xml: "bots/ITC Even Odd Bot.xml" },
+    my_entry: { name: "ITC Entry Digit Bot", market: "Volatility 100 (1s) Index", contract: "Over / Under", stake: 1, tp: 5, sl: 20, losses: 3, martingale: true, multiplier: 2.5, symbol: "1HZ100V", prediction: "Set your own entry digit. The bot waits for that digit, then trades Over or Under. Choose the side and the digit in the first blocks.", xml: "bots/ITC Entry Digit Bot.xml" }
   };
 
   const canvasData = new Map();
@@ -402,7 +402,7 @@
     $('#stakeInput').value = bot.stake;
     $('#takeProfitInput').value = bot.tp;
     $('#stopLossInput').value = bot.sl;
-    $('#maxRunsInput').value = 3;
+    $('#maxRunsInput').value = bot.losses || 3;
     $('#martingaleToggle').checked = bot.martingale;
     $('#martingaleOptions').classList.toggle('hidden', !bot.martingale);
     $('#multiplierInput').value = bot.multiplier;
@@ -422,7 +422,7 @@
     $('#stakeInput').value = bot.stake;
     $('#takeProfitInput').value = bot.tp;
     $('#stopLossInput').value = bot.sl;
-    $('#maxRunsInput').value = 3;
+    $('#maxRunsInput').value = bot.losses || 3;
     $('#martingaleToggle').checked = bot.martingale;
     $('#martingaleOptions').classList.toggle('hidden', !bot.martingale);
     $('#multiplierInput').value = bot.multiplier;
@@ -558,11 +558,13 @@
     showToast(`${importedBots[id].name} selected. Use Edit parameters to load or adjust it.`);
   });
   $('#analysisRunBot').addEventListener('click', () => {
+    if (realRun) { stopBot(); return; }
     const id = $('#analysisBotSelect').value;
-    if (id === 'custom') { loadedImportedBot = null; runSimulation(); return; }
-    if (loadedImportedBot !== id) loadImportedBot(id, false, true);
-    runSimulation();
+    if (id === 'custom') { loadedImportedBot = null; if (window.ITC_RUNNER) window.ITC_RUNNER.forced = null; }
+    else if (loadedImportedBot !== id) loadImportedBot(id, false, true);
+    startBot();
   });
+  $('#analysisStopBot')?.addEventListener('click', stopBot);
   $('#analysisEditBot').addEventListener('click', () => {
     const id = $('#analysisBotSelect').value;
     if (id !== 'custom') loadImportedBot(id, true, true); else { navigate('botbuilder'); setBB('itc'); }
@@ -823,6 +825,11 @@
     if (dockRun) { dockRun.classList.toggle('is-running', running); dockRun.querySelector('b').textContent = running ? 'Stop' : 'Run'; dockRun.querySelector('.dock-run-icon').textContent = running ? '■' : '▶'; }
     if (top) top.textContent = running ? '■ Stop' : '▶ Run';
     setBotStatus(running, running ? 'Bot running…' : 'Bot is not running');
+    const ar = $('#analysisRunBot'), as = $('#analysisStopBot');
+    if (ar) ar.textContent = running ? '■ Stop' : '▶ Run bot';
+    if (as) as.disabled = !running;
+    const st = document.querySelector('#digitCircleAnalysisPanel .analysis-bot-compact .panel-overline');
+    if (st) st.textContent = running ? 'BOT CONTROL · RUNNING' : 'BOT CONTROL';
   }
   function paintSpeedUi() {
     const label = $('#dockSpeedLabel'); if (label) label.textContent = execSpeed.toUpperCase();

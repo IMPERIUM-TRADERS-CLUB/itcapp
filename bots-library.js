@@ -14,7 +14,7 @@
 
   function register(bot) {
     if (!window.ITC_APP || !window.ITC_APP.bots) return;
-    window.ITC_APP.bots[bot.id] = { name: bot.name, market: bot.market || 'Volatility 100 (1s) Index', contract: bot.contract || 'Over / Under', stake: Number(bot.stake) || 1, tp: Number(bot.tp) || 10, sl: Number(bot.sl) || 10, runs: Number(bot.runs) || 10, martingale: Boolean(bot.martingale), multiplier: Number(bot.multiplier) || 2, symbol: bot.symbol || '', prediction: bot.description || '', xml: '' };
+    window.ITC_APP.bots[bot.id] = { name: bot.name, market: bot.market || 'Volatility 100 (1s) Index', contract: bot.contract || 'Over / Under', stake: Number(bot.stake) || 1, tp: Number(bot.tp) || 10, sl: Number(bot.sl) || 10, losses: Number(bot.losses) || 3, martingale: Boolean(bot.martingale), multiplier: Number(bot.multiplier) || 2, symbol: bot.symbol || '', prediction: bot.description || '', xml: '' };
   }
 
   // ---- card design: colourful, hoverable, only a Load bot button ----
