@@ -557,13 +557,7 @@
     if (id === 'custom') { loadedImportedBot = null; showToast('Current Builder strategy selected.'); return; }
     showToast(`${importedBots[id].name} selected. Use Edit parameters to load or adjust it.`);
   });
-  $('#analysisRunBot').addEventListener('click', () => {
-    if (realRun) { stopBot(); return; }
-    const id = $('#analysisBotSelect').value;
-    if (id === 'custom') { loadedImportedBot = null; if (window.ITC_RUNNER) window.ITC_RUNNER.forced = null; }
-    else if (loadedImportedBot !== id) loadImportedBot(id, false, true);
-    startBot();
-  });
+  $('#analysisRunBot').addEventListener('click', () => runFrom('analysis'));
   $('#analysisStopBot')?.addEventListener('click', stopBot);
   $('#analysisEditBot').addEventListener('click', () => {
     const id = $('#analysisBotSelect').value;
@@ -600,13 +594,14 @@
     $$('.dbot-run-tabs button').forEach(x => x.classList.toggle('active', x.dataset.runTab === name));
     $$('[data-run-pane]').forEach(x => x.classList.toggle('hidden', x.dataset.runPane !== name));
   }
-  function openRunPanel(name) { updateRunSummary(); $('#dbotRunPanel').classList.remove('hidden'); showRunPane(name); setTimeout(() => window.ITC_BLOCKLY?.resize?.(), 60); }
+  function openRunPanel(name) { updateRunSummary(); $('#dbotRunPanel').classList.remove('hidden'); $('#dbot').classList.add('panel-open'); $('#dbotRunOpen').setAttribute('aria-expanded', 'true'); $('#dbotRunClose').setAttribute('aria-expanded', 'true'); showRunPane(name); setTimeout(() => window.ITC_BLOCKLY?.resize?.(), 60); }
   $('.dbot-run-tabs').addEventListener('click', e => { const b = e.target.closest('[data-run-tab]'); if (b) showRunPane(b.dataset.runTab); });
-  $('#dbotRunClose').addEventListener('click', () => { $('#dbotRunPanel').classList.add('hidden'); setTimeout(() => window.ITC_BLOCKLY?.resize?.(), 60); });
+  $('#dbotRunClose').addEventListener('click', () => { $('#dbotRunPanel').classList.add('hidden'); $('#dbot').classList.remove('panel-open'); $('#dbotRunOpen').setAttribute('aria-expanded', 'false'); $('#dbotRunClose').setAttribute('aria-expanded', 'false'); setTimeout(() => window.ITC_BLOCKLY?.resize?.(), 60); });
   $('#dbotRunOpen').addEventListener('click', () => openRunPanel('summary'));
+  $('#builderQuickStrategy').addEventListener('click', () => $('#openBotPicker').click());
   $('#dbotOpen').addEventListener('click', () => { if (window.ITC_AI) window.ITC_AI.open(); else showToast('The bot builder AI is loading. Try again in a moment.'); });
   const setBotStatus = (running, text) => { $('#dbotStatus').textContent = text; $('#dbot').classList.toggle('is-running', running); };
-  $('#resetBot').addEventListener('click', () => { setBotStatus(false, 'Bot is not running'); $('#dbotHint').textContent = 'Build a bot from the start menu then hit the run button to run the bot.'; });
+  $('#resetBot').addEventListener('click', () => { setBotStatus(false, 'Bot is not running'); $('#dbotHint').textContent = 'Build a strategy with blocks or choose Quick strategy, then press Run.'; });
   $('#dbotSearch').addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     const q = e.target.value.trim().toLowerCase(); if (!q) return;
@@ -614,7 +609,9 @@
     const item = tb?.getToolboxItems?.().find(i => (i.getName?.() || '').toLowerCase().includes(q));
     if (item) { try { tb.setSelectedItem(item); } catch (_) {} } else showToast('No block category matches “' + e.target.value.trim() + '”.');
   });
-  if (window.innerWidth < 760) $('#dbotRunPanel').classList.add('hidden');
+  let mobileRunPanel = window.innerWidth < 760;
+  if (mobileRunPanel) { $('#dbotRunPanel').classList.add('hidden'); $('#dbot').classList.remove('panel-open'); $('#dbotRunOpen').setAttribute('aria-expanded', 'false'); }
+  else { $('#dbot').classList.add('panel-open'); $('#dbotRunOpen').setAttribute('aria-expanded', 'true'); }
   $('#dbotParams').addEventListener('click', () => $('#dbotDrawer').classList.toggle('hidden'));
   $('#dbotDrawerClose').addEventListener('click', () => $('#dbotDrawer').classList.add('hidden'));
   const wsDo = fn => { const ws = window.ITC_BLOCKLY?.getWorkspace(); if (ws) fn(ws); };
@@ -631,7 +628,17 @@
     dbotEl.classList.toggle('toolbox-collapsed');
     setTimeout(() => window.ITC_BLOCKLY?.resize?.(), 50);
   });
-  window.addEventListener('resize', () => { syncMenuForScreen(); });
+  window.addEventListener('resize', () => {
+    syncMenuForScreen();
+    const isMobile = window.innerWidth < 760;
+    if (isMobile !== mobileRunPanel) {
+      mobileRunPanel = isMobile;
+      $('#dbotRunPanel').classList.toggle('hidden', isMobile);
+      dbotEl.classList.toggle('panel-open', !isMobile);
+      $('#dbotRunOpen').setAttribute('aria-expanded', String(!isMobile));
+      $('#dbotRunClose').setAttribute('aria-expanded', String(!isMobile));
+    }
+  });
   setBuilderMode();
   // Load-bot picker: opens the chosen bot straight onto the white canvas.
   const pickerBackdrop = $('#botPickerBackdrop');
@@ -825,6 +832,7 @@
     if (dockRun) { dockRun.classList.toggle('is-running', running); dockRun.querySelector('b').textContent = running ? 'Stop' : 'Run'; dockRun.querySelector('.dock-run-icon').textContent = running ? '■' : '▶'; }
     if (top) top.textContent = running ? '■ Stop' : '▶ Run';
     setBotStatus(running, running ? 'Bot running…' : 'Bot is not running');
+    try { document.body.classList.toggle('bot-is-running', running); window.dispatchEvent(new CustomEvent('itc:run-state', { detail: { running } })); } catch (_) {}
     const ar = $('#analysisRunBot'), as = $('#analysisStopBot');
     if (ar) ar.textContent = running ? '■ Stop' : '▶ Run bot';
     if (as) as.disabled = !running;
@@ -928,8 +936,22 @@
     realRun = true; paintRunUi(true);
   }
   const toggleBot = () => { if ($('#page-bulktrader').classList.contains('active')) { showToast('On the Bulk Trader, tap the Even/Odd (or other) button to place trades.'); return; } if (realRun) stopBot(); else startBot(); };
-  $('#runBot').addEventListener('click', () => { if (!botTimer) openRunPanel('summary'); toggleBot(); });
-  $('#dockRun').addEventListener('click', toggleBot);
+  // One controller for every Run button: Builder, Digit Circles (Analysis Tool) and the Charts / Signals dock.
+  // Any of them starts the same live bot immediately, and any of them stops it; all labels stay in sync.
+  function runFrom(source) {
+    if ($('#page-bulktrader').classList.contains('active')) { showToast('On the Bulk Trader, tap the Even/Odd (or other) button to place trades.'); return; }
+    if (realRun) { stopBot(); return; }
+    if (source === 'builder') openRunPanel('summary');
+    else {   // Digit Circles and Charts run the bot chosen in the bot selector (same bot the Builder has loaded)
+      const id = $('#analysisBotSelect').value;
+      if (id === 'custom') { loadedImportedBot = null; if (window.ITC_RUNNER) window.ITC_RUNNER.forced = null; }
+      else if (loadedImportedBot !== id) loadImportedBot(id, false, true);
+    }
+    startBot();
+  }
+  window.ITC_RUN = { toggle: runFrom, running: () => realRun };
+  $('#runBot').addEventListener('click', () => runFrom('builder'));
+  $('#dockRun').addEventListener('click', () => runFrom('dock'));
   $('#dockSpeed').addEventListener('click', () => {
     execSpeed = execSpeed === 'fast' ? 'slow' : 'fast';
     paintSpeedUi();

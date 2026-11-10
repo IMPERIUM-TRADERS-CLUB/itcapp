@@ -690,3 +690,237 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
   .str-cells span{min-width:0;width:100%;height:30px;font-size:15px}
   .str-cells span.new{outline-offset:-2px}
 }
+
+/* Bot Builder only: light Deriv-style Blockly workspace, without a framed-card look. */
+#page-botbuilder{background:#fff!important;color:#0e0e0e}
+#page-botbuilder .dbot{background:#fff!important;color:#0e0e0e;border:0!important;border-radius:0!important;box-shadow:none!important}
+#page-botbuilder .dbot-bar,
+#page-botbuilder .dbot-namebar{background:#fff!important;border-color:#d6dadb!important;box-shadow:none!important}
+#page-botbuilder .dbot-start,
+#page-botbuilder .dbot-runbtn,
+#page-botbuilder .dbot .button.dbot-run{background:#ff444f!important;border-color:#ff444f!important;color:#fff!important;border-radius:4px!important;box-shadow:none!important}
+#page-botbuilder .dbot-start:hover,
+#page-botbuilder .dbot-runbtn:hover,
+#page-botbuilder .dbot .button.dbot-run:hover{background:#ec3f3f!important;border-color:#ec3f3f!important}
+#page-botbuilder .dbot-tools{background:#fff!important;border-color:#d6dadb!important;border-radius:4px!important}
+#page-botbuilder .dbot-tool{color:#0e0e0e!important;border-radius:4px!important}
+#page-botbuilder .dbot-tool:hover,
+#page-botbuilder .dbot-tool:focus-visible{background:#f2f3f4!important;border-color:#d6dadb!important}
+#page-botbuilder .dbot-search input,
+#page-botbuilder .dbot-status{background:#fff!important;border-color:#d6dadb!important;color:#0e0e0e!important;border-radius:4px!important}
+#page-botbuilder .dbot-search input::placeholder,
+#page-botbuilder .dbot-footnote{color:#6e6e6e!important}
+#page-botbuilder .dbot-speed{border-color:#d6dadb!important;border-radius:4px!important;color:#0e0e0e!important}
+#page-botbuilder .dbot-stage,
+#page-botbuilder #blocklyWorkspace,
+#page-botbuilder .blocklySvg{background:#fff!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#page-botbuilder .blocklyMainBackground{fill:#fff!important;stroke:none!important}
+#page-botbuilder .dbot .blocklyToolboxDiv,
+#page-botbuilder .dbot .blocklyToolbox{background:#f2f3f4!important;border-color:#d6dadb!important}
+#page-botbuilder .dbot .blocklyTreeLabel,
+#page-botbuilder .dbot .blocklyToolboxCategoryLabel{color:#0e0e0e!important}
+#page-botbuilder .dbot .blocklyToolboxCategory:hover,
+#page-botbuilder .dbot .blocklyToolboxCategorySelected{background:#eaeced!important}
+#page-botbuilder .dbot .blocklyFlyoutBackground{fill:#f8f9f9!important;fill-opacity:1!important}
+#page-botbuilder .dbot-run-panel{background:#fff!important;border-color:#d6dadb!important;box-shadow:none!important}
+#page-botbuilder .dbot-run-head{background:#fff!important;border-color:#d6dadb!important}
+#page-botbuilder .dbot-run-tabs button{color:#6e6e6e!important}
+#page-botbuilder .dbot-run-tabs button.active{background:#fff!important;color:#0e0e0e!important;border-bottom-color:#ff444f!important}
+#page-botbuilder .dbot-run-close,
+#page-botbuilder .dbot-run-handle{color:#6e6e6e!important;border-color:#d6dadb!important;background:#fff!important}
+#page-botbuilder .dbot-hint{background:#f2f3f4!important;color:#0e0e0e!important;border-radius:4px!important}
+#page-botbuilder .dbot-drawer{background:#fff!important;color:#0e0e0e!important;border-color:#d6dadb!important;border-radius:4px!important;box-shadow:0 8px 24px #0002!important}
+#page-botbuilder .dbot-run-controls{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:0 8px;background:#fff;border-bottom:1px solid #d6dadb}
+#page-botbuilder .dbot-run-controls .dbot-run-close{flex:none}
+#page-botbuilder .dbot-run-controls .dbot-run-reset{display:inline-flex;align-items:center;justify-content:center;margin:0 4px 0 auto;padding:6px 16px}
+#page-botbuilder .dbot.panel-open .dbot-run-handle{display:none}
+
+/* Mobile Bot Builder (phones): matches the Deriv Bot mobile layout.
+   Left icon rail, floating Quick strategy button, collapsed run bar with a chevron, and a full-screen run sheet. */
+@media(max-width:760px){
+  #page-botbuilder{padding:0!important}
+  #page-botbuilder .dbot{
+    --rail:44px; --runh:58px; --handle:34px;
+    position:relative!important;min-height:0!important;max-width:100vw!important;
+    height:calc(100vh - var(--bb-top,127px))!important;height:calc(100dvh - var(--bb-top,127px))!important;
+    overflow:hidden!important;background:#fff!important;border:0!important;border-radius:0!important;
+  }
+  /* the old toolbar row collapses; its children are positioned on the screen instead */
+  #page-botbuilder .dbot-bar{position:static!important;display:block!important;height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;border:0!important;background:transparent!important}
+  #page-botbuilder .dbot-search,#page-botbuilder .dbot-namebar{display:none!important}
+
+  /* Quick strategy: red button floating over the canvas */
+  #page-botbuilder .dbot-start{
+    position:absolute!important;z-index:15;top:14px;left:calc(var(--rail) + 12px);right:auto;
+    width:auto;min-width:128px;height:40px!important;min-height:40px;padding:0 16px!important;
+    border-radius:4px!important;font-size:15px!important;font-weight:700;text-align:left;white-space:nowrap;
+    box-shadow:0 2px 6px #0002!important;
+  }
+
+  /* left tool rail */
+  #page-botbuilder .dbot-tools{
+    position:absolute!important;z-index:16;left:0;top:0;bottom:calc(var(--runh) + var(--handle));width:var(--rail);max-width:none;
+    display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;flex-wrap:nowrap;
+    gap:0;overflow-y:auto;overflow-x:hidden;padding:6px 0!important;
+    border:0!important;border-right:1px solid #e6e9ea!important;border-radius:0!important;
+    background:#fff!important;scrollbar-width:none;
+  }
+  #page-botbuilder .dbot-tools::-webkit-scrollbar{display:none}
+  #page-botbuilder .dbot-tool{
+    flex:none;width:var(--rail)!important;min-width:0!important;height:40px!important;padding:0!important;
+    display:grid!important;place-items:center;border:0!important;border-radius:0!important;
+    background:transparent!important;color:#30363b!important;font-size:20px!important;
+  }
+  #page-botbuilder .dbot-tool:active{background:#f2f3f4!important}
+  #page-botbuilder .dbot-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #page-botbuilder #openBotPicker svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #page-botbuilder .dbot-sep{flex:none;width:16px;height:1px;margin:6px 0;background:#d6dadb}
+  /* order: refresh, folder, save, sort | undo, redo | zoom in, zoom out | (ITC extras) */
+  #page-botbuilder #resetBot{order:1}#page-botbuilder #openBotPicker{order:2}#page-botbuilder #blocklyDownload{order:3}#page-botbuilder #dbotSort{order:4;display:grid!important}
+  #page-botbuilder .dbot-sep:nth-of-type(1){order:5}
+  #page-botbuilder #dbotUndo{order:6}#page-botbuilder #dbotRedo{order:7}
+  #page-botbuilder .dbot-sep:nth-of-type(2){order:8}
+  #page-botbuilder #dbotZoomIn{order:9}#page-botbuilder #dbotZoomOut{order:10}
+  #page-botbuilder #dbotMenu{order:11;margin-top:6px;border-top:1px solid #d6dadb!important;font-size:0!important}
+  #page-botbuilder #dbotMenu::before{content:"▤";font-size:21px}
+  #page-botbuilder #dbotParams{order:12;font-size:20px!important;width:var(--rail)!important;padding:0!important}
+  #page-botbuilder #dbotSpeed{order:13;font-size:18px!important}
+  #page-botbuilder #dbotSpeed span{display:none!important}
+  #page-botbuilder #dbotOpen,#page-botbuilder #blocklyToLog,#page-botbuilder #blocklyClear{display:none!important}
+
+  /* canvas */
+  #page-botbuilder .dbot-stage{position:absolute!important;inset:0!important;display:block!important;min-height:0!important;padding:0!important;overflow:hidden!important;background:#fff!important}
+  #page-botbuilder #blocklyWorkspace{
+    position:absolute!important;left:var(--rail)!important;right:0!important;top:0!important;bottom:calc(var(--runh) + var(--handle))!important;
+    width:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;
+  }
+  #page-botbuilder .dbot .blocklyToolboxDiv{width:104px}
+
+  /* bottom run bar: Run + status */
+  #page-botbuilder .dbot-runzone{
+    position:absolute!important;z-index:1200;left:0;right:0;bottom:0;width:100%;height:var(--runh);
+    display:grid!important;grid-template-columns:86px minmax(0,1fr);gap:8px;
+    align-items:center;margin:0!important;padding:8px 10px!important;
+    border-top:1px solid #e6e9e9;background:#fff!important;
+  }
+  #page-botbuilder .dbot-runbtn{
+    width:100%;min-width:0;height:42px!important;padding:0 8px!important;border:0!important;border-radius:4px!important;
+    background:#4bb4b3!important;color:#fff!important;font-size:16px!important;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:none!important;
+  }
+  #page-botbuilder .dbot-runbtn:hover,#page-botbuilder .dbot-runbtn:active{background:#43a7a6!important}
+  #page-botbuilder .dbot-status{
+    position:relative;display:block!important;width:auto!important;height:42px!important;margin:0;
+    border:1px solid #d6dadb!important;border-radius:4px!important;background:#fff!important;
+    color:#30363b!important;font-size:13px!important;font-weight:700!important;text-align:center;line-height:1;overflow:hidden;
+  }
+  #page-botbuilder .dbot-status>span{position:absolute;left:0;right:0;top:9px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+  /* progress track with three dots, like the Deriv run bar */
+  #page-botbuilder .dbot-status::before{
+    content:"";position:absolute;left:12px;right:12px;bottom:8px;height:5px;border-radius:3px;background:#dfe3e4;
+  }
+  #page-botbuilder .dbot-status::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:8px;height:5px;
+    background:
+      radial-gradient(circle,#30363b 0 1.6px,transparent 2px) left center/5px 5px no-repeat,
+      radial-gradient(circle,#30363b 0 1.6px,transparent 2px) center center/5px 5px no-repeat,
+      radial-gradient(circle,#30363b 0 1.6px,transparent 2px) right center/5px 5px no-repeat;
+  }
+  #page-botbuilder .dbot-status i{position:absolute;left:12px;bottom:8px;height:5px;border-radius:3px;background:#4bb4b3;width:0;z-index:1}
+  #page-botbuilder .dbot.is-running .dbot-status i{width:calc(100% - 24px)}
+
+  /* chevron bar that opens the run sheet */
+  #page-botbuilder .dbot-run-handle{
+    position:absolute!important;z-index:1190;left:0;right:0;top:auto;bottom:var(--runh);
+    width:100%;height:var(--handle);transform:none;display:grid;place-items:center;
+    border:0!important;border-top:1px solid #e6e9e9!important;border-radius:0!important;background:#fff!important;font-size:0!important;
+  }
+  #page-botbuilder .dbot-run-handle::before,#page-botbuilder .dbot-run-close::before{
+    content:"";display:block;width:11px;height:11px;border-left:2.5px solid #30363b;border-top:2.5px solid #30363b;transform:rotate(45deg) translate(3px,3px);
+  }
+  #page-botbuilder .dbot.panel-open .dbot-run-handle{display:none!important}
+
+  /* run sheet: covers the canvas, run bar stays visible */
+  #page-botbuilder .dbot-run-panel{
+    position:absolute!important;z-index:1180;left:0!important;right:0!important;top:0!important;bottom:var(--runh)!important;
+    width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;
+    display:flex;flex-direction:column;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;overflow:hidden;
+  }
+  #page-botbuilder .dbot-run-panel.hidden{display:none!important}
+  #page-botbuilder .dbot-run-controls{position:relative;flex:none;height:44px;display:flex;align-items:center;justify-content:center;padding:0 10px;border-bottom:0;background:#fff}
+  #page-botbuilder .dbot-run-close{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px!important;height:40px;border:0!important;background:transparent!important;
+    display:grid;place-items:center;font-size:0!important;
+  }
+  #page-botbuilder .dbot-run-close::before{transform:rotate(225deg) translate(3px,3px)}
+  #page-botbuilder .dbot-run-reset{
+    position:static!important;margin:0 0 0 auto!important;width:auto!important;height:34px!important;
+    padding:0 18px!important;border:1px solid #9a9fa2!important;border-radius:6px!important;
+    background:#fff!important;color:#30363b!important;font-size:14px!important;font-weight:700;
+  }
+  #page-botbuilder .dbot-run-head{flex:none;height:44px;background:#fff!important;border:0!important}
+  #page-botbuilder .dbot-run-tabs{display:flex;width:100%;height:100%;border-bottom:1px solid #e3e6e7}
+  #page-botbuilder .dbot-run-tabs button{flex:1;padding:8px 2px;border:0;border-bottom:2.5px solid transparent;background:#fff;color:#40464b!important;font-size:14px;font-weight:500}
+  #page-botbuilder .dbot-run-tabs button.active{color:#202428!important;font-weight:700;border-bottom-color:#ff444f!important}
+  #page-botbuilder .dbot-run-body{flex:1;min-height:0;overflow:auto;padding:0!important;background:#fff!important}
+  #page-botbuilder .dbot-run-body.hidden{display:none!important}
+  #page-botbuilder .dbot-run-body[data-run-pane="summary"]{display:flex;flex-direction:column}
+  #page-botbuilder .dbot-hint{
+    flex:1;min-height:120px;display:grid;place-items:center;margin:0!important;padding:20px 28px!important;
+    background:#fff!important;color:#343a3f!important;border-radius:0!important;font-size:14.5px!important;line-height:1.45;text-align:center;
+  }
+  #page-botbuilder .dbot-sumfoot{flex:none;background:#f2f3f4;padding:10px 12px 14px}
+  #page-botbuilder .dbot-whats{display:block;margin:0 0 14px auto;padding:0;border:0;background:none;color:#30363b;font-size:11.5px;text-decoration:underline dotted;cursor:pointer}
+  #page-botbuilder .dbot-whats-text{margin:-6px 0 14px;font-size:11.5px;line-height:1.45;color:#4b5054;text-align:right}
+  #page-botbuilder .dbot-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:22px 6px!important;margin:0!important;padding:0 0 4px!important;background:transparent}
+  #page-botbuilder .dbot-stats>div{padding:0!important;border:0!important;background:transparent!important;text-align:center}
+  #page-botbuilder .dbot-stats small{font-size:12px!important;font-weight:700!important;color:#30363b!important;margin-bottom:8px}
+  #page-botbuilder .dbot-stats strong{font-size:12px!important;font-weight:400!important;color:#4b5054!important}
+  #page-botbuilder .dbot-note{margin:14px 0 0;font-size:10.5px;color:#6e6e6e;text-align:center}
+  #page-botbuilder .dbot-run-body[data-run-pane="transactions"],
+  #page-botbuilder .dbot-run-body[data-run-pane="journal"]{padding:12px!important}
+}
+/* "What's this?" link (all sizes) */
+.dbot-whats{background:none;border:0;padding:0;color:#4b5054;font-size:11px;text-decoration:underline dotted;cursor:pointer;display:block;margin:0 0 8px auto}
+.dbot-whats-text{font-size:11px;color:#4b5054;margin:0 0 8px}
+.dbot-whats-text[hidden]{display:none}
+
+/* Bot Builder run bar: gold Fast/Slow toggle (same look as the Analysis Tool dock) */
+#page-botbuilder #dbotSpeed{display:none!important}
+#page-botbuilder .dbot-runspeed{flex:none;max-width:none;height:34px;padding:0 10px;gap:8px;border-radius:6px}
+#page-botbuilder .dbot-runspeed .dock-bolt{font-size:16px}
+#page-botbuilder .dbot-runspeed .dock-speed-text{flex:none}
+#page-botbuilder .dbot-runspeed .dock-speed-text small{font-size:9px}
+#page-botbuilder .dbot-runspeed .dock-speed-text b{font-size:12px;color:#fff}
+#page-botbuilder .dbot-runspeed .dock-switch{width:36px;height:20px;border-radius:10px}
+#page-botbuilder .dbot-runspeed .dock-switch i{top:3px;left:3px;width:14px;height:14px}
+#page-botbuilder .dbot-runspeed.is-fast .dock-switch i{transform:translateX(16px)}
+@media(max-width:760px){
+  #page-botbuilder .dbot-runzone{grid-template-columns:78px minmax(0,1fr) auto!important;gap:6px!important}
+  #page-botbuilder .dbot-runspeed{height:42px;padding:0 8px;gap:5px;border-radius:4px;display:flex!important}
+  #page-botbuilder .dbot-runspeed .dock-bolt{font-size:15px}
+}
+
+/* Side menu: Join our community dropdown */
+.social-menu{display:block}
+.social-menu[hidden]{display:none}
+.social-toggle{width:100%;display:flex;align-items:center;gap:0}
+.social-toggle .social-label{flex:1;text-align:left}
+.social-caret{margin-left:auto;font-size:12px;color:var(--gold,#d9a51b);transition:transform .2s}
+.social-menu.open .social-caret{transform:rotate(180deg)}
+.social-list{display:grid;gap:6px;margin:4px 0 6px 12px;padding:6px 0 6px 12px;border-left:1.5px solid var(--gold-line,#594929)}
+.social-list[hidden]{display:none}
+.social-item{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 10px;border:1px solid #2a2a2a;border-radius:10px;background:#0a0c0d;color:#f1ead2;text-decoration:none;font-size:13px;font-weight:600}
+.social-item:hover,.social-item:focus-visible{border-color:var(--gold-line,#594929);background:#14110a;outline:0}
+.social-badge{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center}
+.social-badge svg{width:15px;height:15px;fill:#fff}
+.social-telegram .social-badge{background:#29a9eb}.social-whatsapp .social-badge{background:#25d366}
+.social-youtube .social-badge{background:#ff0000}.social-facebook .social-badge{background:#1877f2}
+.social-name{flex:1;min-width:0}.social-go{color:var(--gold,#d9a51b);font-size:12px}
+@media(min-width:701px) and (max-width:1040px){
+  .social-label,.social-caret,.social-name,.social-go{display:none}
+  .social-list{margin:4px 0;padding:0;border:0;justify-items:center}
+  .social-item{padding:6px;min-height:0;border-radius:50%}
+}
+.social-toggle .nav-icon{margin-right:12px}
+.social-item{font-size:12.5px;gap:8px;padding:6px 8px}.social-name{white-space:nowrap}

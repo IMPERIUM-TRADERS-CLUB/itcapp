@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>ITC Version 9.10 · Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=92">
+  <link rel="stylesheet" href="itc-theme.css?v=98">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -62,6 +62,10 @@
         <button class="nav-link" data-page="signalalerts"><span class="nav-icon">◔</span> Signals</button>
         <button class="nav-link" data-page="history"><span class="nav-icon">◷</span> Trade History</button>
         <a class="nav-link" href="https://app.abepayy.com/?ref=LEVON" target="_blank" rel="noopener noreferrer"><span class="nav-icon">$</span><span>Deposit / Withdraw</span></a>
+        <div class="social-menu" id="socialMenu">
+          <button class="nav-link social-toggle" id="socialToggle" type="button" aria-expanded="false" aria-controls="socialList"><span class="nav-icon">☍</span><span class="social-label">Join our community</span><span class="social-caret" aria-hidden="true">▾</span></button>
+          <div class="social-list" id="socialList" hidden></div>
+        </div>
       </nav>
       <div class="sidebar-divider"></div>
       <div class="workspace-label">PREFERENCES</div>
@@ -151,45 +155,50 @@
       <section class="page" id="page-botbuilder">
         <div class="dbot" id="dbot">
           <div class="dbot-bar" role="toolbar" aria-label="Bot builder tools">
-            <button class="dbot-start" id="openBotPicker" type="button">★ Get started</button>
+            <button class="dbot-start" id="builderQuickStrategy" type="button">Quick strategy</button>
             <label class="dbot-search"><input id="dbotSearch" type="search" placeholder="Search blocks..." autocomplete="off" aria-label="Search blocks"><span aria-hidden="true">⌕</span></label>
             <div class="dbot-tools">
+              <button class="dbot-tool" id="resetBot" type="button" title="Reset" aria-label="Reset"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.6L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.6L20 15.5"/><path d="M20 20v-4.5h-4.5"/></svg></button>
+              <button class="dbot-tool" id="openBotPicker" type="button" title="Load a bot" aria-label="Load a bot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h9v10H3z"/><path d="M3 8.5l2-4h6l2 2"/></svg></button>
+              <button class="dbot-tool" id="blocklyDownload" type="button" title="Save to My Bots" aria-label="Save to My Bots"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3"/><circle cx="12" cy="15" r="2.6"/></svg></button>
               <button class="dbot-tool dbot-menu-btn" id="dbotMenu" type="button" title="Show or hide the block menu" aria-label="Show or hide the block menu">▤ Blocks</button>
-              <button class="dbot-tool" id="resetBot" type="button" title="Reset" aria-label="Reset">↻</button>
-              <button class="dbot-tool" id="dbotOpen" type="button" title="Bot Forge: build a bot with AI" aria-label="Bot Forge: build a bot with AI">🤖</button>
-              <button class="dbot-tool" id="blocklyDownload" type="button" title="Save to My Bots" aria-label="Save to My Bots">💾</button>
               <span class="dbot-sep"></span>
-              <button class="dbot-tool" id="dbotUndo" type="button" title="Undo" aria-label="Undo">↶</button>
-              <button class="dbot-tool" id="dbotRedo" type="button" title="Redo" aria-label="Redo">↷</button>
-              <button class="dbot-tool" id="dbotSort" type="button" title="Sort blocks" aria-label="Sort blocks">⇅</button>
-              <button class="dbot-tool" id="dbotZoomIn" type="button" title="Zoom in" aria-label="Zoom in">⊕</button>
-              <button class="dbot-tool" id="dbotZoomOut" type="button" title="Zoom out" aria-label="Zoom out">⊖</button>
+              <button class="dbot-tool" id="dbotUndo" type="button" title="Undo" aria-label="Undo"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5"/><path d="M4 10h10a6 6 0 0 1 0 12h-3"/></svg></button>
+              <button class="dbot-tool" id="dbotRedo" type="button" title="Redo" aria-label="Redo"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5"/><path d="M20 10H10a6 6 0 0 0 0 12h3"/></svg></button>
+              <span class="dbot-sep"></span>
+              <button class="dbot-tool" id="dbotZoomIn" type="button" title="Zoom in" aria-label="Zoom in"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/><path d="M10.5 7.5v6M7.5 10.5h6"/></svg></button>
+              <button class="dbot-tool" id="dbotZoomOut" type="button" title="Zoom out" aria-label="Zoom out"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/><path d="M7.5 10.5h6"/></svg></button>
+              <button class="dbot-tool" id="dbotParams" type="button" title="Trade parameters" aria-label="Trade parameters">ⓘ</button>
+              <button class="dbot-tool dbot-speed" id="dbotSpeed" type="button" title="Execution speed" aria-label="Execution speed"><i>⚡</i><span>FAST</span></button>
+              <button class="dbot-tool" id="dbotOpen" type="button" title="Bot Forge: build a bot with AI" aria-label="Bot Forge: build a bot with AI">🤖</button>
+              <button class="dbot-tool" id="dbotSort" type="button" title="Sort blocks" aria-label="Sort blocks"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><rect x="8" y="4" width="12" height="5" rx="1.2"/><rect x="8" y="14" width="8" height="5" rx="1.2"/></svg></button>
               <button class="dbot-tool" id="blocklyToLog" type="button" title="Validate strategy" aria-label="Validate strategy">✔</button>
               <button class="dbot-tool" id="blocklyClear" type="button" title="Clear canvas" aria-label="Clear canvas">🗑</button>
             </div>
             <div class="dbot-runzone">
-              <button class="dbot-tool" id="dbotParams" type="button" title="Trade parameters" aria-label="Trade parameters">ⓘ Parameters</button>
-              <button class="dbot-runbtn" id="runBot" type="button">▶ Run</button><button class="dbot-speed" id="dbotSpeed" type="button" title="Execution speed"><i>⚡</i><span>FAST</span></button>
+              <button class="dbot-runbtn" id="runBot" type="button">▶ Run</button>
               <div class="dbot-status"><span id="dbotStatus">Bot is not running</span><i></i></div>
+              <button class="dock-speed dbot-runspeed is-fast" id="dbotRunSpeed" type="button" aria-pressed="true" aria-label="Toggle execution speed Fast or Slow"><span class="dock-bolt">⚡</span><span class="dock-speed-text"><small>Speed</small><b id="dbotRunSpeedLabel">FAST</b></span><span class="dock-switch"><i></i></span></button>
             </div>
           </div>
           <div class="dbot-namebar"><span class="dbot-botname" id="dbotBotName">Untitled bot</span><span class="template-tag" id="blocklyStatus">BLOCK EDITOR</span><span class="dbot-footnote" id="blocklyFootnote">Drag blocks from the left menu onto the canvas.</span></div>
           <div class="dbot-stage">
             <div id="blocklyWorkspace" aria-label="Bot builder canvas"></div>
-            <button class="dbot-run-handle" id="dbotRunOpen" type="button" aria-label="Open run panel">«</button>
+            <button class="dbot-run-handle" id="dbotRunOpen" type="button" aria-label="Open run panel" aria-expanded="false">⌃</button>
             <aside class="dbot-run-panel" id="dbotRunPanel" aria-label="Run panel">
-              <div class="dbot-run-head"><div class="dbot-run-tabs" role="tablist"><button class="active" data-run-tab="summary" role="tab">Summary</button><button data-run-tab="transactions" role="tab">Transactions</button><button data-run-tab="journal" role="tab">Journal</button></div><button class="dbot-run-close" id="dbotRunClose" aria-label="Collapse run panel">»</button></div>
+              <div class="dbot-run-controls"><button class="dbot-run-close" id="dbotRunClose" type="button" aria-label="Collapse run panel" aria-expanded="true">⌄</button></div>
+              <div class="dbot-run-head"><div class="dbot-run-tabs" role="tablist"><button class="active" data-run-tab="summary" role="tab">Summary</button><button data-run-tab="transactions" role="tab">Transactions</button><button data-run-tab="journal" role="tab">Journal</button></div></div>
               <div class="dbot-run-body" data-run-pane="summary">
-                <div class="dbot-hint" id="dbotHint">Build a bot from the start menu then hit the run button to run the bot.</div>
-                <div class="dbot-stats">
+                <div class="dbot-hint" id="dbotHint">When you’re ready to trade, hit Run. You’ll be able to track your bot’s performance here.</div>
+                <div class="dbot-sumfoot"><button class="dbot-whats" id="dbotWhats" type="button" aria-expanded="false">What’s this?</button><p class="dbot-whats-text" id="dbotWhatsText" hidden>Summary tracks your stake, payout, wins and losses for the bot runs in this session. Reset clears it.</p><div class="dbot-stats">
                   <div><small>Total stake</small><strong><span id="sumStake">0.00</span> USD</strong></div>
                   <div><small>Total payout</small><strong>0.00 USD</strong></div>
                   <div><small>No. of runs</small><strong id="sumRuns">0</strong></div>
                   <div><small>Contracts lost</small><strong>0</strong></div>
                   <div><small>Contracts won</small><strong>0</strong></div>
-                  <div><small>Profit/loss</small><strong>0.00 USD</strong></div>
+                  <div><small>Total profit/loss</small><strong>0.00 USD</strong></div>
                 </div>
-                <p class="dbot-note">Live: Run places real contracts on the account selected in the top bar.</p>
+                <p class="dbot-note">Live: Run places real contracts on the account selected in the top bar.</p></div>
               </div>
               <div class="dbot-run-body hidden" data-run-pane="transactions"><div class="dbot-empty"><strong>No transactions yet</strong><p>Contracts bought by a live bot will be listed here.</p></div></div>
               <div class="dbot-run-body hidden" data-run-pane="journal"><div class="dbot-journal-head"><button class="subtle-link" id="clearLog">Clear log</button></div><div class="log-content" id="logContent"><div class="log-empty">No bot has run yet. Press <b>Run</b> to start trading live.</div></div></div>
@@ -606,29 +615,30 @@
     </div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <div class="picker-backdrop hidden" id="botPickerBackdrop"><div class="picker panel" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><div class="picker-head"><h2 id="botPickerTitle">Load a bot</h2><button class="modal-close" id="botPickerClose" aria-label="Close">×</button></div><p class="muted-text">Pick a bot to open on the canvas, or build your own with the Bot Forge.</p><div class="picker-list" id="botPickerList"></div><button type="button" class="button secondary picker-upload" id="pickerForge">🤖 Build a bot with the Forge</button></div></div>
+  <div class="picker-backdrop hidden" id="botPickerBackdrop"><div class="picker panel" role="dialog" aria-modal="true" aria-labelledby="botPickerTitle"><div class="picker-head"><h2 id="botPickerTitle">Choose a strategy</h2><button class="modal-close" id="botPickerClose" aria-label="Close">×</button></div><p class="muted-text">Choose a ready-made strategy to load onto the canvas, or start building with blocks.</p><div class="picker-list" id="botPickerList"></div><button type="button" class="button secondary picker-upload" id="pickerForge">🤖 Build a bot with the Forge</button></div></div>
   <div class="modal-backdrop hidden" id="modalBackdrop"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Close dialog">×</button><div class="eyebrow"><span class="eyebrow-line"></span> IMPERIUM TRADERS CLUB</div><h2 id="modalTitle">Workspace notice</h2><p id="modalBody">Trades placed here are real contracts on your selected Deriv account (Demo or Real).</p><button class="button primary" id="modalOk">Understood</button></div></div>
-  <script src="config.js?v=8.9"></script>
-  <script src="market-live.js?v=9.3"></script>
+  <script src="config.js?v=9.0"></script>
+  <script src="market-live.js?v=9.4"></script>
   <script src="charts-live.js?v=8.8"></script>
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=91"></script>
-  <script src="app.js?v=9.28"></script>
+  <script src="app.js?v=9.31"></script>
   <script src="deriv-account.js?v=9.14"></script>
   <script src="account-display.js?v=7.6"></script>
   <script src="real-trading.js?v=8.0"></script>
   <script src="bot-runner.js?v=7.9"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.28"></script>
+  <script src="market-hunter.js?v=9.29"></script>
   <script src="sound.js?v=9.8"></script>
-  <script src="enhancements.js"></script>
-  <script src="circle-ai.js?v=9.21"></script>
+  <script src="enhancements.js?v=2"></script>
+  <script src="circle-ai.js?v=9.22"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
   <script src="speedbot.js?v=9.29"></script>
   <script src="quick-strategy.js?v=9.20"></script>
-  <script src="run-panel.js?v=9.22"></script>
-  <script src="canvas-spec.js?v=9.23"></script>
+  <script src="run-panel.js?v=9.25"></script>
+  <script src="social-links.js?v=1"></script>
+  <script src="canvas-spec.js?v=9.24"></script>
   <script src="signal-engine.js"></script>
   <script src="admin-gate.js"></script>
   <script src="auto-signals.js?v=8.8"></script>

@@ -662,8 +662,9 @@
       if (!opts.length || sel.id === "analysisMarketSelect" || !opts.every(o => /^(Volatility|Jump) .* Index$/.test(o.textContent.trim())) || opts.some(o => o.hasAttribute("value"))) return;   // selects that carry real market codes (traders, charts) must keep them
       const keep = sel.value;
       const group = (label, list) => '<optgroup label="' + label + '">' + list.map(n => '<option>' + n + '</option>').join("") + "</optgroup>";
-      sel.innerHTML = group("Volatility Indices", vol) + group("Jump Indices", jump);
-      sel.value = names.includes(keep) ? keep : (names.includes(state.selected) ? state.selected : names[0]);
+      sel.innerHTML = group("Volatility Indices", vol) + (sel.id === "speedBotMarket" ? "" : group("Jump Indices", jump));   // no Jump indices on the SpeedBot
+      const okName = n => names.includes(n) && !(sel.id === "speedBotMarket" && /^Jump /.test(n));
+      sel.value = okName(keep) ? keep : (okName(state.selected) ? state.selected : vol[0]);
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", expandMarketSelects); else expandMarketSelects();

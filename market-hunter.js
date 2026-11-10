@@ -60,6 +60,7 @@
     const md = window.ITC_MARKET_DATA; if (!md) return [];
     const out = [];
     for (const mk of md.getMarkets()) {
+      if (/^Jump /.test(mk.name || '')) continue;   // Jump indices are slow and make recovery hard, so the hunt skips them
       const t = mk.ticks || []; if (t.length < 100) continue;
       const digits = t.map(x => x.digit), epoch = t[t.length - 1].epoch;
       const share = (w, ok) => { const s = digits.slice(-w); return s.filter(ok).length / s.length; };

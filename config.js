@@ -14,6 +14,13 @@ window.ITC_CONFIG = {
   // Leave empty to use the built-in canvas and Deriv's public trading page.
   DBOT_URL: "",      // e.g. "https://itc-dbot.pages.dev/"   (fork of deriv-com/trading-bot-template)
   DTRADER_URL: "",   // e.g. "https://itc-trader.pages.dev/" (your DTrader template deployment)
+  // Community links shown in the side menu under "Join our community". Leave a link empty ("") and it stays hidden.
+  SOCIAL: {
+    telegram: "https://t.me/IMPTC",
+    whatsapp: "https://chat.whatsapp.com/GuWX2jy465cLxq3PZ",
+    youtube: "",    // add your YouTube channel link here later
+    facebook: ""    // add your Facebook page or group link here later
+  },
   DEFAULT_SYMBOL: "1HZ100V",
   RECONNECT_MS: 3500,
   MAX_TICKS: 1200

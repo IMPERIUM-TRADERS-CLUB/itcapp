@@ -69,13 +69,14 @@
     return out;
   }
   // Preference: you mostly trade the 1-second volatilities. "1s-first" lists them ahead of other markets, "1s-only" hides the rest, "all" ranks purely by win share.
+  const isJump = name => /^Jump /.test(name || '');
   const is1s = name => /^Volatility \d+ \(1s\) Index$/.test(name || '');
   const marketPref = () => { try { return localStorage.getItem('itc_scan_markets') || '1s-first'; } catch (_) { return '1s-first'; } };
   const sortSetups = (a, b) => { if (marketPref() === '1s-first') { const d = (is1s(b.market || b.name) ? 1 : 0) - (is1s(a.market || a.name) ? 1 : 0); if (d) return d; } return (b.rules || 0) - (a.rules || 0) || b.score - a.score; };
-  const scanAll = (family, windowSize) => (window.ITC_MARKET_DATA?.getMarkets?.() || []).filter(m => marketPref() !== '1s-only' || is1s(m.name)).flatMap(m => scanMarket(m, family, windowSize));
+  const scanAll = (family, windowSize) => (window.ITC_MARKET_DATA?.getMarkets?.() || []).filter(m => !isJump(m.name) && (marketPref() !== '1s-only' || is1s(m.name))).flatMap(m => scanMarket(m, family, windowSize));
   // Shared rule engine so the ITC AI and the Smart Analysis scanner apply the same conditions.
   window.ITC_AI_RULES = { scanMarket, scanAll, getDigitCounts, is1s, marketPref, sortSetups };
-  function getMarkets() { return window.ITC_MARKET_DATA?.getMarkets?.() || []; }
+  function getMarkets() { return (window.ITC_MARKET_DATA?.getMarkets?.() || []).filter(m => !isJump(m.name)); }   // Jump indices are left out of every scan
   function setContract(contract) {
     state.contract = contract;
     document.querySelectorAll('[data-ai-contract]').forEach(btn => {

@@ -13,7 +13,7 @@
   const paint = () => {
     setText('sumStake', money(S.stake)); setText('sumRuns', String(S.runs)); setText('sumLost', String(S.lost)); setText('sumWon', String(S.won));
     const p = document.getElementById('sumPayout'); if (p) p.textContent = money(S.payout) + ' ' + S.cur;
-    const pl = document.getElementById('sumPL'); if (pl) { pl.textContent = (S.profit >= 0 ? '+' : '') + money(S.profit) + ' ' + S.cur; pl.style.color = S.profit > 0 ? '#16a34a' : S.profit < 0 ? '#dc2626' : ''; }
+    const pl = document.getElementById('sumPL'); if (pl) { pl.textContent = (S.profit > 0 ? '+' : '') + money(S.profit) + ' ' + S.cur; pl.style.color = S.profit > 0 ? '#16a34a' : S.profit < 0 ? '#dc2626' : ''; }
     const st = document.getElementById('sumStake'); if (st && st.tagName !== 'SPAN') st.textContent = money(S.stake) + ' ' + S.cur;
   };
   // Transactions pane
@@ -38,7 +38,21 @@
   });
   // Reset button (Summary pane)
   const sum = panel.querySelector('[data-run-pane="summary"]');
-  const reset = document.createElement('button'); reset.type = 'button'; reset.className = 'tx-reset'; reset.textContent = 'Reset';
+  const reset = document.createElement('button'); reset.type = 'button'; reset.className = 'tx-reset dbot-run-reset'; reset.textContent = 'Reset'; reset.setAttribute('aria-label', 'Reset run summary');
   reset.addEventListener('click', () => { Object.assign(S, { stake: 0, payout: 0, runs: 0, won: 0, lost: 0, profit: 0 }); rows.clear(); body.innerHTML = ''; empty.style.display = ''; paint(); });
-  sum.appendChild(reset); paint();
+  (panel.querySelector('.dbot-run-controls') || sum).appendChild(reset); paint();
+  const wb = document.getElementById('dbotWhats'), wt = document.getElementById('dbotWhatsText');
+  if (wb && wt) wb.addEventListener('click', () => { const open = wt.hidden; wt.hidden = !open; wb.setAttribute('aria-expanded', String(open)); });
+  // Phones: make the builder fill the screen exactly, from just under the header to the bottom edge.
+  const dbotEl = document.getElementById('dbot'), pageEl = document.getElementById('page-botbuilder');
+  const fitBuilder = () => {
+    if (!dbotEl || !pageEl) return;
+    if (window.innerWidth > 760) { dbotEl.style.removeProperty('--bb-top'); return; }
+    const top = pageEl.getBoundingClientRect().top + window.scrollY;
+    if (top > 0) dbotEl.style.setProperty('--bb-top', Math.round(top) + 'px');
+    if (window.ITC_BLOCKLY && window.ITC_BLOCKLY.resize) window.ITC_BLOCKLY.resize();
+  };
+  ['resize', 'orientationchange', 'hashchange'].forEach(ev => window.addEventListener(ev, () => setTimeout(fitBuilder, 60)));
+  document.addEventListener('click', e => { if (e.target.closest('[data-page="botbuilder"]')) { setTimeout(fitBuilder, 80); setTimeout(fitBuilder, 400); } });
+  setTimeout(fitBuilder, 300);
 })();

@@ -31,4 +31,13 @@
     if (lbl) new MutationObserver(paint).observe(lbl, { childList: true, characterData: true, subtree: true });
     paint();
   }
+
+  // Gold Fast/Slow toggle in the builder's run bar (same switch and state as the Analysis Tool dock)
+  const rs = document.getElementById('dbotRunSpeed'), rl = document.getElementById('dbotRunSpeedLabel');
+  if (rs && dock) {
+    const paintRs = () => { const f = (lbl ? lbl.textContent : 'FAST').trim() || 'FAST'; if (rl) rl.textContent = f; const fast = !/slow/i.test(f); rs.classList.toggle('is-fast', fast); rs.setAttribute('aria-pressed', String(fast)); };
+    rs.addEventListener('click', () => { dock.click(); setTimeout(paintRs, 30); });
+    if (lbl) new MutationObserver(paintRs).observe(lbl, { childList: true, characterData: true, subtree: true });
+    paintRs();
+  }
 })();
