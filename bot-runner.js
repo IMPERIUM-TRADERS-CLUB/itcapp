@@ -56,7 +56,7 @@
     st.stake = st.base;
     const log = (m, s) => o.log && o.log(m, s || 'LIVE');
     const finish = why => {
-      if (st.stopped) return; st.stopped = true; run = null;
+      if (st.stopped) return; st.stopped = true; run = null; window.removeEventListener('itc:trade-halt', st.haltFn);
       if (st.subId) try { A.request({ forget: st.subId }); } catch (_) {}
       log(why + ' · ' + st.n + ' runs · P/L ' + st.profit.toFixed(2), 'STOPPED'); o.done && o.done(why);
       const kind = /^Take profit/.test(why) ? 'win' : /^Stop loss/.test(why) ? 'loss' : (/^Consecutive losses/.test(why) ? 'loss' : '');
@@ -99,6 +99,9 @@
       } catch (err) { log('Error: ' + (err.message || err), 'ERROR'); finish('Stopped on error'); return true; }
       st.busy = false; return false;
     }
+    st.haltFn = e => finish('Stopped: ' + ((e.detail && e.detail.message) || 'trading halted.'));   // low balance or wrong account: stop and stay stopped
+    window.addEventListener('itc:trade-halt', st.haltFn);
+    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { window.removeEventListener('itc:trade-halt', st.haltFn); return { error: chk.message }; } }
     run = { stop: () => finish('Stopped by you') };
     try {
       if (T.simulated()) { const r = T.simTicks(sym, onTick, () => st.stopped); if (r.error) { run = null; return { error: r.error }; } }

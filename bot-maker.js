@@ -204,19 +204,38 @@
   const root = $('botForge');
   if (!root) return;
   const chat = $('forgeChat'), input = $('forgeText'), send = $('forgeSend'), actions = $('forgeActions');
+  const preview = $('forgePreview'), charCount = $('forgeCharCount');
   const workerUrl = (() => { const u = String((window.ITC_CONFIG || {}).OAUTH_WORKER_URL || '').replace(/\/+$/, ''); return /^https:\/\//.test(u) && !/REPLACE/i.test(u) ? u : ''; })();
   const history = []; let current = null, currentXml = '', busy = false;
   const toast = t => window.ITC_APP && window.ITC_APP.showToast(t);
   const add = (who, text) => { const d = document.createElement('div'); d.className = 'forge-msg ' + who; d.textContent = text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d; };
 
   async function askServer(userText) {
-    const res = await fetch(workerUrl + '/ai/bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-10), currentSpec: current }) });
+    const res = await fetch(workerUrl + '/ai/bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-10), currentSpec: current, request: String(userText).slice(0, 1500) }) });
     if (!res.ok) throw new Error('ai_' + res.status);
     return res.json();
   }
+  function money(v) { return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function renderPreview(sp) {
+    if (!preview) return;
+    let exposure = 0, stake = sp.stake;
+    for (let i = 0; i < sp.losses; i++) { exposure += stake; stake *= sp.martingale; if (!Number.isFinite(exposure) || !Number.isFinite(stake)) break; }
+    $('forgePreviewName').textContent = sp.name;
+    $('forgePreviewDescription').textContent = describe(sp);
+    $('forgeMetricStake').textContent = money(sp.stake);
+    $('forgeMetricExposure').textContent = Number.isFinite(exposure) ? money(exposure) : 'Very high';
+    $('forgeMetricLosses').textContent = String(sp.losses);
+    $('forgeMetricMultiplier').textContent = sp.martingale + '×';
+    const warning = $('forgeRiskWarning');
+    if (sp.martingale > 1) warning.textContent = 'Risk warning: if every trade in the configured loss sequence loses, the estimated stake total is ' + money(exposure) + '. The next stake would be ' + money(stake) + '. Martingale does not guarantee recovery.';
+    else warning.textContent = 'Flat-stake mode: the estimated total stake across ' + sp.losses + ' consecutive losses is ' + money(exposure) + '. Losses can still exceed this if the bot is changed or restarted.';
+    preview.classList.remove('hidden');
+  }
   async function handle(userText) {
-    if (busy || !userText.trim()) return; busy = true; send.disabled = true;
-    add('user', userText); history.push({ role: 'user', content: userText.slice(0, 1500) });
+    userText = String(userText || '').trim().slice(0, 1500);
+    if (busy || !userText) { if (!userText && !busy) toast('Describe the bot you want to build first.'); return; }
+    busy = true; send.disabled = true; send.textContent = 'Building…';
+    add('user', userText); history.push({ role: 'user', content: userText });
     const wait = add('ai', 'Building your bot…'); wait.classList.add('thinking');
     let reply = '', spec = null, basic = false;
     try {
@@ -228,12 +247,15 @@
       const built = compile(spec); current = built.spec; currentXml = built.xml;
       if (window.ITC_BLOCKLY && window.ITC_BLOCKLY.importXml) window.ITC_BLOCKLY.importXml(currentXml);
       const nm = $('dbotBotName'); if (nm) nm.textContent = current.name;
-      wait.textContent = (reply || 'Done! Here is your bot.') + '\n\n' + describe(current) + (basic ? '\n\n(Basic mode: the AI server is not connected, so I understood the common words only. Add what you want to change and I will update it.)' : '');
+      wait.textContent = (reply || 'Your bot has been generated. Review the strategy and risk estimate below.') + '\n\n' + describe(current) + (basic ? '\n\nBasic mode is active: I used the built-in phrase parser. Check every setting carefully, especially if your request was complex.' : '');
+      renderPreview(current);
       actions.classList.remove('hidden');
-    } else wait.textContent = reply || 'Tell me what the bot should trade, for example “Over 1 with recovery Over 3”.';
+    } else { wait.textContent = reply || 'I need a little more detail. Specify the market and contract, such as “Over 1 on Volatility 100”.'; }
     history.push({ role: 'assistant', content: wait.textContent.slice(0, 1500) });
-    busy = false; send.disabled = false; input.value = ''; input.focus();
+    if (history.length > 20) history.splice(0, history.length - 20);
+    busy = false; send.disabled = false; send.textContent = 'Build bot'; input.value = ''; if (charCount) charCount.textContent = '0 / 1500'; input.focus();
   }
+  if (charCount) input.addEventListener('input', () => { charCount.textContent = input.value.length + ' / 1500'; });
   send.addEventListener('click', () => handle(input.value));
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handle(input.value); } });
   root.querySelectorAll('[data-forge-chip]').forEach(b => b.addEventListener('click', () => { input.value = b.dataset.forgeChip; handle(input.value); }));
@@ -244,7 +266,16 @@
     if (id && window.ITC_RUNNER) window.ITC_RUNNER.custom[id] = current;
     if (id) toast('Saved to My Bots. It stays in this browser.');
   });
-  $('forgeTest').addEventListener('click', () => { if (!currentXml || !window.ITC_APP) return; if (window.ITC_RUNNER) { window.ITC_RUNNER.custom.__forge = current; window.ITC_RUNNER.forced = '__forge'; } window.ITC_APP.openBuilder(); setTimeout(() => window.ITC_APP.startBot(), 600); });
+  $('forgeTest').addEventListener('click', () => {
+    if (!currentXml || !window.ITC_APP) return;
+    const account = window.ITC_DERIV_ACCOUNT && window.ITC_DERIV_ACCOUNT.getStatus ? window.ITC_DERIV_ACCOUNT.getStatus().account : null;
+    if (account && String(account.account_type || '').toLowerCase() === 'real') { toast('Demo safety check: switch your Deriv account to Demo before testing this bot.'); return; }
+    if (account && String(account.account_type || '').toLowerCase() !== 'demo') { toast('Could not verify a Demo account. Please select a Deriv Demo account before testing.'); return; }
+    const testNote = account ? 'Open this bot in the builder on your selected Demo account? Review the stake and stop-loss settings before starting.' : 'No Deriv account is connected. Open the bot in the builder for practice/simulation, and do not connect a Real account before testing.';
+    if (!window.confirm(testNote)) return;
+    if (window.ITC_RUNNER) { window.ITC_RUNNER.custom.__forge = current; window.ITC_RUNNER.forced = '__forge'; }
+    window.ITC_APP.openBuilder(); setTimeout(() => window.ITC_APP.startBot(), 600);
+  });
   $('forgeOpen').addEventListener('click', () => { if (window.ITC_APP) window.ITC_APP.openBuilder(); });
   // Save whatever is on the canvas (including edits) to My Bots. Nothing is downloaded.
   const saveBtn = $('blocklyDownload');
@@ -276,7 +307,7 @@
     if (workerUrl) fetch(workerUrl + '/health').then(r => r.json()).then(h => set(Boolean(h && h.ai))).catch(() => set(false));
     window.addEventListener('itc:forge-basic', () => set(false));
   })();
-  add('ai', 'Hi! I am the ITC Bot Forge. Tell me the bot you want in your own words, typed or spoken, and I will build every block. Then you can test it, save it to My Bots, or ask me to change it.');
+  add('ai', 'Welcome to ITC Bot Forge. Describe a strategy in your own words, or choose an example above. I will build the blocks and show you a risk estimate. Review the settings before opening or testing the bot.');
   window.ITC_AI = { open() {
     if (!window.ITC_APP) return;
     window.ITC_APP.navigate('freebots');

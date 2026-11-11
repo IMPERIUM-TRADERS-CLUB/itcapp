@@ -1,0 +1,17 @@
+ITC BOT FORGE UPDATE
+
+What changed
+- Added a clearer three-step Forge workflow and strategy review panel.
+- Added generated strategy summary, base stake, loss-sequence exposure estimate, loss limit and multiplier.
+- Added a visible warning explaining martingale exposure and flat-stake risk.
+- Added character count and a 1,500-character description limit.
+- Improved the example prompts and the basic-mode feedback.
+- Added a confirmation before opening a generated bot for testing.
+- Blocked the Forge test action when the selected Deriv account is Real or cannot be verified as Demo.
+- Improved small-screen layout and keyboard focus states.
+- Bumped asset and service-worker cache versions so deployed clients can receive the update.
+
+Important
+- The exposure shown is an estimate based on the configured number of consecutive losses and multiplier; it is not a prediction or guarantee.
+- Test strategies on a Deriv Demo account first. Review the generated blocks and all risk settings before starting.
+- Existing site features, bot templates, Worker files and Deriv integration have been retained.

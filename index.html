@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>ITC Version 9.10 · Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=98">
+  <link rel="stylesheet" href="itc-theme.css?v=100">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -106,7 +106,7 @@
           </div>
           <div class="account-balance-widget authenticated-only" aria-label="Account balance; use the arrow to switch account mode">
             <div class="account-balance-top"><button type="button" class="mode-badge" id="headerModeBadge" aria-label="Demo account. Tap to switch to Real" title="Switch Demo / Real">D</button><span class="balance-caption">BALANCE</span><strong id="headerBalanceValue">$0.00</strong>
-              <label class="sr-only" for="headerAccountMode">Account mode</label><select id="headerAccountMode" aria-label="Switch between demo and real account" title="Switch account mode"><option value="demo">Demo</option><option value="real">Real</option></select><button type="button" class="balance-mode-arrow" id="headerModeToggle" aria-label="Switch account mode" title="Switch Demo / Real">⌄</button>
+              <label class="sr-only" for="headerAccountMode">Account mode</label><select id="headerAccountMode" aria-label="Switch between demo and real account" title="Switch account mode"><option value="demo">Demo</option><option value="real">Real</option></select><button type="button" class="balance-reset" id="headerResetDemo" hidden aria-label="Reset demo balance" title="Reset demo balance to 10,000"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button><button type="button" class="balance-mode-arrow" id="headerModeToggle" aria-label="Switch account mode" title="Switch Demo / Real">⌄</button>
             </div>
             <small id="headerBalanceNote">Log in to see your Deriv balance</small>
           </div>
@@ -286,11 +286,14 @@
           <div class="mybots-content" id="aiBotsContent"><div class="ai-bots-note"><strong>ITC AI Bots</strong><p>Smart bots built by Imperium Traders Club. Load one to see every block on the canvas, then set your stake, take profit and stop loss before you run it.</p></div><div class="itc-bot-grid" id="aiBotGrid"><article class="itc-bot skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></article></div>
           <section class="forge" id="botForge" aria-labelledby="forgeTitle">
             <div class="forge-head"><button type="button" class="forge-icon forge-icon-btn" id="forgeHow" aria-label="How the Bot Forge works" title="Tap to see how it works"><span class="forge-bot">🤖</span><span class="forge-q">?</span></button><div><h3 id="forgeTitle">ITC Bot Forge <span class="forge-status off" id="forgeStatus">○ Basic mode</span></h3><p>Build your own bot from your own thoughts. Type or speak what you want, and the Forge builds every block for you. <a href="#" id="forgeHowLink">How it works</a></p></div></div>
-            <div class="forge-chips" id="forgeChips"><button type="button" data-forge-chip="Trade Over 1 with recovery Over 3">Over 1, recovery Over 3</button><button type="button" data-forge-chip="Trade Under 8 with recovery Under 7">Under 8, recovery Under 7</button><button type="button" data-forge-chip="Trade Even with martingale 2">Even with martingale</button><button type="button" data-forge-chip="Under 8 with entry digit 9">Entry digit 9, Under 8</button><button type="button" data-forge-chip="Trade Over 2 with recovery Over 4 and wait for the last 3 digits greater than 4 before recovery">Recovery after 3 digits above 4</button></div>
-            <div class="forge-chat" id="forgeChat" aria-live="polite"></div>
-            <div class="forge-input"><button type="button" class="forge-mic" id="forgeMic" aria-label="Speak to the Forge">🎤</button><textarea id="forgeText" rows="2" placeholder="Example: Trade Over 1 on Volatility 100, recovery Over 3 after a loss, stake 1, take profit 5, stop loss 20, martingale 2" aria-label="Describe your bot"></textarea><button type="button" class="forge-send" id="forgeSend">Build</button></div>
-            <div class="forge-actions hidden" id="forgeActions"><button type="button" id="forgeSave">💾 Save to My Bots</button><button type="button" id="forgeTest">▶ Test it</button><button type="button" id="forgeOpen">🧩 Open on canvas</button></div>
-            <p class="forge-note">Your bots stay in this browser. They cannot be downloaded. Test every bot on a demo account first.</p>
+            <div class="forge-steps" aria-label="Bot Forge steps"><span class="active">1. Describe</span><span>2. Review</span><span>3. Test on demo</span></div>
+            <div class="forge-chips" id="forgeChips"><button type="button" data-forge-chip="Trade Over 1 on Volatility 100 (1s), stake 0.35, take profit 2, stop loss 3, no martingale">Simple Over 1</button><button type="button" data-forge-chip="Trade Under 8 with recovery Under 7, stake 0.35, stop loss 3">Under 8 + recovery</button><button type="button" data-forge-chip="Trade Even on Volatility 50, stake 0.50, take profit 2, stop loss 2, no martingale">Even / flat stake</button><button type="button" data-forge-chip="Trade Over 2 only when the last 3 digits are above 4">Entry conditions</button><button type="button" data-forge-chip="Trade Rise on Volatility 25, 5 ticks, stake 0.35, take profit 2, stop loss 2">Rise / Fall</button></div>
+            <div class="forge-chat" id="forgeChat" aria-live="polite" aria-relevant="additions text"></div>
+            <div class="forge-input"><button type="button" class="forge-mic" id="forgeMic" aria-label="Speak to the Forge" title="Describe your bot by voice">🎤</button><textarea id="forgeText" rows="2" maxlength="1500" placeholder="Describe your strategy… e.g. Trade Over 1 on Volatility 100 (1s), stake 0.35, stop after 3 losses, take profit 2." aria-label="Describe your bot"></textarea><button type="button" class="forge-send" id="forgeSend">Build bot</button></div>
+            <div class="forge-hint"><span>Tip: include market, contract, stake, take profit and stop loss.</span><span id="forgeCharCount">0 / 1500</span></div>
+            <section class="forge-preview hidden" id="forgePreview" aria-live="polite" aria-label="Generated bot review"><div class="forge-preview-head"><div><span class="panel-overline">STRATEGY REVIEW</span><h4 id="forgePreviewName">Your strategy</h4></div><span class="forge-review-tag">READY TO REVIEW</span></div><p id="forgePreviewDescription"></p><div class="forge-metrics"><div><span>Base stake</span><strong id="forgeMetricStake">$0.35</strong></div><div><span>Loss sequence exposure</span><strong id="forgeMetricExposure">$0.35</strong></div><div><span>Max consecutive losses</span><strong id="forgeMetricLosses">3</strong></div><div><span>Multiplier</span><strong id="forgeMetricMultiplier">1×</strong></div></div><p class="forge-risk-warning" id="forgeRiskWarning">Review your risk settings before testing.</p></section>
+            <div class="forge-actions hidden" id="forgeActions"><button type="button" id="forgeSave">💾 Save to My Bots</button><button type="button" id="forgeTest">▶ Test on demo</button><button type="button" id="forgeOpen">🧩 Open on canvas</button></div>
+            <p class="forge-note">Bots are saved in this browser. Test on a Deriv demo account first. Martingale can increase losses rapidly; the exposure estimate is not a guarantee of outcomes.</p>
           </section></div>
         </section>
         <div class="filter-row hidden"><div class="search-box"><span>⌕</span><input id="botSearch" placeholder="Search templates..." aria-label="Search bot templates"></div><div class="filter-chips"><button class="chip selected" data-filter="all">All templates</button><button class="chip" data-filter="digits">Digits</button><button class="chip" data-filter="trend">Trend</button><button class="chip" data-filter="risk">Risk tools</button></div></div>
@@ -372,7 +375,8 @@
             <div class="sb-f"><label for="speedBotSL">Stop loss</label><input id="speedBotSL" class="regular-input" type="number" min="0.01" step="0.01" value="20"></div>
           </div>
           <div class="sb-row">
-            <div class="sb-f"><label for="speedBotRecMult">Martingale</label><input id="speedBotRecMult" class="regular-input" type="number" min="1" max="5" step="0.1" value="1.8"></div>
+            <div class="sb-f"><label for="speedBotRecMult">Martingale ×</label><input id="speedBotRecMult" class="regular-input" type="number" min="1" max="5" step="0.1" value="1.8"></div>
+            <div class="sb-f sb-sw"><label for="speedBotMartingale">Martingale on</label><label class="sb-switch"><input id="speedBotMartingale" type="checkbox" checked><span></span></label></div>
             <div class="sb-f sb-sw"><label for="speedBotContinuous">Repeat trades</label><label class="sb-switch"><input id="speedBotContinuous" type="checkbox" checked><span></span></label></div>
           </div>
           <div class="sb-row sb-recrow">
@@ -391,7 +395,7 @@
             <div class="sb-f"><label>Contracts bought</label><div class="sb-box" id="speedBotTickets">0</div></div>
           </div>
           <div class="sb-sess"><span class="demo-pill" id="speedBotRunState">STOPPED</span> <span class="sb-pl" id="speedBotPL">+0.00</span> <span class="sb-mode" id="speedBotMode">MAIN</span></div>
-          <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Press Run. Every matched tick and result will be listed here.</div></div>
+          <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Press Run. Every trade and result will be listed here.</div></div>
           <p class="form-footnote">Trades are placed on the account chosen in the top bar. Martingale raises the stake after a losing batch and can lose more quickly; results are not guaranteed.</p>
         </article>
       </section>
@@ -534,6 +538,7 @@
           <input id="mhBudget" class="cp-in mh-input" type="number" min="5" step="1" value="100" inputmode="decimal">
           <div class="mh-risk" id="mhRisk"><button type="button" data-r="low">Low risk</button><button type="button" data-r="medium" class="on">Medium risk</button><button type="button" data-r="high">High risk</button></div>
           <div class="mh-plan" id="mhPlan"></div>
+          <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
           <div class="mh-row"><label class="mh-label" for="hunterMarkets">Markets</label><select id="hunterMarkets" class="cp-in"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div>
           <div class="mh-btns"><button class="cp-btn mh-go" id="mhStart" type="button">▶ Hunt</button><button class="cp-btn cp-danger" id="mhStop" type="button" disabled>■ Stop</button></div>
         </article>
@@ -591,11 +596,11 @@
     <div class="circle-ai-contracts" role="group" aria-label="Contract type">
       <button class="circle-ai-contract active" data-ai-contract="overunder">Over / Under</button><button class="circle-ai-contract" data-ai-contract="evenodd">Even / Odd</button><button class="circle-ai-contract" data-ai-contract="matches">Matches</button><button class="circle-ai-contract" data-ai-contract="differs">Differs</button>
     </div>
-    <div class="circle-ai-form-grid"><div class="scan-auto-hidden"><label for="circleAISide">Over / Under side</label><select id="circleAISide" class="dark-select"><option value="over">Over</option><option value="under">Under</option></select></div><div class="scan-auto-hidden"><label for="circleAITarget">Entry digit / threshold</label><select id="circleAITarget" class="dark-select"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div><label for="circleAIWindow">Tick sample</label><select id="circleAIWindow" class="dark-select"><option value="100">100 ticks</option><option value="500">500 ticks</option><option value="1000" selected>1,000 ticks</option></select></div><div><label for="circleAIMarkets">Markets</label><select id="circleAIMarkets" class="dark-select"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div></div>
+    <div class="circle-ai-form-grid"><div class="scan-auto-hidden"><label for="circleAISide">Over / Under side</label><select id="circleAISide" class="dark-select"><option value="over">Over</option><option value="under">Under</option></select></div><div class="scan-auto-hidden"><label for="circleAITarget">Entry digit / threshold</label><select id="circleAITarget" class="dark-select"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div><div><label for="circleAIWindow">Tick sample</label><select id="circleAIWindow" class="dark-select"><option value="100">100 ticks</option><option value="500">500 ticks</option><option value="1000" selected>1,000 ticks</option></select></div><div><label for="circleAIMarkets">Markets</label><select id="circleAIMarkets" class="dark-select"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div></div>
     <div class="circle-ai-section-label">02 / TRADE SETTINGS</div>
     <div class="circle-ai-form-grid"><div><label for="circleAIStake">Stake (USD)</label><input id="circleAIStake" class="regular-input" type="number" min="0.35" step="0.01" value="0.35"></div><div><label for="circleAITP">Take profit (USD)</label><input id="circleAITP" class="regular-input" type="number" min="0.01" step="0.01" value="2"></div><div><label for="circleAISL">Stop loss (USD)</label><input id="circleAISL" class="regular-input" type="number" min="0.01" step="0.01" value="3"></div><div><label for="circleAIMultiplier">Martingale multiplier</label><input id="circleAIMultiplier" class="regular-input" type="number" min="1" max="10" step="0.1" value="2"></div></div>
     <div class="circle-ai-inline-toggle"><div><strong>Martingale</strong><small>Increase next stake after a loss</small></div><label class="switch"><input id="circleAIMartingale" type="checkbox"><span></span></label></div>
-    <div class="circle-ai-rule-card" id="circleAIRuleCard"><strong>Current scan rule</strong><p id="circleAIRuleText">Over 2: digits 0, 1 and 2 must each be below 10% and must not be the two most frequent digits in the sample.</p></div>
+    <div class="circle-ai-rule-card" id="circleAIRuleCard"><strong>Current scan rule</strong><p id="circleAIRuleText">Over 1: digits 0 and 1 must each be below 9.5% and must not be the two most frequent digits in the sample.</p></div>
     <button class="button primary full-button circle-ai-scan" id="circleAIScan">✦ Scan for best market</button>
     <div id="circleAIStatus" class="circle-ai-status" aria-live="polite">Waiting for your scan. The assistant needs enough real observed ticks before recommending a market.</div>
     <div id="circleAIResult" class="circle-ai-result hidden"></div>
@@ -623,19 +628,19 @@
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=91"></script>
   <script src="app.js?v=9.31"></script>
-  <script src="deriv-account.js?v=9.14"></script>
-  <script src="account-display.js?v=7.6"></script>
-  <script src="real-trading.js?v=9.9"></script>
-  <script src="bot-runner.js?v=9.9"></script>
+  <script src="deriv-account.js?v=9.15"></script>
+  <script src="account-display.js?v=7.7"></script>
+  <script src="real-trading.js?v=9.41"></script>
+  <script src="bot-runner.js?v=9.41"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.30"></script>
+  <script src="market-hunter.js?v=9.41"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=2"></script>
-  <script src="circle-ai.js?v=9.22"></script>
+  <script src="circle-ai.js?v=9.41"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
-  <script src="speedbot.js?v=9.9"></script>
-  <script src="quick-strategy.js?v=9.20"></script>
+  <script src="speedbot.js?v=9.41"></script>
+  <script src="quick-strategy.js?v=9.21"></script>
   <script src="run-panel.js?v=9.25"></script>
   <script src="social-links.js?v=1"></script>
   <script src="canvas-spec.js?v=9.24"></script>
@@ -643,7 +648,7 @@
   <script src="admin-gate.js"></script>
   <script src="auto-signals.js?v=8.8"></script>
   <script src="bots-library.js?v=9.1"></script>
-  <script src="bot-maker.js?v=9.1"></script>
+  <script src="bot-maker.js?v=9.2"></script>
   <script src="deriv-trader.js"></script>
   <script src="settings-page.js"></script>
   <script src="live-feed.js?v=8.9"></script>

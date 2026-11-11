@@ -7,6 +7,22 @@
   const authed = () => { const A = window.ITC_DERIV_ACCOUNT; return Boolean(A && A.getStatus().authorized && acct()); };
   // PRACTICE MODE: with no Deriv account connected, Run still works. Trades are simulated on the live public ticks (clearly labelled PRACTICE).
   const simulated = () => !authed();
+  // ---- safety: never trade with too little balance, never on a different account than the one the selector shows ----
+  let bal = { id: '', value: NaN };
+  window.addEventListener('itc:deriv-balance', e => { const d = e.detail || {}; if (d.loginId && Number.isFinite(Number(d.balance))) bal = { id: String(d.loginId), value: Number(d.balance) }; });
+  const LOW_RE = /insufficient|not enough|balance (is )?(too )?low|exceeds? (your )?(account )?balance|lack of funds|no funds/i;
+  function halt(message, reason) {   // tells every bot to stop; nothing restarts until you press Run / Start yourself
+    const e = new Error(message); e.halt = true; e.reason = reason;
+    try { window.dispatchEvent(new CustomEvent('itc:trade-halt', { detail: { reason, message } })); } catch (_) {}
+    return e;
+  }
+  function accountCheck() {
+    if (simulated()) return { ok: true, sim: true };
+    const a = acct(); if (!a) return { ok: false, reason: 'account', message: 'No Deriv account is connected. Tap Login.' };
+    const sel = document.getElementById('headerAccountMode'), shown = sel ? sel.value : '', conn = a.account_type;
+    if (shown && conn && shown !== conn) return { ok: false, reason: 'account', type: conn, message: 'The account selector shows ' + shown.toUpperCase() + ' but the connection is on your ' + conn.toUpperCase() + ' account. Nothing was traded. Check the account switch at the top, then start again.' };
+    return { ok: true, type: conn, id: a.loginid, balance: bal.id === a.loginid ? bal.value : NaN };
+  }
   const ready = () => authed() || Boolean(window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.onTick);
 
   function proposalReq(p, currency) {
@@ -45,7 +61,7 @@
     for (let i = 0; ; i++) {
       await pace(manual);
       try { return await fn(); }
-      catch (e) { if (i < 5 && /rate ?limit/i.test(String(e && e.message || e))) { await sleep(1500 * (i + 1)); continue; } throw e; }
+      catch (e) { if (e && e.halt) throw e; if (LOW_RE.test(String(e && e.message || e))) throw halt('Not enough balance for this trade (' + String(e && e.message || e) + '). Bot stopped. Fund the account, then start it again yourself.', 'balance'); if (i < 5 && /rate ?limit/i.test(String(e && e.message || e))) { await sleep(1500 * (i + 1)); continue; } throw e; }
     }
   }
   // Sells an open contract at the market price (used by Accumulators).
@@ -94,11 +110,13 @@
     if (simulated()) return simTrade(p);
     if (!ready()) throw new Error('Tap Login first to connect your Deriv account.');
     const A = window.ITC_DERIV_ACCOUNT, a = acct(), cur = a.currency || 'USD';
+    const chk = accountCheck(); if (!chk.ok) throw halt(chk.message, chk.reason);
+    if (Number.isFinite(chk.balance) && Number(p.amount) > chk.balance + 1e-9) throw halt('Balance too low: ' + chk.balance.toFixed(2) + ' ' + cur + ' available, ' + Number(p.amount).toFixed(2) + ' needed. Bot stopped. Fund the account, then start it again yourself.', 'balance');
     let bought = null;
     if (directOk) {   // fastest path: buy straight away without asking for a price first
       const prm = { ...proposalReq(p, cur) }; delete prm.proposal;
       try { bought = await limited(() => A.request({ buy: 1, price: Number(p.amount), parameters: prm }), manual); if (!bought || !bought.buy) bought = null; }
-      catch (e) { const m = String(e && e.message || e); if (/rate ?limit|balance|insufficient/i.test(m)) throw e; if (/validation|invalid|parameter|schema|unexpected|required|unrecognis/i.test(m)) directOk = false; bought = null; }
+      catch (e) { if (e && e.halt) throw e; const m = String(e && e.message || e); if (/rate ?limit|balance|insufficient/i.test(m)) throw e; if (/validation|invalid|parameter|schema|unexpected|required|unrecognis/i.test(m)) directOk = false; bought = null; }
     }
     if (!bought) {
       const prop = await limited(() => A.request(proposalReq(p, cur)), manual);
@@ -131,5 +149,5 @@
     }
     return done;
   }
-  window.ITC_TRADE = { execute, trade, sell, ready, simulated, simTicks, proposalReq, busy, budgetPerMinute: HARD };
+  window.ITC_TRADE = { accountCheck, execute, trade, sell, ready, simulated, simTicks, proposalReq, busy, budgetPerMinute: HARD };
 })();

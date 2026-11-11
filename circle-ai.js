@@ -5,13 +5,13 @@
   const state = { contract: 'overunder', lastPick: null, paperTrades: 0, nextStake: 0.35 };
   const names = {overunder:'Over / Under', evenodd:'Even / Odd', matches:'Matches', differs:'Differs'};
   const rulesText = {
-    overunder: t => { const side = $('#circleAISide')?.value || 'over'; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
+    overunder: t0 => { let t = t0; const side = $('#circleAISide')?.value || 'over'; t = side === 'over' ? 1 : 8; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
     evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher.',
     matches: () => 'Choose the most frequent digit in the selected sample. This is a historical frequency rule, not a prediction.',
     differs: () => 'Choose the least frequent digit in the selected sample. The contract wins only if the next last digit differs from that selected digit.'
   };
   function updateRuleText() {
-    const target = Number($('#circleAITarget').value || 2);
+    
     // rules are not shown to the user
   }
   function getDigitCounts(digits) {
@@ -35,11 +35,11 @@
     const out = [];
     if (family === 'overunder') {
       const rarest = ranked.slice(-2).map(x => x.digit);   // the red bar and the yellow bar
-      [{ side: 'over', target: 2, lose: [0, 1, 2], win: d => d > 2 }, { side: 'under', target: 7, lose: [7, 8, 9], win: d => d < 7 }].forEach(s => {
-        const zone = s.lose.reduce((sum, d) => sum + rate(d), 0), zoneOk = zone <= 25, allRare = s.lose.every(d => rate(d) < 10 && !topTwo.includes(d));
-        const redYellow = rarest.every(d => s.lose.includes(d) && rate(d) < 10);
+      [{ side: 'over', target: 1, lose: [0, 1], win: d => d > 1 }, { side: 'under', target: 8, lose: [8, 9], win: d => d < 8 }].forEach(s => {
+        const zone = s.lose.reduce((sum, d) => sum + rate(d), 0), zoneOk = zone <= 25 * s.lose.length / 3, /* 16.7% for two losing digits (normal is 20%) */ allRare = s.lose.every(d => rate(d) < 9.5 && !topTwo.includes(d));   // 9.5% keeps the pass rate about the same now that only two digits must be rare
+        const redYellow = rarest.every(d => s.lose.includes(d) && rate(d) < 9.5);
         const why = [`Losing digits ${s.lose.join(', ')} total only ${zone.toFixed(1)}%`];
-        if (allRare) why.push(`Each losing digit is under 10% and none is a top digit`);
+        if (allRare) why.push(`Each losing digit is under 9.5% and none is a top digit`);
         if (redYellow) why.push(`The two rarest digits ${rarest.join(' and ')} are both in ${s.lose[0]}–${s.lose[s.lose.length - 1]}`);
         const rules = (zoneOk ? 1 : 0) + (allRare ? 1 : 0) + (redYellow ? 1 : 0);
         out.push({ ...base, eligible: rules > 0, rules, score: 100 - zone, side: s.side, target: s.target, entry: `${s.side === 'over' ? 'Over' : 'Under'} ${s.target}`,
@@ -136,13 +136,14 @@
   function finish(evaluated, ctx, note) {
     window.ITC_SOUND?.stopScan?.('ai');
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), { stake, tp, sl, windowSize } = ctx;
-    const eligible = evaluated.filter(x => x.eligible && Number.isFinite(x.score)).sort(sortSetups);
+    let eligible = evaluated.filter(x => x.eligible && Number.isFinite(x.score)).sort(sortSetups);
+    if (state.avoid) { const fresh = eligible.filter(x => x.market !== state.avoid); if (fresh.length) eligible = fresh; }   // after a finished run, look for a different market
     if (!eligible.length) {
       status.className='circle-ai-status error';
       status.textContent = evaluated.some(x=>x.sample < Math.min(100,windowSize)) ? 'Not enough ticks yet for this scan. Wait for the stream and try again.' : 'No market qualified right now, so no trade was placed. Try scanning again in a moment.';
       return;
     }
-    const pick = eligible[0]; state.lastPick = {...pick, stake, tp, sl, martingale:$('#circleAIMartingale').checked, multiplier:Math.max(1,Number($('#circleAIMultiplier').value)||2)};
+    const pick = eligible[0]; state.avoid = null; state.lastPick = {...pick, stake, tp, sl, martingale:$('#circleAIMartingale').checked, multiplier:Math.max(1,Number($('#circleAIMultiplier').value)||2)};
     status.className='circle-ai-status success'; status.textContent=`${note ? note + ' ' : ''}Trading ${pick.market} · ${pick.entry}. This is not a forecast.`;
     resultBox.classList.remove('hidden');
     const ed = entryText(pick);
@@ -162,9 +163,10 @@
   function stopAuto(why, kind) {
     if (!auto) return; auto.stop = true; auto = null;
     const btn = $('#circleAIScan'); if (btn) btn.textContent = '\u2726 Scan for best market';
-    const st = $('#circleAIStatus'); if (st) { st.className = 'circle-ai-status ' + (kind === 'loss' ? 'error' : 'success'); st.textContent = why; }
+    const st = $('#circleAIStatus'); if (st) { st.className = 'circle-ai-status ' + (kind === 'loss' || kind === 'halt' ? 'error' : 'success'); st.textContent = why; }
     const net = state.autoNet || 0;
-    if (kind && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: net, bot: 'ITC AI' }); } catch (_) {} }
+    if ((kind === 'win' || kind === 'loss') && state.lastPick) state.avoid = state.lastPick.market;   // take profit or stop loss reached: the next scan skips this market
+    if ((kind === 'win' || kind === 'loss') && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: net, bot: 'ITC AI' }); } catch (_) {} }
   }
   async function runAuto() {
     if (!state.lastPick) return;
@@ -172,6 +174,7 @@
     const map = { over: 'DIGITOVER', under: 'DIGITUNDER', even: 'DIGITEVEN', odd: 'DIGITODD', matches: 'DIGITMATCH', differs: 'DIGITDIFF' };
     const ct = map[pick.side];
     if (!T || !ct || !T.ready || !T.ready()) { st.className = 'circle-ai-status error'; st.textContent = 'Trading is not available. Tap Login first.'; return; }
+    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { st.className = 'circle-ai-status error'; st.textContent = chk.message; return; } if (chk && Number.isFinite(chk.balance) && chk.balance < pick.stake) { st.className = 'circle-ai-status error'; st.textContent = 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.'; return; } }
     const run = { stop: false }; auto = run; state.autoNet = 0;
     let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0;
     btn.textContent = '\u25A0 Stop trading';
@@ -205,8 +208,10 @@
     st.className = 'circle-ai-status success'; st.textContent = 'Placing live trade on ' + pick.market + ' · ' + pick.entry + '…';
     T.execute(params, { count: 1, label: pick.entry, priority: true });
   }
+  window.addEventListener('itc:trade-halt', e => { if (auto) stopAuto('Stopped: ' + ((e.detail && e.detail.message) || 'trading halted.'), 'halt'); });   // low balance or wrong account: stop and stay stopped
   $('#circleAIScan').addEventListener('click', scan);
   // Validate minimum stake and maintain shared rule copy from the initial state.
   $('#circleAIStake').addEventListener('change', e => { if (Number(e.target.value) < .35) e.target.value = '.35'; });
+  { const mg = $('#circleAIMartingale'); if (mg) { let on = true; try { const v = localStorage.getItem('itc_ai_martingale'); if (v !== null) on = v === '1'; } catch (_) {} mg.checked = on; mg.addEventListener('change', () => { try { localStorage.setItem('itc_ai_martingale', mg.checked ? '1' : '0'); } catch (_) {} }); } }   // martingale stays on until you switch it off
   setContract('overunder');
 })();

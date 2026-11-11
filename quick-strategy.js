@@ -81,7 +81,7 @@
       const params = { symbol: cfg.symbol, symbolName: cfg.market, contract_type: ct, amount: stake, duration: cfg.dur, barrier: digit ? cfg.pred : undefined };
       paintStats(); setState('Running', '');
       let res; try { const info = await T.trade(params, false); res = await Promise.race([info.settled, sleep(30000).then(() => ({ profit: 0, timeout: true }))]); errors = 0; }
-      catch (e) { addLog('Not placed: ' + (e.message || e), 'l'); if (++errors >= 3) { stop('Stopped: trades could not be placed.', 'loss'); return; } await sleep(1500); continue; }
+      catch (e) { if (!S.running || e.halt) return; addLog('Not placed: ' + (e.message || e), 'l'); if (++errors >= 3) { stop('Stopped: trades could not be placed.', 'loss'); return; } await sleep(1500); continue; }
       if (!S.running) return;
       const p = Number(res.profit) || 0, won = p > 0; S.net = R2(S.net + p); S.runs++; if (won) S.wins++; else S.losses++;
       addLog((won ? 'WON +' : 'LOST ') + p.toFixed(2) + ' · stake ' + stake.toFixed(2) + ' · net ' + (S.net >= 0 ? '+' : '') + S.net.toFixed(2), won ? 'w' : 'l');
@@ -92,8 +92,10 @@
       await sleep(150);
     }
   }
+  window.addEventListener('itc:trade-halt', e => { if (S.running) stop('Stopped: ' + ((e.detail && e.detail.message) || 'trading halted.')); });
   function start() {
     if (S.running) return;
+    { const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { setState(chk.message, 'loss'); return; } }
     if (!ready()) { setState('Tap Login first', 'loss'); paintAcct(); return; }
     const num = id => Number($(id).value), stake = num('qsStake');
     const cfg = { strat: $('qsStrat').value, symbol: $('qsMarket').value, market: $('qsMarket').selectedOptions[0].textContent, contract: $('qsContract').value, pred: $('qsPred').value, dur: Math.max(1, Math.min(10, Math.floor(num('qsDur')) || 1)), stake, size: num('qsSize') || 1, max: num('qsMax') || 0, tp: num('qsTP'), sl: num('qsSL') };

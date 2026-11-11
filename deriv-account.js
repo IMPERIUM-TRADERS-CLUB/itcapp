@@ -427,8 +427,22 @@
     if (!(o && o.data && o.data.url)) throw new Error('Deriv did not return a trading connection URL.');
     return o.data.url;
   }
+  // Resets the DEMO account balance (Deriv: POST /options/accounts/{id}/reset-demo-balance, demo only, default 10,000 USD).
+  async function resetDemo() {
+    const token = getAccessToken(); if (!token) throw new Error('Log in with Deriv first.');
+    const demo = state.accounts.find(a => a.type === 'demo'); if (!demo) throw new Error('This Deriv login has no demo account.');
+    const res = await fetch(oauthConfig.workerUrl + '/deriv/reset-demo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ accountId: demo.id }) });
+    let body = {}; try { body = await res.json(); } catch (_) {}
+    if (res.status === 404 && body.error === 'not_found') throw new Error('Deploy the updated worker/worker.js first (it adds the reset route).');
+    if (!res.ok) throw new Error((body.errors && body.errors[0] && body.errors[0].message) || body.error_description || body.error || ('Deriv request failed (' + res.status + ')'));
+    let amount = 10000, currency = demo.currency || 'USD';
+    if (state.account && state.account.loginid === demo.id && state.socket && state.socket.readyState === WebSocket.OPEN) {
+      try { const b = await request({ balance: 1 }, 7000); if (b && b.balance && Number.isFinite(Number(b.balance.balance))) { amount = Number(b.balance.balance); currency = b.balance.currency || currency; } } catch (_) {}
+    }
+    demo.balance = amount; publishBalance(amount, currency, demo.id, 'demo');
+  }
   window.ITC_DERIV_ACCOUNT = {
-    notice: showLoginError, request: tradeRequest, subscribe, switchTo, otpUrl,
+    notice: showLoginError, request: tradeRequest, subscribe, switchTo, otpUrl, resetDemo,
     connect,
     disconnect,
     beginOAuth,

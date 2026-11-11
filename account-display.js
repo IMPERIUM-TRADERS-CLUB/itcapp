@@ -7,6 +7,7 @@
   const note = $('headerBalanceNote');
   const widget = document.querySelector('.account-balance-widget');
   const modeToggle = $('headerModeToggle');
+  let switching = false;   // true while the user's own Demo/Real switch is in progress
   const state = { mode: 'demo', currency: 'USD', realAccount: null, demoAccount: null, demoBalance: 10000, usdKes: null, rateFetchedAt: 0 };
 
   const fmt = (amount, currency) => {
@@ -43,6 +44,7 @@
       if (i) i.textContent = acc && acc.id ? acc.id : (real ? 'No real account' : '—');
     }
     const authorized = Boolean(window.ITC_DERIV_ACCOUNT?.getStatus().authorized);
+    { const rb = $('headerResetDemo'); if (rb) rb.hidden = !(authorized && state.mode === 'demo' && state.demoAccount); }   // reset button only for a connected Demo account
     const account = state.mode === 'real' ? state.realAccount : (authorized ? state.demoAccount : null);
     if (state.mode === 'real' && (!authorized || !account)) {
       balanceValue.textContent = authorized ? 'No real account' : 'Connect account';
@@ -80,7 +82,7 @@
     modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
   });
   modeSelect?.addEventListener('change', () => {
-    state.mode = modeSelect.value;
+    state.mode = modeSelect.value; switching = true;
     if (state.mode === 'real' && !window.ITC_DERIV_ACCOUNT?.getStatus().authorized) {
       note.textContent = 'Log in with Deriv to see your real balance.';
       window.ITC_DERIV_ACCOUNT?.beginOAuth(false).catch(() => {});
@@ -91,16 +93,23 @@
     if (A && A.getStatus().authorized && A.switchTo) {
       const wanted = state.mode, toast = t => window.ITC_APP && window.ITC_APP.showToast && window.ITC_APP.showToast(t);
       A.switchTo(wanted).then(() => toast(wanted === 'real' ? 'REAL account selected. Trades use real money.' : 'Demo account selected.'))
-        .catch(err => { toast(String(err.message || err)); state.mode = wanted === 'real' ? 'demo' : 'real'; modeSelect.value = state.mode; render(); });
-    }
+        .catch(err => { toast(String(err.message || err)); state.mode = wanted === 'real' ? 'demo' : 'real'; modeSelect.value = state.mode; render(); })
+        .finally(() => { switching = false; syncToConnection(); });
+    } else switching = false;
   });
   $('headerModeBadge')?.addEventListener('click', () => { if (!modeSelect) return; modeSelect.value = modeSelect.value === 'demo' ? 'real' : 'demo'; modeSelect.dispatchEvent(new Event('change', { bubbles: true })); });
   currencySelect?.addEventListener('change', () => { state.currency = currencySelect.value; render(); });
+  // The header must always show the account the bots really trade on, so it follows the live connection.
+  function syncToConnection() {
+    const a = window.ITC_DERIV_ACCOUNT?.getStatus().account;
+    if (switching || !a || !['demo', 'real'].includes(a.account_type)) return;
+    if (state.mode !== a.account_type) { state.mode = a.account_type; if (modeSelect) modeSelect.value = a.account_type; render(); }
+  }
   window.addEventListener('itc:deriv-accounts', event => {
     const accounts = Array.isArray(event.detail?.accounts) ? event.detail.accounts : [];
     state.realAccount = accounts.find(a => a.type === 'real' && Number.isFinite(a.balance)) || null;
     state.demoAccount = accounts.find(a => a.type === 'demo' && Number.isFinite(a.balance)) || null;
-    render();
+    syncToConnection(); render();
   });
   window.addEventListener('itc:deriv-balance', event => {
     const detail = event.detail || {};
@@ -108,7 +117,7 @@
     const account = { id: detail.loginId || 'Deriv account', type: detail.accountType, currency: detail.currency || 'USD', balance: Number(detail.balance) };
     if (Number.isFinite(account.balance) && account.type === 'real') state.realAccount = account;
     if (Number.isFinite(account.balance) && account.type === 'demo') state.demoAccount = account;
-    render();
+    syncToConnection(); render();
   });
   window.addEventListener('itc:deriv-disconnected', () => { document.body.classList.remove('itc-account-authorized'); state.realAccount = null; state.demoAccount = null; render(); });
   const originalDisconnect = window.ITC_DERIV_ACCOUNT?.disconnect;
@@ -116,6 +125,16 @@
   if (window.ITC_DERIV_ACCOUNT && originalDisconnect) {
     window.ITC_DERIV_ACCOUNT.disconnect = (...args) => { const result = originalDisconnect(...args); window.dispatchEvent(new Event('itc:deriv-disconnected')); return result; };
   }
+  // Rotating-arrows button: resets the DEMO balance to the default 10,000 (Deriv does not allow this on real accounts).
+  $('headerResetDemo')?.addEventListener('click', async () => {
+    const btn = $('headerResetDemo'), toast = t => window.ITC_APP && window.ITC_APP.showToast && window.ITC_APP.showToast(t);
+    if (btn.classList.contains('spin') || state.mode !== 'demo') return;
+    if (!window.confirm('Reset your DEMO balance to the default 10,000 USD? Your real account is not affected.')) return;
+    btn.classList.add('spin'); btn.disabled = true;
+    try { await window.ITC_DERIV_ACCOUNT.resetDemo(); toast('Demo balance reset.'); }
+    catch (err) { toast('Could not reset demo balance: ' + String(err.message || err)); }
+    finally { btn.classList.remove('spin'); btn.disabled = false; }
+  });
   // Header Login is wired only by deriv-account.js to prevent duplicate OAuth redirects.
   render();
 })();

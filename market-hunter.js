@@ -7,13 +7,15 @@
   const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
   const money = (v, c) => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + (c ? ' ' + c : '');
   const R2 = v => Math.round(v * 100) / 100;
-  const CT = { over: 'DIGITOVER', under: 'DIGITUNDER' };   // Over 2 and Under 7 only (no Differs)
-  const NOMINAL = { over: 0.7, under: 0.7 };
-  const RATIO = { over: 0.35, under: 0.35 };   // typical profit per 1.00 staked on a win; replaced by the real figure after the first win
-  const MIN_PROB = 0.75;           // a market must show at least this winning probability before the hunter trades it
+  const CT = { over: 'DIGITOVER', under: 'DIGITUNDER' };   // Over 1 and Under 8 only (no Differs)
+  const NOMINAL = { over: 0.8, under: 0.8 };   // Over 1 / Under 8 win 80% of the time on average
+  const RATIO = { over: 0.19, under: 0.19 };   // typical profit per 1.00 staked on a win; replaced by the real figure after the first win
+  const MIN_PROB = { over: 0.80, under: 0.80 };   // the market must be at least at the contract's normal win rate (Over 2 used 70%, Over 1 and Under 8 use 80%)
+  const ROTATE_MIN = 2, ROTATE_MAX = 4;           // after 2 to 4 wins in a row on one market, move to another market
+  const newRotate = () => ROTATE_MIN + Math.floor(Math.random() * (ROTATE_MAX - ROTATE_MIN + 1));
   const MARTINGALE = 2, MAX_LOSSES = 3;                      // stake x2 after a loss; stop after 3 losses in a row
   const RISK = { low: 0.10, medium: 0.15, high: 0.20 };      // target profit as a share of the amount you are willing to risk
-  const S = { running: false, level: store.get('itc_mh_level', 'medium'), plan: null, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, cool: new Map(), dots: [], errors: 0, currency: 'USD', ratio: {}, lastEpoch: {} };
+  const S = { martingale: store.get('itc_mh_martingale', true), winRun: 0, rotateAt: newRotate(), running: false, level: store.get('itc_mh_level', 'medium'), plan: null, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, cool: new Map(), dots: [], errors: 0, currency: 'USD', ratio: {}, lastEpoch: {} };
 
   function planFor(budget, level) {
     const tp = R2(budget * RISK[level]), sl = R2(budget);
@@ -28,18 +30,20 @@
   const authed = () => Boolean(window.ITC_DERIV_ACCOUNT && window.ITC_DERIV_ACCOUNT.getStatus().authorized && acct());
   const canTrade = () => Boolean(window.ITC_TRADE && window.ITC_TRADE.ready && window.ITC_TRADE.ready());   // a Deriv account, or practice mode on live ticks
   let balance = NaN;
-  window.addEventListener('itc:deriv-balance', e => { if (e.detail && Number.isFinite(Number(e.detail.balance))) balance = Number(e.detail.balance); paintAcct(); });
+  window.addEventListener('itc:deriv-balance', e => { const d = e.detail || {}, a = acct(); if (a && d.loginId === a.loginid && Number.isFinite(Number(d.balance))) balance = Number(d.balance); paintAcct(); });   // only the balance of the connected account counts
 
   function paintAcct() {
     const el = $('mhAcct'); if (!el) return; const a = acct();
     if (!authed()) { el.className = 'mh-acct demo'; el.innerHTML = '<b>PRACTICE</b> mode · simulated on live ticks · log in to trade your Deriv account'; return; }
     const real = a.account_type === 'real'; S.currency = a.currency || 'USD';
+    const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck();
+    if (chk && !chk.ok) { el.className = 'mh-acct real'; el.innerHTML = '<b>CHECK ACCOUNT</b> · ' + chk.message; return; }
     el.className = 'mh-acct ' + (real ? 'real' : 'demo'); el.innerHTML = '<b>' + (real ? 'REAL' : 'DEMO') + '</b> account · ' + a.loginid + (Number.isFinite(balance) ? ' · balance ' + balance.toFixed(2) + ' ' + S.currency : '');
   }
   function paintPlan() {
     const budget = Number($('mhBudget').value) || 0, p = planFor(budget, S.level); S.plan = p;
     $('mhPlan').innerHTML = budget < 5 ? 'Enter at least 5.' : p.ok
-      ? `<div><span>Stake (Over 2)</span><b>${stakeFor('over', p).toFixed(2)}</b></div><div><span>Martingale</span><b>x2 · stop after 3 losses</b></div><div><span>Target profit</span><b class="g">+${p.tp.toFixed(2)}</b></div><div><span>Max loss</span><b class="r">-${p.sl.toFixed(2)}</b></div>`
+      ? `<div><span>Stake (Over 1 / Under 8)</span><b>${stakeFor('over', p).toFixed(2)}</b></div><div><span>Martingale</span><b>${S.martingale ? 'ON · x2 · stop after 3 losses' : 'OFF · flat stake'}</b></div><div><span>Target profit</span><b class="g">+${p.tp.toFixed(2)}</b></div><div><span>Max loss</span><b class="r">-${p.sl.toFixed(2)}</b></div>`
       : 'That amount is too small for this risk level. Increase it a little.';
     document.querySelectorAll('#mhRisk button').forEach(b => b.classList.toggle('on', b.dataset.r === S.level));
   }
@@ -67,12 +71,12 @@
       const share = (w, ok) => { const s = digits.slice(-w); return s.filter(ok).length / s.length; };
       const blend = ok => { const p1 = share(100, ok), p3 = share(300, ok), p10 = share(1000, ok); return { p: 0.5 * p1 + 0.3 * p3 + 0.2 * p10, recent: p1 }; };
       const add = (side, target, entry, ok, min) => { const b = blend(ok); out.push({ market: mk.name, symbol: mk.symbol, side, target, entry, prob: b.p, score: b.p - NOMINAL[side], epoch, eligible: b.p >= min && b.recent >= min - 0.03, key: mk.name + '|' + entry }); };
-      add('over', 2, 'Over 2', d => d > 2, MIN_PROB);
-      add('under', 7, 'Under 7', d => d < 7, MIN_PROB);
+      add('over', 1, 'Over 1', d => d > 1, MIN_PROB.over);
+      add('under', 8, 'Under 8', d => d < 8, MIN_PROB.under);
     }
     return out;
   }
-  function pick() {   // best Over 2 / Under 7 market, switching markets as the numbers change
+  function pick() {   // best Over 1 / Under 8 market, switching markets as the numbers change
     const R = window.ITC_AI_RULES, now = Date.now(), all = candidates().filter(x => x.eligible && !(S.cool.get(x.key) > now));
     if (!all.length) return null;
     const one = x => (R && R.is1s && R.is1s(x.market)) ? 1 : 0, rank = (a, b) => b.score - a.score || one(b) - one(a);
@@ -81,7 +85,7 @@
     return pool[0];
   }
   async function round(setup) {
-    const T = window.ITC_TRADE, n = 1, stake = Math.min(R2(baseStake(setup.side) * Math.pow(MARTINGALE, S.lossRun)), Math.floor((S.plan.sl + S.net) * 100) / 100);   // never risk more than the room left before the stop loss
+    const T = window.ITC_TRADE, n = 1, stake = Math.min(R2(baseStake(setup.side) * (S.martingale ? Math.pow(MARTINGALE, S.lossRun) : 1)), Math.floor((S.plan.sl + S.net) * 100) / 100);   // never risk more than the room left before the stop loss
     if (stake < 0.35) { const e = new Error('Stop loss reached'); e.stopLoss = true; throw e; }
     const params = { symbol: setup.symbol, symbolName: setup.market, contract_type: CT[setup.side], amount: stake, duration: 1, barrier: setup.target };
     const placed = await Promise.allSettled(Array.from({ length: n }, () => T.trade(params)));
@@ -93,7 +97,7 @@
     while (S.running) {
       if (!canTrade()) { stop('The market feed is not ready yet.'); return; }
       const setup = pick();
-      if (!setup) { status('Scanning for a market at 75% or better…'); S.current = null; await sleep(400); continue; }
+      if (!setup) { status('Scanning for the best market…'); S.current = null; await sleep(400); continue; }
       if (!S.current || S.current.key !== setup.key) status('Hunting · switched market'); else status('Hunting…');
       if (setup.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(100); continue; }   // one round per new tick
       S.lastEpoch[setup.symbol] = setup.epoch;
@@ -101,6 +105,7 @@
       let results;
       try { results = await round(setup); S.errors = 0; }
       catch (e) {
+        if (!S.running || e.halt) return;   // stopped by a safety halt (low balance / wrong account): do not retry
         if (e.stopLoss) { stop('Stop loss reached', 'loss'); return; }
         const msg = String(e.message || e);
         if (/no return|ContractBuyValidation|not offered|not available|suspended|market is closed|unavailable/i.test(msg)) {   // Deriv will not sell this contract right now: skip it and try the next best market
@@ -114,26 +119,32 @@
       const net = results.reduce((s, r) => s + (Number(r.profit) || 0), 0), won = net > 0;
       S.net = R2(S.net + net); S.trades += results.length; results.forEach(r => { if (r.profit > 0) S.wins++; else S.losses++; }); S.dots.push(won);
       results.forEach(r => { if (r.profit > 0 && r.price > 0) S.ratio[setup.side] = R2(r.profit / r.price * 1000) / 1000; });   // learn the real payout
-      if (won) S.lossRun = 0; else { S.lossRun++; S.current = null; }   // lost: double the next stake and rescan
+      if (won) { S.lossRun = 0; S.winRun++; } else { S.lossRun++; S.winRun = 0; S.current = null; }   // lost: double the next stake (if martingale is on) and rescan
+      if (won && S.winRun >= S.rotateAt && S.current) {   // 2-4 wins in a row on this market: rest it and go to the next best one
+        const mk = S.current.market, until = Date.now() + 120000;
+        S.cool.set(mk + '|Over 1', until); S.cool.set(mk + '|Under 8', until);
+        status('Switching market after ' + S.winRun + ' wins in a row', 'win'); S.current = null; S.winRun = 0; S.rotateAt = newRotate();
+      }
       paintResults();
       if (S.net >= S.plan.tp) { stop('Take profit reached', 'win'); return; }
-      if (S.lossRun >= MAX_LOSSES) { stop('Stopped: 3 losses in a row', 'loss'); return; }
+      if (S.martingale && S.lossRun >= MAX_LOSSES) { stop('Stopped: 3 losses in a row', 'loss'); return; }
       if (S.net <= -S.plan.sl) { stop('Stop loss reached', 'loss'); return; }
       await sleep(80);
     }
   }
   function start() {
     if (S.running) return;
+    { const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { status(chk.message, 'warn'); paintAcct(); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < 0.35) { status('Balance too low to trade (' + chk.balance.toFixed(2) + '). Fund the account first.', 'warn'); return; } }
     if (!canTrade()) { status('The market feed is not ready yet. Try again in a moment.', 'warn'); return; }
     let budget = Number($('mhBudget').value) || 0; if (Number.isFinite(balance) && budget > balance) { budget = Math.floor(balance); $('mhBudget').value = budget; status('Amount reduced to your balance.', 'warn'); }
     store.set('itc_mh_budget', budget); store.set('itc_mh_level', S.level);
     S.plan = planFor(budget, S.level); if (budget < 5 || !S.plan.ok) { status('Increase the amount to risk.', 'warn'); return; }
-    Object.assign(S, { running: true, net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, errors: 0, dots: [], lastEpoch: {} });
-    $('mhStart').disabled = true; $('mhStop').disabled = false; $('mhBudget').disabled = true; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = true);
+    Object.assign(S, { running: true, winRun: 0, rotateAt: newRotate(), net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, errors: 0, dots: [], lastEpoch: {} });
+    $('mhStart').disabled = true; $('mhStop').disabled = false; $('mhBudget').disabled = true; if ($('mhMartingale')) $('mhMartingale').disabled = true; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = true);
     paintResults(); status('Hunting…'); loop();
   }
   function stop(why, kind) {
-    S.running = false; $('mhStart').disabled = false; $('mhStop').disabled = true; $('mhBudget').disabled = false; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = false);
+    S.running = false; $('mhStart').disabled = false; $('mhStop').disabled = true; $('mhBudget').disabled = false; if ($('mhMartingale')) $('mhMartingale').disabled = false; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = false);
     $('mhNow').textContent = '';
     status(why || 'Stopped', kind === 'win' ? 'win' : kind === 'loss' ? 'loss' : '');
     if (kind && window.ITC_BOTMSG) window.ITC_BOTMSG.show({ kind, why, profit: S.net, bot: 'Market Hunter' });
@@ -141,9 +152,12 @@
   }
   // ---- wiring ----
   $('mhBudget').value = store.get('itc_mh_budget', 100); paintPlan(); paintResults(); paintAcct();
+  const mgEl = $('mhMartingale'); if (mgEl) { mgEl.checked = S.martingale; mgEl.addEventListener('change', () => { S.martingale = mgEl.checked; store.set('itc_mh_martingale', S.martingale); paintPlan(); }); }   // stays on until you switch it off
   $('mhBudget').addEventListener('input', paintPlan);
   $('mhRisk').addEventListener('click', e => { const b = e.target.closest('button[data-r]'); if (!b || S.running) return; S.level = b.dataset.r; paintPlan(); });
   $('mhStart').addEventListener('click', start); $('mhStop').addEventListener('click', () => stop('Stopped by you'));
   ['itc:deriv-accounts', 'itc:oauth-authorized'].forEach(ev => window.addEventListener(ev, () => { paintAcct(); paintPlan(); }));
+  window.addEventListener('itc:trade-halt', e => { if (S.running) stop((e.detail && e.detail.message) || 'Stopped: trading halted.'); });
+  document.getElementById('headerAccountMode')?.addEventListener('change', () => setTimeout(paintAcct, 600));
   window.ITC_HUNTER = { planFor, state: S, pick };
 })();

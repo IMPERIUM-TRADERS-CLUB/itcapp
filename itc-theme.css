@@ -924,3 +924,33 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 }
 .social-toggle .nav-icon{margin-right:12px}
 .social-item{font-size:12.5px;gap:8px;padding:6px 8px}.social-name{white-space:nowrap}
+
+/* ITC Bot Forge review and mobile usability upgrade */
+.forge-steps{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 14px}
+.forge-steps span{padding:6px 10px;border:1px solid #393052;border-radius:999px;color:#a9a2bd;font-size:11px;font-weight:750;background:#100d1b}
+.forge-steps span.active{color:#f5d77a;border-color:#a98736;background:#f5c84212}
+.forge-hint{display:flex;justify-content:space-between;gap:10px;margin:6px 2px 0;color:#a9a2bd;font-size:10px}
+.forge-preview{margin-top:14px;padding:15px;border:1px solid #79602a;border-radius:15px;background:linear-gradient(145deg,#1b170d,#100e17 70%)}
+.forge-preview-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.forge-preview h4{margin:4px 0 0;color:#fff;font-size:17px}
+.forge-preview>p{margin:10px 0;color:#d8d1e6;font-size:12px;line-height:1.6}
+.forge-review-tag{padding:5px 8px;border-radius:999px;border:1px solid #a98736;color:#f5d77a;font-size:9px;font-weight:800;white-space:nowrap}
+.forge-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.forge-metrics>div{padding:10px;border-radius:10px;background:#08070d;border:1px solid #393052;min-width:0}
+.forge-metrics span{display:block;color:#aaa2bb;font-size:10px;line-height:1.35}
+.forge-metrics strong{display:block;margin-top:5px;color:#f5d77a;font-size:14px;overflow-wrap:anywhere}
+.forge-preview .forge-risk-warning{margin:12px 0 0;padding:10px;border-left:3px solid #e6a23c;border-radius:7px;background:#e6a23c12;color:#f1d9ad;font-size:11px}
+.forge-input textarea:focus{outline:2px solid #a78bfa;outline-offset:1px}
+.forge-send:focus-visible,.forge-mic:focus-visible,.forge-actions button:focus-visible,.forge-chips button:focus-visible{outline:2px solid #f5d77a;outline-offset:3px}
+@media(max-width:600px){.forge{padding:15px 12px}.forge-chat{min-height:100px;max-height:300px}.forge-input{gap:6px}.forge-input textarea{min-width:0;font-size:14px}.forge-send{padding:0 12px;font-size:13px}.forge-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.forge-preview-head{flex-direction:column}.forge-hint{font-size:9px}}
+
+/* Demo balance reset button (rotating arrows) */
+.balance-reset{display:grid;place-items:center;width:22px;height:22px;flex:0 0 22px;border:1px solid #67532c;border-radius:50%;background:#272115;color:#f5d887;cursor:pointer;padding:0;transition:background .15s,border-color .15s}
+.balance-reset[hidden]{display:none}
+.balance-reset:hover{background:#3a2d15;border-color:#d0a84f}
+.balance-reset:focus-visible{outline:2px solid #f5d887;outline-offset:2px}
+.balance-reset:disabled{opacity:.7;cursor:wait}
+.balance-reset.spin svg{animation:itcResetSpin .8s linear infinite}
+@keyframes itcResetSpin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.balance-reset{width:16px;height:16px;flex-basis:16px}.balance-reset svg{width:10px;height:10px}}
+@media(prefers-reduced-motion:reduce){.balance-reset.spin svg{animation-duration:2s}}

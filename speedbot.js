@@ -1,4 +1,4 @@
-// ITC SpeedBot: watches live ticks and buys the moment your rule is met. Optional recovery mode switches to a contract you choose after a losing batch.
+// ITC SpeedBot: reads the live ticks continuously and trades on EVERY tick. It never waits for a particular digit to appear. Optional recovery mode switches to a contract you choose after a losing batch.
 (() => {
   'use strict';
   const _dummy = document.createElement('div');   // stands in for any element that is not on the page, so layout changes can't break the bot
@@ -26,6 +26,7 @@
 
   const MAIN = () => ({ type: $('speedBotContract').value, barrier: Number($('speedBotBarrier').value) });
   const REC = () => { const t = $('speedBotRecContract').value; return t === 'SAME' ? MAIN() : { type: t, barrier: Number($('speedBotRecBarrier').value) }; };
+  const martingaleOn = () => { const el = document.getElementById('speedBotMartingale'); return !el || el.checked; };   // on unless you switch it off
   const recOn = () => $('speedBotRecovery').checked;
   const rule = () => (state.mode === 'recovery' ? REC() : MAIN());
   const label = r => NAMES[r.type] + (NEEDS_DIGIT.includes(r.type) ? ' ' + r.barrier : '');
@@ -41,7 +42,7 @@
   function stakeNow() {
     const base = Math.max(0.35, Number($('speedBotStake').value) || 0.35), n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
     let s = base;
-    if (state.steps > 0) s = R2(base * Math.pow(Math.max(1, Number($('speedBotRecMult').value) || 1), state.steps));   // martingale after a losing batch
+    if (state.steps > 0 && martingaleOn()) s = R2(base * Math.pow(Math.max(1, Number($('speedBotRecMult').value) || 1), state.steps));   // martingale after a losing batch
     const sl = Number($('speedBotSL').value); if (sl > 0) s = Math.min(s, Math.floor((sl + state.profit) / n * 100) / 100);   // never risk more than the room left before the stop loss
     return s;
   }
@@ -66,11 +67,11 @@
   function paintDigit() {
     const big = $('sbBig'), d = state.last, r = rule();
     const ok = d !== null && qualifies(r, d, state.delta), changed = big.textContent !== String(d === null ? '–' : d);
-    big.textContent = d === null ? '–' : d; big.dataset.tone = d === null ? '' : (ok ? 'g' : 'r');
+    big.textContent = d === null ? '–' : d; big.dataset.tone = '';   // the digit never gates a trade, so it is not coloured as a signal
     if (changed) { big.classList.remove('pop'); void big.offsetWidth; big.classList.add('pop'); }
     const even = d !== null && d % 2 === 0;
-    $('sbChips').innerHTML = d === null ? '' : `<span class="${even ? 'g' : 'r'}">${even ? 'EVEN' : 'ODD'}</span><span class="${ok ? 'g' : 'r'}">${label(r).toUpperCase()} ${ok ? '✓' : '✗'}</span>`;
-    $('speedBotDigitStrip').innerHTML = state.digits.slice(-14).map(x => `<span class="${r.type === 'CALL' || r.type === 'PUT' ? '' : (qualifies(r, x, 0) ? 'rank-top' : 'rank-bottom')}">${x}</span>`).join('');
+    $('sbChips').innerHTML = d === null ? '' : `<span>${even ? 'EVEN' : 'ODD'}</span><span>${label(r).toUpperCase()} · EVERY TICK</span>`;
+    $('speedBotDigitStrip').innerHTML = state.digits.slice(-14).map(x => `<span>${x}</span>`).join('');
     $('speedBotLastDigit').textContent = d === null ? '—' : d; $('speedBotPreviousDigit').textContent = state.previous === null ? '—' : state.previous; $('speedBotTickCount').textContent = state.count.toLocaleString();
   }
   function setState(text, cls) { const el = $('speedBotRunState'); el.textContent = text; el.className = 'demo-pill ' + (cls || ''); }
@@ -88,12 +89,12 @@
     if (state.busy && recOn()) return;   // with recovery on, wait for the last batch's result before the next one
     const n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)), stake = stakeNow();
     if (stake < 0.35) { finish('Stop loss reached', 'loss'); return; }
-    if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) { $('speedBotRuleState').textContent = 'Pacing (Deriv limit)'; return; }
+    if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) { $('speedBotRuleState').textContent = 'Pacing (Deriv limit)'; if (Date.now() - (state.lastPaceLog || 0) > 10000) { state.lastPaceLog = Date.now(); addLog('Skipped a tick', 'Deriv call limit reached. Lower Trades per tick to trade every tick.', 'l'); } return; }
     // Deriv allows about 220 trade calls a minute; skip this signal rather than queue it
     state.batches++; state.tickets += n; state.busy = true;
-    $('speedBotBatches').textContent = state.batches; $('speedBotTickets').textContent = state.tickets; $('speedBotRuleState').textContent = 'Matched';
+    $('speedBotBatches').textContent = state.batches; $('speedBotTickets').textContent = state.tickets; $('speedBotRuleState').textContent = 'Trading';
     $('speedBotExposure').textContent = '$' + (n * stake).toFixed(2);
-    addLog(`${label(r)} · digit ${d === null || d === undefined ? '–' : d}`, `Buying ${n} contract${n === 1 ? '' : 's'} · $${stake.toFixed(2)} each${state.steps ? ' · martingale step ' + state.steps : ''}${state.mode === 'recovery' && recOn() ? ' · recovery' : ''}`);
+    addLog(`${label(r)} · tick ${d === null || d === undefined ? '–' : d}`, `Buying ${n} contract${n === 1 ? '' : 's'} · $${stake.toFixed(2)} each${state.steps ? ' · martingale step ' + state.steps : ''}${state.mode === 'recovery' && recOn() ? ' · recovery' : ''}`);
     const T = window.ITC_TRADE; if (!T) { state.busy = false; return; }
     const params = { symbol: symbolOf(), contract_type: r.type, amount: stake, duration: (r.type === 'CALL' || r.type === 'PUT') ? 5 : 1, barrier: NEEDS_DIGIT.includes(r.type) ? r.barrier : undefined };
     let list = []; try { list = await T.execute(params, { count: n, label: label(r) }); } catch (_) {}
@@ -144,6 +145,7 @@
   }
   if (window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.onTick) window.ITC_MARKET_DATA.onTick(onLiveTick);
 
+  window.addEventListener('itc:trade-halt', e => { if (state.running) { const m = (e.detail && e.detail.message) || 'Trading halted'; finish('Stopped: ' + m); addLog('Stopped', m, 'l'); } });   // low balance or wrong account: stop and stay stopped
   // ---- controls ----
   $('speedBotStart').addEventListener('click', () => {
     const n = Math.floor(Number($('speedBotTrades').value)), stake = Number($('speedBotStake').value), tp = Number($('speedBotTP').value), sl = Number($('speedBotSL').value);
@@ -151,9 +153,10 @@
     if (!Number.isFinite(stake) || stake < 0.35) { addLog('Stake must be at least 0.35.'); return; }
     if (!(tp > 0) || !(sl > 0)) { addLog('Take profit and stop loss must be above 0.'); return; }
     if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Market feed not ready', 'Wait a moment for live ticks, then tap Start again.'); return; }
+    { const chk = window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { addLog('Not started', chk.message, 'l'); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < stake) { addLog('Not started', 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.', 'l'); return; } }
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
-    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('WATCHING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}${window.ITC_TRADE.simulated && window.ITC_TRADE.simulated() ? ' · PRACTICE (simulated on live ticks)' : ''}`);
+    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('TRADING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}${window.ITC_TRADE.simulated && window.ITC_TRADE.simulated() ? ' · PRACTICE (simulated on live ticks)' : ''}`);
     fire(state.last, 'start-' + Date.now());   // trade immediately, do not wait for a tick or a digit
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });
@@ -161,5 +164,6 @@
     el.addEventListener('change', () => { if (el === market) { const b = window.ITC_MARKET_DATA; if (b) b.selectMarket(market.value); Object.assign(state, { digits: [], win: [], last: null, previous: null, count: 0, seen: 0, lastPrice: null }); } paintRuleUi(); paintDigit(); });
     el.addEventListener('input', () => paintRuleUi());
   });
+  { const mg = document.getElementById('speedBotMartingale'); if (mg) { let on = true; try { const v = localStorage.getItem('itc_sb_martingale'); if (v !== null) on = v === '1'; } catch (_) {} mg.checked = on; mg.addEventListener('change', () => { try { localStorage.setItem('itc_sb_martingale', mg.checked ? '1' : '0'); } catch (_) {} paintRuleUi(); }); } }   // martingale stays on until you switch it off
   paintRuleUi(); paintDigit(); paintPL(); setInterval(processMarketData, 1000);
 })();

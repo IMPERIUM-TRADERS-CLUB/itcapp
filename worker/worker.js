@@ -160,14 +160,15 @@ async function derivProxy(request, headers, kind) {
   if (!/^Bearer [A-Za-z0-9._~+\/-]{10,4096}=*$/.test(auth)) return json({ error: 'unauthorized' }, 401, headers);
   const init = { method: 'GET', headers: { 'Authorization': auth, 'Accept': 'application/json' } };
   let target = 'https://api.derivws.com/trading/v1/options/accounts';
-  if (kind === 'otp') {
+  if (kind === 'otp' || kind === 'reset') {
     let body = {}; try { body = await request.json(); } catch { /* bad json */ }
     const id = String(body.accountId || '');
     if (!/^[A-Za-z0-9_-]{3,40}$/.test(id)) return json({ error: 'invalid_account' }, 400, headers);
-    target += '/' + encodeURIComponent(id) + '/otp'; init.method = 'POST';
+    target += '/' + encodeURIComponent(id) + (kind === 'reset' ? '/reset-demo-balance' : '/otp'); init.method = 'POST';
   }
   try {
     const up = await fetch(target, init); // the token is passed through, never stored or logged
+    if (kind === 'reset' && up.ok) return json({ ok: true }, 200, headers);   // Deriv answers 200 with no body
     let data; try { data = await up.json(); } catch { return json({ error: 'upstream_unreadable' }, 502, headers); }
     return json(data, up.status, headers);
   } catch { return json({ error: 'upstream_unreachable' }, 502, headers); }
@@ -274,6 +275,7 @@ const itcWorker = {
     if (url.pathname === '/ai/bot' && request.method === 'POST') return aiBot(request, env, headers);
     if (url.pathname === '/deriv/accounts' && request.method === 'GET') return derivProxy(request, headers, 'accounts');
     if (url.pathname === '/deriv/otp' && request.method === 'POST') return derivProxy(request, headers, 'otp');
+    if (url.pathname === '/deriv/reset-demo' && request.method === 'POST') return derivProxy(request, headers, 'reset');
     if (url.pathname === '/admin/login' && request.method === 'POST') return adminLogin(request, env, headers);
     if (url.pathname === '/admin/send' && request.method === 'POST') return adminSend(request, env, headers);
     if (url.pathname === '/signals' && request.method === 'GET') {
