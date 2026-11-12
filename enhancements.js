@@ -64,7 +64,7 @@
   function rowsHtml(list) {
     return list.map((m, i) => { const eds = (m.entryDigits || []).map(x => x.digit), ed = eds.join(' · ');
       const attrs = `data-send-bot="1" data-market="${m.name}" data-symbol="${m.symbol || ''}" data-family="${m.family || ''}" data-side="${m.side || ''}" data-target="${m.target === undefined ? '' : m.target}" data-entry="${m.entry || ''}" data-entry-digits="${eds.join(',')}"`;
-      return `<div class="scanner-result-row"><span class="scanner-rank">${i + 1}</span><div class="scanner-market"><strong>${m.name}</strong><small>${m.symbol} · ${m.sample || 0} ticks checked</small><button class="use-market-button" type="button" ${attrs}>▶ Send to bot</button></div><div class="scanner-entry"><small>Trade</small><strong>${m.entry || '—'} <span class="rules-badge r${Math.min(m.rules || 1, 3)}">${m.rules || 1} rule${(m.rules || 1) > 1 ? 's' : ''} met</span></strong><span>${m.label}</span>${ed ? `<span class="entry-digits">Entry digits: <b>${ed}</b></span>` : ''}</div><div class="scanner-score"><strong>${m.score.toFixed(1)}%</strong><div><i style="width:${Math.max(0, Math.min(100, m.score))}%"></i></div><small>win share</small></div></div>`; }).join('');
+      return `<div class="scanner-result-row"><span class="scanner-rank">${i + 1}</span><div class="scanner-market"><strong>${m.name}</strong><small>${m.symbol} · ${m.sample || 0} ticks checked</small><button class="use-market-button" type="button" ${attrs}>▶ Send to bot</button></div><div class="scanner-entry"><small>Trade</small><strong>${m.entry || '—'} <span class="rules-badge r${Math.min(m.rules || 1, 3)}">${m.rules || 1} rule${(m.rules || 1) > 1 ? 's' : ''} met</span></strong><span>${m.label}</span>${ed ? `<span class="entry-digits">Entry digits: <b>${ed}</b></span>` : ''}</div><div class="scanner-score"><strong>${m.score.toFixed(1)}%</strong><div><i style="width:${Math.max(0, Math.min(100, m.score))}%"></i></div><small>seen in last ${m.sample || 0} ticks</small></div></div>`; }).join('');
   }
   function stopScan(btn) { clearInterval(scanTimer); scanTimer = null; lastSig = ''; window.ITC_SOUND?.stopScan?.('smart'); if (btn) btn.textContent = '⌕ Scan markets'; }
   function showResults(ranked, note) {
@@ -387,4 +387,12 @@
   const paint = () => ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = get(); });
   ids.forEach(id => document.getElementById(id)?.addEventListener('change', e => { try { localStorage.setItem(key, e.target.value); } catch (_) {} paint(); document.getElementById('scannerContract')?.dispatchEvent(new Event('change', { bubbles: true })); }));
   paint();
+})();
+
+// Keep the active tab in view when the tab bar is too narrow to show every tab on one row.
+(function () {
+  const bar = document.getElementById('workspaceSwitcher'); if (!bar) return;
+  const show = () => { const a = bar.querySelector('.workspace-switch.active'); if (a && bar.scrollWidth > bar.clientWidth) bar.scrollTo({ left: a.offsetLeft - (bar.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' }); };
+  new MutationObserver(show).observe(bar, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  setTimeout(show, 600);
 })();

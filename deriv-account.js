@@ -433,7 +433,10 @@
     const demo = state.accounts.find(a => a.type === 'demo'); if (!demo) throw new Error('This Deriv login has no demo account.');
     const res = await fetch(oauthConfig.workerUrl + '/deriv/reset-demo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ accountId: demo.id }) });
     let body = {}; try { body = await res.json(); } catch (_) {}
-    if (res.status === 404 && body.error === 'not_found') throw new Error('Deploy the updated worker/worker.js first (it adds the reset route).');
+    if (res.status === 404 && body.error === 'not_found') {   // the Worker this site talks to does not have the reset route
+      let live = null; try { live = await (await fetch(oauthConfig.workerUrl + '/health')).json(); } catch (_) {}
+      throw new Error('The Worker at ' + oauthConfig.workerUrl.replace('https://', '') + ' is still the old code (' + (live && live.reset_demo ? 'it reports the reset route, so refresh the page and try again' : 'its /health page has no "reset_demo": true') + '). Redeploy worker.js to that exact Worker.');
+    }
     if (!res.ok) throw new Error((body.errors && body.errors[0] && body.errors[0].message) || body.error_description || body.error || ('Deriv request failed (' + res.status + ')'));
     let amount = 10000, currency = demo.currency || 'USD';
     if (state.account && state.account.loginid === demo.id && state.socket && state.socket.readyState === WebSocket.OPEN) {

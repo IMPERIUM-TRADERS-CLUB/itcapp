@@ -270,7 +270,7 @@ const itcWorker = {
     const url = new URL(request.url);
     if (url.pathname === '/' && request.method === 'GET') return json({ ok: true, service: 'itc-oauth-bridge', message: 'ITC backend is running. Open /health for details.' }, 200, headers);
     if (url.pathname === '/health' && request.method === 'GET') {
-      return json({ ok: true, service: 'itc-oauth-bridge', version: 7, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) || Boolean(env.AI) }, 200, headers);
+      return json({ ok: true, service: 'itc-oauth-bridge', version: 8, reset_demo: true, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) || Boolean(env.AI) }, 200, headers);
     }
     if (url.pathname === '/ai/bot' && request.method === 'POST') return aiBot(request, env, headers);
     if (url.pathname === '/deriv/accounts' && request.method === 'GET') return derivProxy(request, headers, 'accounts');

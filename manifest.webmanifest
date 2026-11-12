@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Project 1 — Imperium Traders Club",
+  "name": "Imperium Traders Club",
   "short_name": "ITC",
-  "description": "Project 1: ITC market tools, bot inspection, risk planning and signal alert drafts.",
+  "description": "Imperium Traders Club (ITC): market tools, bots, risk planning and signal alerts.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

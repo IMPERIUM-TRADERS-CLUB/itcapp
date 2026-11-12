@@ -149,5 +149,12 @@
     }
     return done;
   }
+  // ---- one bot at a time: only the bot you started may trade; every other bot refuses to start until it stops ----
+  let lockOwner = '';
+  window.ITC_LOCK = {
+    acquire(name) { if (lockOwner && lockOwner !== name) return { ok: false, by: lockOwner }; lockOwner = name; return { ok: true }; },
+    release(name) { if (lockOwner === name) lockOwner = ''; },
+    owner: () => lockOwner
+  };
   window.ITC_TRADE = { accountCheck, execute, trade, sell, ready, simulated, simTicks, proposalReq, busy, budgetPerMinute: HARD };
 })();

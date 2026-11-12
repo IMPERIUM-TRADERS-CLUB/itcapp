@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050607">
-  <meta name="description" content="ITC Version 9.10 — Imperium Traders Club (ITC): responsive market observation, bot inspection, risk planning and signal alerts.">
+  <meta name="description" content="Imperium Traders Club (ITC): market observation, bots, risk planning and signal alerts.">
   <link rel="icon" type="image/svg+xml" href="imperium-logo.svg">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ITC">
   <link rel="apple-touch-icon" href="icons/itc-192.png">
-  <title>ITC Version 9.10 · Imperium Traders Club</title>
+  <title>Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=100">
+  <link rel="stylesheet" href="itc-theme.css?v=105">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -361,7 +361,7 @@
       <section class="page" id="page-speedbot">
         <article class="panel sb-sheet">
           <h1 class="sb-title">ITC SPEEDBOT</h1>
-          <div class="sb-row1"><label for="speedBotMarket">Market</label><select id="speedBotMarket" class="dark-select"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select></div>
+          <div class="sb-left"><div class="sb-row1"><label for="speedBotMarket">Market</label><select id="speedBotMarket" class="dark-select"><option>Volatility 100 (1s) Index</option><option>Volatility 75 Index</option><option>Volatility 50 Index</option><option>Volatility 50 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 25 Index</option><option>Volatility 10 Index</option><option>Volatility 25 (1s) Index</option><option>Volatility 10 (1s) Index</option></select></div>
           <div class="sb-row">
             <div class="sb-f"><label for="speedBotContract">Contract</label><select id="speedBotContract" class="dark-select"><option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option><option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option><option value="DIGITMATCH">Matches</option><option value="DIGITDIFF">Differs</option><option value="CALL">Rise</option><option value="PUT">Fall</option></select></div>
             <div class="sb-f" id="sbBarrierWrap"><label for="speedBotBarrier">Digit</label><select id="speedBotBarrier" class="dark-select"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
@@ -386,7 +386,7 @@
               <div class="sb-f" id="sbRecBarrierWrap"><label for="speedBotRecBarrier">Digit</label><select id="speedBotRecBarrier" class="dark-select"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
             </div>
           </div>
-          <div class="sb-runrow">
+          </div><div class="sb-right"><div class="sb-runrow">
             <div class="sb-btns"><button class="button primary" id="speedBotStart" type="button">Run</button><button class="button secondary" id="speedBotStop" type="button" disabled>Stop</button></div>
             <div class="sb-tick"><span class="sb-tick-l">Tick movement <i class="live-pill wait" id="speedBotLive">…</i></span><div class="sb-tick-v" id="sbTickPrice">–</div></div>
           </div>
@@ -396,7 +396,7 @@
           </div>
           <div class="sb-sess"><span class="demo-pill" id="speedBotRunState">STOPPED</span> <span class="sb-pl" id="speedBotPL">+0.00</span> <span class="sb-mode" id="speedBotMode">MAIN</span></div>
           <div class="speedbot-log" id="speedBotLog" aria-live="polite"><div class="speedbot-log-empty">Press Run. Every trade and result will be listed here.</div></div>
-          <p class="form-footnote">Trades are placed on the account chosen in the top bar. Martingale raises the stake after a losing batch and can lose more quickly; results are not guaranteed.</p>
+          <p class="form-footnote">Trades are placed on the account chosen in the top bar. Martingale raises the stake after a losing batch and can lose more quickly; results are not guaranteed.</p></div>
         </article>
       </section>
       <section class="page" id="page-signals">
@@ -548,7 +548,7 @@
           <div class="mh-dots" id="mhDots"></div>
           <div class="mh-status" id="mhStatus">Ready</div><div class="mh-now" id="mhNow"></div>
         </article>
-        <p class="cp-fine">Automated trading carries risk and results are not guaranteed. It trades on the account selected in the top bar (Demo or Real). Stop any time.</p>
+        <p class="cp-fine">The percentages shown are what happened in the last 1,000 ticks. They do not predict the next tick. Automated trading carries risk and results are not guaranteed. It trades on the account selected in the top bar (Demo or Real). Stop any time.</p>
       </section>
 
       <section class="page" id="page-copytrading">
@@ -628,19 +628,19 @@
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=91"></script>
   <script src="app.js?v=9.31"></script>
-  <script src="deriv-account.js?v=9.15"></script>
-  <script src="account-display.js?v=7.7"></script>
-  <script src="real-trading.js?v=9.41"></script>
-  <script src="bot-runner.js?v=9.41"></script>
+  <script src="deriv-account.js?v=9.16"></script>
+  <script src="account-display.js?v=7.8"></script>
+  <script src="real-trading.js?v=9.42"></script>
+  <script src="bot-runner.js?v=9.42"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.41"></script>
+  <script src="market-hunter.js?v=9.42"></script>
   <script src="sound.js?v=9.8"></script>
-  <script src="enhancements.js?v=2"></script>
-  <script src="circle-ai.js?v=9.41"></script>
+  <script src="enhancements.js?v=4"></script>
+  <script src="circle-ai.js?v=9.45"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
-  <script src="speedbot.js?v=9.41"></script>
-  <script src="quick-strategy.js?v=9.21"></script>
+  <script src="speedbot.js?v=9.42"></script>
+  <script src="quick-strategy.js?v=9.22"></script>
   <script src="run-panel.js?v=9.25"></script>
   <script src="social-links.js?v=1"></script>
   <script src="canvas-spec.js?v=9.24"></script>

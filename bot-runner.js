@@ -56,7 +56,7 @@
     st.stake = st.base;
     const log = (m, s) => o.log && o.log(m, s || 'LIVE');
     const finish = why => {
-      if (st.stopped) return; st.stopped = true; run = null; window.removeEventListener('itc:trade-halt', st.haltFn);
+      if (st.stopped) return; st.stopped = true; run = null; window.removeEventListener('itc:trade-halt', st.haltFn); if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner');
       if (st.subId) try { A.request({ forget: st.subId }); } catch (_) {}
       log(why + ' · ' + st.n + ' runs · P/L ' + st.profit.toFixed(2), 'STOPPED'); o.done && o.done(why);
       const kind = /^Take profit/.test(why) ? 'win' : /^Stop loss/.test(why) ? 'loss' : (/^Consecutive losses/.test(why) ? 'loss' : '');
@@ -99,15 +99,16 @@
       } catch (err) { log('Error: ' + (err.message || err), 'ERROR'); finish('Stopped on error'); return true; }
       st.busy = false; return false;
     }
+    { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('Bot Runner'); if (g && !g.ok) return { error: g.by + ' is running. Stop it first: only one bot can trade at a time.' }; }
     st.haltFn = e => finish('Stopped: ' + ((e.detail && e.detail.message) || 'trading halted.'));   // low balance or wrong account: stop and stay stopped
     window.addEventListener('itc:trade-halt', st.haltFn);
-    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { window.removeEventListener('itc:trade-halt', st.haltFn); return { error: chk.message }; } }
+    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { window.removeEventListener('itc:trade-halt', st.haltFn); if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: chk.message }; } }
     run = { stop: () => finish('Stopped by you') };
     try {
-      if (T.simulated()) { const r = T.simTicks(sym, onTick, () => st.stopped); if (r.error) { run = null; return { error: r.error }; } }
+      if (T.simulated()) { const r = T.simTicks(sym, onTick, () => st.stopped); if (r.error) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: r.error }; } }
       else A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
     }
-    catch (e) { run = null; return { error: e.message || String(e) }; }
+    catch (e) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: e.message || String(e) }; }
     log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (T.simulated() ? 'PRACTICE (simulated on live ticks, no Deriv login needed)' : (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account')) + ' · stake ' + st.base, 'LIVE');
     return { ok: true };
   }

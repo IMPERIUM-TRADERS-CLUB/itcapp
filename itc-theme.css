@@ -954,3 +954,91 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 @keyframes itcResetSpin{to{transform:rotate(360deg)}}
 @media(max-width:700px){.balance-reset{width:16px;height:16px;flex-basis:16px}.balance-reset svg{width:10px;height:10px}}
 @media(prefers-reduced-motion:reduce){.balance-reset.spin svg{animation-duration:2s}}
+
+/* ===== One-row tab bar (no wrapping, so pages start higher up). Tabs share the width; if the window is very narrow the bar scrolls sideways. ===== */
+@media(min-width:701px){
+  .workspace-switcher{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden;scrollbar-width:none}
+  .workspace-switcher::-webkit-scrollbar{display:none}
+  .workspace-switch{flex:1 0 auto!important;min-width:74px!important;padding:7px 8px 6px!important;gap:3px!important;font-size:10.5px!important}
+  .workspace-switch .ico{width:22px;height:22px}
+  .workspace-switch .ico svg{width:20px;height:20px}
+  .switcher-tools{margin-left:0!important}
+}
+
+/* ===== ITC AI: opens centered and large so all of it shows; the round button can be dragged anywhere ===== */
+.circle-ai-drawer{left:0!important;right:0!important;top:0!important;bottom:0!important;margin:auto!important;width:min(780px,96vw)!important;height:fit-content!important;max-height:94vh!important;padding:20px!important;z-index:140!important}
+.circle-ai-launcher{touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+.circle-ai-launcher.dragging{cursor:grabbing;transition:none!important;transform:none!important}
+.circle-ai-launcher[aria-expanded="true"]{visibility:hidden}
+@media(max-width:700px){.circle-ai-drawer{width:calc(100vw - 12px)!important;max-height:96vh!important;padding:14px!important}}
+
+/* ===== Laptop fit: shorter bars, tighter headings and cards, and the empty side space is used so pages need little or no scrolling ===== */
+@media(min-width:901px){
+  .topbar{height:48px!important;min-height:48px!important}
+  .workspace-switcher{top:48px!important;height:auto!important;min-height:0!important}
+  .workspace-switch{padding:4px 8px 3px!important;gap:1px!important}
+  .workspace-switch .ico{width:19px!important;height:19px!important}
+  .workspace-switch .ico svg{width:17px!important;height:17px!important}
+  .page{padding:10px 20px 16px!important}
+  .page-heading{margin:0 0 10px!important;display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap}
+  .page-heading .eyebrow{display:none!important}
+  .page-heading h1{font-size:22px!important;margin:0!important;line-height:1.1}
+  .page-heading p{margin:0!important;font-size:11.5px!important}
+  .panel{padding:12px!important}
+  input.regular-input,select.dark-select,.cp-in{min-height:34px!important;padding-top:4px!important;padding-bottom:4px!important;font-size:14px!important}
+
+  /* Market Hunter: controls on the left, results on the right */
+  #page-markethunter.active{display:grid;grid-template-columns:minmax(420px,560px) minmax(300px,1fr);column-gap:16px;align-items:start}
+  #page-markethunter .page-heading,#page-markethunter .cp-fine{grid-column:1/-1}
+  #page-markethunter .mh-card{max-width:none!important;width:auto!important;margin:0!important;padding:12px!important}
+  #page-markethunter .mh-input{font-size:20px!important;min-height:40px!important}
+  #page-markethunter .mh-risk button{padding:8px 6px!important}
+  #page-markethunter .mh-plan>*{padding:7px 9px!important}
+  #page-markethunter .mh-pl{font-size:38px!important;line-height:1.1}
+  #page-markethunter .cp-fine{margin:8px 0 0!important}
+
+  /* SpeedBot: settings on the left, run / stats / log on the right */
+  #page-speedbot.active .sb-sheet{max-width:1120px!important;display:grid;grid-template-columns:1fr 1fr;column-gap:22px;margin:0 auto!important;padding:12px 16px!important}
+  #page-speedbot .sb-title{grid-column:1/-1;font-size:17px!important;margin:0 0 8px!important}
+  #page-speedbot .sb-left,#page-speedbot .sb-right{min-width:0}
+  #page-speedbot .sb-row{gap:8px 12px!important;margin-bottom:6px!important}
+  #page-speedbot .sb-row1{margin-bottom:6px!important}
+  #page-speedbot .sb-sw{min-height:34px!important}
+  #page-speedbot .sb-runrow{margin:0 0 8px!important}
+  #page-speedbot .sb-sheet .speedbot-log,#page-speedbot .speedbot-log{max-height:150px!important;min-height:90px}
+  #page-speedbot .form-footnote{margin:6px 0 0!important}
+}
+
+@media(min-width:901px){
+  /* SpeedBot: tighter rows */
+  #page-speedbot .sb-row:has(#speedBotRecMult){grid-template-columns:repeat(3,1fr)!important}
+  #page-speedbot .sb-recrow{grid-template-columns:170px 1fr!important;align-items:end;gap:8px 12px!important}
+  #page-speedbot .sb-f label,#page-speedbot .sb-row1 label{font-size:11px!important;margin-bottom:2px!important}
+  #page-speedbot .sb-counts .sb-box{min-height:30px!important;padding:4px 10px!important}
+
+  /* Deriv Trader: chart on the left, trade panel on the right */
+  #page-manualtrader .mt{max-width:none!important;width:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr) 400px;gap:10px 14px;align-items:start;margin:0!important}
+  #page-manualtrader .mt-header{grid-column:1/-1;padding:8px 12px!important}
+  #page-manualtrader .mt-chart{height:min(430px,calc(100vh - 190px))!important;min-height:240px;margin:0!important}
+  #page-manualtrader .mt-sheet{margin:0!important}
+}
+
+@media(min-width:901px){
+  #page-manualtrader{padding-bottom:16px!important}
+  .riskcalc-grid{margin-top:8px!important;gap:12px!important}
+  .riskcalc-panel,.risk-results{padding:12px!important}
+  .cp-card{padding:12px!important;margin-bottom:10px!important}
+}
+
+@media(min-width:901px){
+  #page-dtrader{padding-bottom:58px!important}
+  #page-dtrader .dchart-canvas-wrap{height:min(322px,calc(100vh - 345px))!important;min-height:200px}
+  #page-dtrader .dchart-price{min-height:0!important}
+  #page-dtrader .chart-switch{margin-bottom:6px!important}
+}
+
+/* Small confirmation under the demo reset button */
+.reset-pop{position:fixed;z-index:300;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;background:#1a1710;border:1px solid #67532c;border-radius:10px;color:#f5d887;font:600 12px/1 inherit;box-shadow:0 6px 20px #000a;white-space:nowrap}
+.reset-pop button{border:1px solid #67532c;border-radius:7px;background:#272115;color:#f5d887;font:700 12px/1 inherit;padding:6px 10px;cursor:pointer}
+.reset-pop button[data-y]{background:#d3a93b;color:#241b06;border-color:#d3a93b}
+.reset-pop button:hover{filter:brightness(1.15)}

@@ -66,6 +66,7 @@
     return base;
   }
   function stop(why, kind) {
+    if (window.ITC_LOCK) window.ITC_LOCK.release('Quick Strategy');
     S.running = false; $('qsRun').disabled = false; $('qsStop').disabled = true; ['qsStrat', 'qsMarket', 'qsContract', 'qsPred', 'qsDur', 'qsStake', 'qsSize', 'qsMax', 'qsTP', 'qsSL'].forEach(i => { $(i).disabled = false; });
     paintForm(); setState(why, kind === 'win' ? 'win' : kind === 'loss' ? 'loss' : ''); addLog(why, kind === 'win' ? 'w' : kind === 'loss' ? 'l' : ''); paintStats();
     if (kind && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: S.net, bot: 'Quick Strategy' }); } catch (_) {} }
@@ -100,8 +101,9 @@
     const num = id => Number($(id).value), stake = num('qsStake');
     const cfg = { strat: $('qsStrat').value, symbol: $('qsMarket').value, market: $('qsMarket').selectedOptions[0].textContent, contract: $('qsContract').value, pred: $('qsPred').value, dur: Math.max(1, Math.min(10, Math.floor(num('qsDur')) || 1)), stake, size: num('qsSize') || 1, max: num('qsMax') || 0, tp: num('qsTP'), sl: num('qsSL') };
     if (!(stake >= 0.35)) { setState('Minimum stake is 0.35', 'loss'); return; }
-    if (!(cfg.tp > 0) || !(cfg.sl > 0)) { setState('Set take profit and stop loss', 'loss'); return; }
-    if (cfg.strat !== 's1326' && cfg.size <= 0) { setState('Check the size value', 'loss'); return; }
+    { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('Quick Strategy'); if (g && !g.ok) { setState(g.by + ' is running. Stop it first.', 'loss'); return; } }
+    if (!(cfg.tp > 0) || !(cfg.sl > 0)) { if (window.ITC_LOCK) window.ITC_LOCK.release('Quick Strategy'); setState('Set take profit and stop loss', 'loss'); return; }
+    if (cfg.strat !== 's1326' && cfg.size <= 0) { if (window.ITC_LOCK) window.ITC_LOCK.release('Quick Strategy'); setState('Check the size value', 'loss'); return; }
     Object.assign(S, { running: true, stake, cycle: 0, seq: 0, net: 0, runs: 0, wins: 0, losses: 0, log: [] }); $('qsLog').innerHTML = '';
     $('qsRun').disabled = true; $('qsStop').disabled = false; ['qsStrat', 'qsMarket', 'qsContract', 'qsPred', 'qsDur', 'qsStake', 'qsSize', 'qsMax', 'qsTP', 'qsSL'].forEach(i => { $(i).disabled = true; });
     addLog(STRATS[cfg.strat].name + ' on ' + cfg.market + ' started'); loop(cfg);

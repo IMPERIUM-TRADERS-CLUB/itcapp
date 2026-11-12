@@ -125,11 +125,29 @@
   if (window.ITC_DERIV_ACCOUNT && originalDisconnect) {
     window.ITC_DERIV_ACCOUNT.disconnect = (...args) => { const result = originalDisconnect(...args); window.dispatchEvent(new Event('itc:deriv-disconnected')); return result; };
   }
+  // Small pop-up under the reset button (instead of a big browser dialog).
+  function askReset() {
+    return new Promise(resolve => {
+      document.getElementById('resetDemoPop')?.remove();
+      const btn = $('headerResetDemo'), pop = document.createElement('div');
+      pop.id = 'resetDemoPop'; pop.className = 'reset-pop'; pop.setAttribute('role', 'dialog');
+      pop.innerHTML = '<span>Reset demo balance</span><button type="button" data-y>Reset</button><button type="button" data-n aria-label="Cancel">\u2715</button>';
+      document.body.appendChild(pop);
+      const r = btn.getBoundingClientRect();
+      pop.style.top = (r.bottom + 6) + 'px';
+      pop.style.left = Math.max(8, Math.min(window.innerWidth - pop.offsetWidth - 8, r.left - 30)) + 'px';
+      const out = e => { if (!pop.contains(e.target)) done(false); };
+      const done = v => { pop.remove(); document.removeEventListener('mousedown', out, true); document.removeEventListener('touchstart', out, true); resolve(v); };
+      pop.querySelector('[data-y]').addEventListener('click', () => done(true));
+      pop.querySelector('[data-n]').addEventListener('click', () => done(false));
+      setTimeout(() => { document.addEventListener('mousedown', out, true); document.addEventListener('touchstart', out, true); }, 0);
+    });
+  }
   // Rotating-arrows button: resets the DEMO balance to the default 10,000 (Deriv does not allow this on real accounts).
   $('headerResetDemo')?.addEventListener('click', async () => {
     const btn = $('headerResetDemo'), toast = t => window.ITC_APP && window.ITC_APP.showToast && window.ITC_APP.showToast(t);
     if (btn.classList.contains('spin') || state.mode !== 'demo') return;
-    if (!window.confirm('Reset your DEMO balance to the default 10,000 USD? Your real account is not affected.')) return;
+    if (!(await askReset())) return;
     btn.classList.add('spin'); btn.disabled = true;
     try { await window.ITC_DERIV_ACCOUNT.resetDemo(); toast('Demo balance reset.'); }
     catch (err) { toast('Could not reset demo balance: ' + String(err.message || err)); }

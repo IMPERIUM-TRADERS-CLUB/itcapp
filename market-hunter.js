@@ -76,13 +76,16 @@
     }
     return out;
   }
+  let scanCache = [], scanAt = 0;
+  function cachedCandidates() { if (Date.now() - scanAt > 1500) { scanCache = candidates(); scanAt = Date.now(); } return scanCache; }   // the 1,000-tick scan of every market barely changes per tick, so it runs every 1.5 s, not on every loop
+  function fresh(x) { const md = window.ITC_MARKET_DATA, t = md && md.getTicks ? md.getTicks(x.symbol, 1)[0] : null; return t ? { ...x, epoch: t.epoch } : x; }
   function pick() {   // best Over 1 / Under 8 market, switching markets as the numbers change
-    const R = window.ITC_AI_RULES, now = Date.now(), all = candidates().filter(x => x.eligible && !(S.cool.get(x.key) > now));
+    const R = window.ITC_AI_RULES, now = Date.now(), all = cachedCandidates().filter(x => x.eligible && !(S.cool.get(x.key) > now));
     if (!all.length) return null;
     const one = x => (R && R.is1s && R.is1s(x.market)) ? 1 : 0, rank = (a, b) => b.score - a.score || one(b) - one(a);
     const pool = all.sort(rank);
-    if (S.current) { const cur = pool.find(x => x.key === S.current.key); if (cur && cur.score >= pool[0].score - 0.02) return cur; }   // stay while it is still among the best
-    return pool[0];
+    if (S.current) { const cur = pool.find(x => x.key === S.current.key); if (cur && cur.score >= pool[0].score - 0.02) return fresh(cur); }   // stay while it is still among the best
+    return fresh(pool[0]);
   }
   async function round(setup) {
     const T = window.ITC_TRADE, n = 1, stake = Math.min(R2(baseStake(setup.side) * (S.martingale ? Math.pow(MARTINGALE, S.lossRun) : 1)), Math.floor((S.plan.sl + S.net) * 100) / 100);   // never risk more than the room left before the stop loss
@@ -101,7 +104,7 @@
       if (!S.current || S.current.key !== setup.key) status('Hunting · switched market'); else status('Hunting…');
       if (setup.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(100); continue; }   // one round per new tick
       S.lastEpoch[setup.symbol] = setup.epoch;
-      S.current = setup; $('mhNow').textContent = setup.market + ' · ' + setup.entry + ' · ' + (setup.prob * 100).toFixed(0) + '% win';
+      S.current = setup; $('mhNow').textContent = setup.market + ' · ' + setup.entry + ' · seen ' + (setup.prob * 100).toFixed(0) + '% in the last 1,000 ticks';
       let results;
       try { results = await round(setup); S.errors = 0; }
       catch (e) {
@@ -136,14 +139,16 @@
     if (S.running) return;
     { const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { status(chk.message, 'warn'); paintAcct(); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < 0.35) { status('Balance too low to trade (' + chk.balance.toFixed(2) + '). Fund the account first.', 'warn'); return; } }
     if (!canTrade()) { status('The market feed is not ready yet. Try again in a moment.', 'warn'); return; }
+    { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('Market Hunter'); if (g && !g.ok) { status(g.by + ' is running. Stop it first: only one bot can trade at a time.', 'warn'); return; } }
     let budget = Number($('mhBudget').value) || 0; if (Number.isFinite(balance) && budget > balance) { budget = Math.floor(balance); $('mhBudget').value = budget; status('Amount reduced to your balance.', 'warn'); }
     store.set('itc_mh_budget', budget); store.set('itc_mh_level', S.level);
-    S.plan = planFor(budget, S.level); if (budget < 5 || !S.plan.ok) { status('Increase the amount to risk.', 'warn'); return; }
+    S.plan = planFor(budget, S.level); if (budget < 5 || !S.plan.ok) { if (window.ITC_LOCK) window.ITC_LOCK.release('Market Hunter'); status('Increase the amount to risk.', 'warn'); return; }
     Object.assign(S, { running: true, winRun: 0, rotateAt: newRotate(), net: 0, wins: 0, losses: 0, trades: 0, lossRun: 0, current: null, errors: 0, dots: [], lastEpoch: {} });
     $('mhStart').disabled = true; $('mhStop').disabled = false; $('mhBudget').disabled = true; if ($('mhMartingale')) $('mhMartingale').disabled = true; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = true);
     paintResults(); status('Hunting…'); loop();
   }
   function stop(why, kind) {
+    if (window.ITC_LOCK) window.ITC_LOCK.release('Market Hunter');
     S.running = false; $('mhStart').disabled = false; $('mhStop').disabled = true; $('mhBudget').disabled = false; if ($('mhMartingale')) $('mhMartingale').disabled = false; document.querySelectorAll('#mhRisk button').forEach(b => b.disabled = false);
     $('mhNow').textContent = '';
     status(why || 'Stopped', kind === 'win' ? 'win' : kind === 'loss' ? 'loss' : '');

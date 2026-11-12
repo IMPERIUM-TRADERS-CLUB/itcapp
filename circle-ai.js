@@ -7,7 +7,7 @@
   const rulesText = {
     overunder: t0 => { let t = t0; const side = $('#circleAISide')?.value || 'over'; t = side === 'over' ? 1 : 8; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
     evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher.',
-    matches: () => 'Choose the most frequent digit in the selected sample. This is a historical frequency rule, not a prediction.',
+    matches: () => 'The most frequent digit (green bar) must be at least 12.5% and at least 1.5 points ahead of the second (blue bar). Prediction digit: the blue bar. Entry digit: the third most frequent digit. The bot waits for the entry digit, then trades Matches on the prediction digit. Past frequency only, not a forecast.',
     differs: () => 'Choose the least frequent digit in the selected sample. The contract wins only if the next last digit differs from that selected digit.'
   };
   function updateRuleText() {
@@ -60,8 +60,11 @@
       out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd',
         label: why.join(' · ') || `Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%`, entryDigits: nextTickEntries(digits, side === 'even' ? d => d % 2 === 0 : d => d % 2 === 1) });
     } else if (family === 'matches') {
-      const top = ranked[0], score = rate(top.digit);
-      out.push({ ...base, eligible: score >= 13, rules: score >= 13 ? 1 : 0, score, side: 'matches', target: top.digit, entry: `Matches ${top.digit}`, label: `Digit ${top.digit} appeared most often (${score.toFixed(1)}%)`, entryDigits: [] });
+      // Green bar = most frequent, blue bar = second. They must be at least 1.5 points apart.
+      // Prediction digit = the blue bar (second most frequent). Entry digit = the third most frequent digit.
+      const top = ranked[0], second = ranked[1], third = ranked[2], topRate = rate(top.digit), secondRate = rate(second.digit), thirdRate = rate(third.digit), gap = topRate - secondRate, ok = topRate >= 12.5 && gap >= 1.5;
+      out.push({ ...base, eligible: ok, rules: ok ? 1 : 0, score: topRate + gap, seen: secondRate, side: 'matches', target: second.digit, entryDigit: third.digit, entry: `Matches ${second.digit} · entry ${third.digit}`,
+        label: `Green ${top.digit} ${topRate.toFixed(1)}% leads blue ${second.digit} ${secondRate.toFixed(1)}% by ${gap.toFixed(1)}. Prediction digit: ${second.digit}. Entry digit: ${third.digit} (third most, ${thirdRate.toFixed(1)}%)`, entryDigits: [{ digit: third.digit, n: counts[third.digit], rate: thirdRate }] });
     } else {
       const low = ranked[ranked.length - 1], score = 100 - rate(low.digit);
       out.push({ ...base, eligible: score >= 93, rules: score >= 93 ? 1 : 0, score, side: 'differs', target: low.digit, entry: `Differs ${low.digit}`, label: `Digit ${low.digit} is the least seen (${rate(low.digit).toFixed(1)}%)`, entryDigits: [] });
@@ -147,7 +150,7 @@
     status.className='circle-ai-status success'; status.textContent=`${note ? note + ' ' : ''}Trading ${pick.market} · ${pick.entry}. This is not a forecast.`;
     resultBox.classList.remove('hidden');
     const ed = entryText(pick);
-    resultBox.innerHTML = `<h3>${pick.market} · ${pick.entry}</h3><p><strong>Rules met:</strong> ${pick.rules || 1}</p><p><strong>Why:</strong> ${pick.label}</p>${ed ? `<p><strong>Entry digits:</strong> ${ed}</p>` : ''}<p><strong>Sample:</strong> ${pick.sample.toLocaleString()} ticks · <strong>Win share:</strong> ${pick.score.toFixed(1)}%</p><p><strong>Stake:</strong> ${money(stake)} · <strong>TP / SL:</strong> ${money(tp)} / ${money(sl)}</p><p><strong>Markets that qualified:</strong> ${new Set(eligible.map(x => x.market)).size}</p><button class="button primary circle-ai-execute" id="circleAIExecute">▶ Trade again</button>`;
+    resultBox.innerHTML = `<h3>${pick.market} · ${pick.entry}</h3><p><strong>Rules met:</strong> ${pick.rules || 1}</p><p><strong>Why:</strong> ${pick.label}</p>${ed ? `<p><strong>Entry digits:</strong> ${ed}</p>` : ''}<p><strong>Sample:</strong> ${pick.sample.toLocaleString()} ticks · <strong>Seen in that sample:</strong> ${(pick.seen !== undefined ? pick.seen : pick.score).toFixed(1)}% (past ticks, not a forecast)</p><p><strong>Stake:</strong> ${money(stake)} · <strong>TP / SL:</strong> ${money(tp)} / ${money(sl)}</p><p><strong>Markets that qualified:</strong> ${new Set(eligible.map(x => x.market)).size}</p><button class="button primary circle-ai-execute" id="circleAIExecute">▶ Trade again</button>`;
     $('#circleAIExecute')?.addEventListener('click', executePaperTrade);
     runAuto();   // trades the best market straight away and keeps going until take profit or stop loss
     const sc = $('#scannerContract'), sw = $('#scannerWindow');
@@ -161,20 +164,30 @@
   const sleepMs = ms => new Promise(r => setTimeout(r, ms));
   const R2 = v => Math.round(v * 100) / 100;
   function stopAuto(why, kind) {
-    if (!auto) return; auto.stop = true; auto = null;
+    if (!auto) return; auto.stop = true; auto = null; if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI');
     const btn = $('#circleAIScan'); if (btn) btn.textContent = '\u2726 Scan for best market';
     const st = $('#circleAIStatus'); if (st) { st.className = 'circle-ai-status ' + (kind === 'loss' || kind === 'halt' ? 'error' : 'success'); st.textContent = why; }
     const net = state.autoNet || 0;
     if ((kind === 'win' || kind === 'loss') && state.lastPick) state.avoid = state.lastPick.market;   // take profit or stop loss reached: the next scan skips this market
     if ((kind === 'win' || kind === 'loss') && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: net, bot: 'ITC AI' }); } catch (_) {} }
   }
+  async function waitForEntry(pick, run) {   // resolves true when a NEW tick ends in the entry digit, false if you stop the bot
+    const md = window.ITC_MARKET_DATA; let seen = ((md.getTicks(pick.symbol, 1) || [])[0] || {}).epoch || 0;
+    while (!run.stop) {
+      const t = (md.getTicks(pick.symbol, 1) || [])[0];
+      if (t && t.epoch > seen) { seen = t.epoch; if (t.digit === pick.entryDigit) return true; }
+      await sleepMs(100);
+    }
+    return false;
+  }
   async function runAuto() {
     if (!state.lastPick) return;
     const pick = state.lastPick, T = window.ITC_TRADE, st = $('#circleAIStatus'), btn = $('#circleAIScan');
+    { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('ITC AI'); if (g && !g.ok) { st.className = 'circle-ai-status error'; st.textContent = g.by + ' is running. Stop it first: only one bot can trade at a time. No trade was placed.'; return; } }
     const map = { over: 'DIGITOVER', under: 'DIGITUNDER', even: 'DIGITEVEN', odd: 'DIGITODD', matches: 'DIGITMATCH', differs: 'DIGITDIFF' };
     const ct = map[pick.side];
-    if (!T || !ct || !T.ready || !T.ready()) { st.className = 'circle-ai-status error'; st.textContent = 'Trading is not available. Tap Login first.'; return; }
-    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { st.className = 'circle-ai-status error'; st.textContent = chk.message; return; } if (chk && Number.isFinite(chk.balance) && chk.balance < pick.stake) { st.className = 'circle-ai-status error'; st.textContent = 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.'; return; } }
+    if (!T || !ct || !T.ready || !T.ready()) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = 'Trading is not available. Tap Login first.'; return; }
+    { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = chk.message; return; } if (chk && Number.isFinite(chk.balance) && chk.balance < pick.stake) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.'; return; } }
     const run = { stop: false }; auto = run; state.autoNet = 0;
     let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0;
     btn.textContent = '\u25A0 Stop trading';
@@ -183,6 +196,10 @@
       if (s < 0.35) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
       st.className = 'circle-ai-status success';
       st.textContent = 'Trading ' + pick.market + ' \u00B7 ' + pick.entry + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' (TP ' + pick.tp + ' / SL ' + pick.sl + ') \u00B7 W' + wins + ' L' + losses;
+      if (pick.entryDigit !== undefined) {   // Matches: wait for the entry digit, then trade the prediction digit on the next tick
+        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for entry digit ' + pick.entryDigit + ' on ' + pick.market + ' \u00B7 will trade Matches ' + pick.target + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
+        if (!(await waitForEntry(pick, run))) return;
+      }
       const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
       let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry, priority: true }); } catch (_) {}
       if (run.stop) return;
@@ -214,4 +231,37 @@
   $('#circleAIStake').addEventListener('change', e => { if (Number(e.target.value) < .35) e.target.value = '.35'; });
   { const mg = $('#circleAIMartingale'); if (mg) { let on = true; try { const v = localStorage.getItem('itc_ai_martingale'); if (v !== null) on = v === '1'; } catch (_) {} mg.checked = on; mg.addEventListener('change', () => { try { localStorage.setItem('itc_ai_martingale', mg.checked ? '1' : '0'); } catch (_) {} }); } }   // martingale stays on until you switch it off
   setContract('overunder');
+})();
+
+// ---- Drag the ITC AI round button anywhere on the screen. A tap still opens the panel; the spot is remembered. ----
+(function () {
+  const btn = document.getElementById('circleAILauncher'); if (!btn) return;
+  const KEY = 'itc_ai_launcher_pos';
+  let moved = false, dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function place(left, top) {
+    left = clamp(left, 4, window.innerWidth - btn.offsetWidth - 4); top = clamp(top, 4, window.innerHeight - btn.offsetHeight - 4);
+    btn.style.setProperty('left', left + 'px', 'important'); btn.style.setProperty('top', top + 'px', 'important');
+    btn.style.setProperty('right', 'auto', 'important'); btn.style.setProperty('bottom', 'auto', 'important');
+  }
+  function restore() {
+    try { const p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && Number.isFinite(p.fx) && Number.isFinite(p.fy)) place(p.fx * (window.innerWidth - btn.offsetWidth), p.fy * (window.innerHeight - btn.offsetHeight)); } catch (_) {}
+  }
+  btn.addEventListener('pointerdown', e => {
+    if (e.button > 0) return; const r = btn.getBoundingClientRect();
+    sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top; dragging = true; moved = false;
+    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  btn.addEventListener('pointermove', e => {
+    if (!dragging) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!moved && Math.hypot(dx, dy) < 6) return;
+    moved = true; btn.classList.add('dragging'); place(ox + dx, oy + dy);
+  });
+  function end() {
+    if (!dragging) return; dragging = false; btn.classList.remove('dragging');
+    if (moved) { const r = btn.getBoundingClientRect(); try { localStorage.setItem(KEY, JSON.stringify({ fx: r.left / Math.max(1, window.innerWidth - btn.offsetWidth), fy: r.top / Math.max(1, window.innerHeight - btn.offsetHeight) })); } catch (_) {} }
+  }
+  btn.addEventListener('pointerup', end); btn.addEventListener('pointercancel', end);
+  btn.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);   // a drag must not also open the panel
+  window.addEventListener('resize', restore); restore();
 })();

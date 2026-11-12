@@ -7,7 +7,7 @@
   if (!market) return;
   const NEEDS_DIGIT = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
   const NAMES = { DIGITOVER: 'Over', DIGITUNDER: 'Under', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs', CALL: 'Rise', PUT: 'Fall', SAME: 'Same as main' };
-  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], win: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [] };
+  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], win: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [], tickTimes: [], lastCap: 0 };
   const R2 = v => Math.round(v * 100) / 100;
   const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 8 });
   const stamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -39,8 +39,20 @@
       case 'CALL': return delta > 0; case 'PUT': return delta < 0;
     } return false;
   }
+  // Deriv allows bots about 80 trades a minute (about 2 API calls per trade, 180-call bot budget). The cap below keeps
+  // trades per tick inside that, so the bot trades every tick instead of skipping ticks when it hits the limit.
+  const TRADES_PER_MIN = 80;
+  function ticksPerMin() {
+    const t = state.tickTimes; if (t.length < 6) return 60;   // assume a 1-second market until we have measured it
+    const gap = (t[t.length - 1] - t[0]) / (t.length - 1); return gap > 0 ? Math.min(120, 60 / gap) : 60;
+  }
+  const simulated = () => Boolean(window.ITC_TRADE && window.ITC_TRADE.simulated && window.ITC_TRADE.simulated());
+  function tradesNow() {   // what you asked for, lowered if the market's tick speed would push it over Deriv's limit
+    const want = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
+    return simulated() ? want : Math.max(1, Math.min(want, Math.floor(TRADES_PER_MIN / ticksPerMin())));
+  }
   function stakeNow() {
-    const base = Math.max(0.35, Number($('speedBotStake').value) || 0.35), n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
+    const base = Math.max(0.35, Number($('speedBotStake').value) || 0.35), n = tradesNow();
     let s = base;
     if (state.steps > 0 && martingaleOn()) s = R2(base * Math.pow(Math.max(1, Number($('speedBotRecMult').value) || 1), state.steps));   // martingale after a losing batch
     const sl = Number($('speedBotSL').value); if (sl > 0) s = Math.min(s, Math.floor((sl + state.profit) / n * 100) / 100);   // never risk more than the room left before the stop loss
@@ -56,7 +68,7 @@
     $('sbRecBarrierWrap').style.display = recOn() && $('speedBotRecContract').value !== 'SAME' && NEEDS_DIGIT.includes($('speedBotRecContract').value) ? '' : 'none';
     $('sbRecBody').style.opacity = recOn() ? '1' : '0.45'; $('sbRecBody').style.pointerEvents = recOn() ? '' : 'none';
     $('speedBotRuleNote').textContent = 'Main: ' + label(m) + (recOn() ? ' · after a loss: ' + (($('speedBotRecContract').value === 'SAME') ? 'same contract, higher stake' : label(r)) + ' × ' + (Number($('speedBotRecMult').value) || 2) + ' stake' : ' · recovery off');
-    $('speedBotExposure').textContent = '$' + (Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)) * stakeNow()).toFixed(2);
+    $('speedBotExposure').textContent = '$' + (tradesNow() * stakeNow()).toFixed(2);
     paintMode();
   }
   function paintMode() {
@@ -78,6 +90,7 @@
 
   // ---- trading ----
   function finish(text, kind) {
+    if (window.ITC_LOCK) window.ITC_LOCK.release('ITC SpeedBot');
     state.running = false; $('speedBotStart').disabled = false; $('speedBotStop').disabled = true; setState(text, kind === 'win' ? 'win' : kind === 'loss' ? 'loss' : '');
     if (kind && window.ITC_BOTMSG) window.ITC_BOTMSG.show({ kind, why: text, profit: state.profit, bot: 'ITC SpeedBot' });
   }
@@ -87,7 +100,8 @@
     // no entry rule: Run trades straight away and then on every tick, it never waits for a particular digit
     if (state.lastEligibleEpoch === epoch) return; state.lastEligibleEpoch = epoch;
     if (state.busy && recOn()) return;   // with recovery on, wait for the last batch's result before the next one
-    const n = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)), stake = stakeNow();
+    const n = tradesNow(), stake = stakeNow();
+    { const want = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)); if (n < want && state.lastCap !== n) { state.lastCap = n; addLog('Trades per tick set to ' + n, 'This market ticks about ' + Math.round(ticksPerMin()) + ' times a minute. ' + want + ' per tick would go over Deriv\'s limit, so it trades ' + n + ' every tick.'); } }
     if (stake < 0.35) { finish('Stop loss reached', 'loss'); return; }
     if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) { $('speedBotRuleState').textContent = 'Pacing (Deriv limit)'; if (Date.now() - (state.lastPaceLog || 0) > 10000) { state.lastPaceLog = Date.now(); addLog('Skipped a tick', 'Deriv call limit reached. Lower Trades per tick to trade every tick.', 'l'); } return; }
     // Deriv allows about 220 trade calls a minute; skip this signal rather than queue it
@@ -120,7 +134,7 @@
     state.delta = state.lastPrice === null ? 0 : p - state.lastPrice; state.lastPrice = p;
     state.previous = state.last; state.last = d; state.digits.push(d); state.digits = state.digits.slice(-14);
     state.win.push(d); if (state.win.length > WINDOW) state.win.shift();
-    state.count++; state.seen = Math.max(state.seen, ep);
+    state.count++; state.seen = Math.max(state.seen, ep); state.tickTimes.push(ep); if (state.tickTimes.length > 20) state.tickTimes.shift();
     paintTick(t.price, d); paintDigit(); fire(d, ep);
   }
   function seedFromFeed() {
@@ -154,6 +168,7 @@
     if (!(tp > 0) || !(sl > 0)) { addLog('Take profit and stop loss must be above 0.'); return; }
     if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Market feed not ready', 'Wait a moment for live ticks, then tap Start again.'); return; }
     { const chk = window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { addLog('Not started', chk.message, 'l'); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < stake) { addLog('Not started', 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.', 'l'); return; } }
+    { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('ITC SpeedBot'); if (g && !g.ok) { addLog('Not started', g.by + ' is running. Stop it first: only one bot can trade at a time.', 'l'); return; } }
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
     $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('TRADING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}${window.ITC_TRADE.simulated && window.ITC_TRADE.simulated() ? ' · PRACTICE (simulated on live ticks)' : ''}`);
@@ -161,7 +176,7 @@
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });
   [market, $('speedBotContract'), $('speedBotBarrier'), $('speedBotRecContract'), $('speedBotRecBarrier'), $('speedBotRecovery'), $('speedBotRecMult'), $('speedBotTrades'), $('speedBotStake'), $('speedBotSL')].forEach(el => {
-    el.addEventListener('change', () => { if (el === market) { const b = window.ITC_MARKET_DATA; if (b) b.selectMarket(market.value); Object.assign(state, { digits: [], win: [], last: null, previous: null, count: 0, seen: 0, lastPrice: null }); } paintRuleUi(); paintDigit(); });
+    el.addEventListener('change', () => { if (el === market) { const b = window.ITC_MARKET_DATA; if (b) b.selectMarket(market.value); Object.assign(state, { digits: [], win: [], last: null, previous: null, count: 0, seen: 0, lastPrice: null, tickTimes: [], lastCap: 0 }); } paintRuleUi(); paintDigit(); });
     el.addEventListener('input', () => paintRuleUi());
   });
   { const mg = document.getElementById('speedBotMartingale'); if (mg) { let on = true; try { const v = localStorage.getItem('itc_sb_martingale'); if (v !== null) on = v === '1'; } catch (_) {} mg.checked = on; mg.addEventListener('change', () => { try { localStorage.setItem('itc_sb_martingale', mg.checked ? '1' : '0'); } catch (_) {} paintRuleUi(); }); } }   // martingale stays on until you switch it off
