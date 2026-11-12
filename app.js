@@ -827,10 +827,20 @@
   // ===== Shared Run / Execution Speed dock (Analysis Tool + Bot Builder) =====
   let botTimer = null, botCycles = 0;
   const speedMs = () => execSpeed === 'fast' ? 900 : 2800;
+  function paintPause(paused) {
+    const dp = $('#dockPause'), pb = $('#pauseBot');
+    if (dp) { dp.classList.toggle('is-paused', paused); dp.querySelector('b').textContent = paused ? 'Resume' : 'Pause'; dp.querySelector('.dock-pause-icon').textContent = paused ? '▶' : '❚❚'; }
+    if (pb) pb.textContent = paused ? '▶ Resume' : '❚❚ Pause';
+  }
+  function togglePauseBot() {
+    const R = window.ITC_RUNNER; if (!R || !R.running()) return;
+    const paused = R.togglePause(); paintPause(paused); showToast(paused ? 'Paused. No new trades until you resume.' : 'Resumed.');
+  }
   function paintRunUi(running) {
     const dockRun = $('#dockRun'), top = $('#runBot');
     if (dockRun) { dockRun.classList.toggle('is-running', running); dockRun.querySelector('b').textContent = running ? 'Stop' : 'Run'; dockRun.querySelector('.dock-run-icon').textContent = running ? '■' : '▶'; }
     if (top) top.textContent = running ? '■ Stop' : '▶ Run';
+    { const dp = $('#dockPause'), pb = $('#pauseBot'); [dp, pb].forEach(b => { if (!b) return; b.classList.toggle('hidden', !running); if (!running) paintPause(false); }); }
     setBotStatus(running, running ? 'Bot running…' : 'Bot is not running');
     try { document.body.classList.toggle('bot-is-running', running); window.dispatchEvent(new CustomEvent('itc:run-state', { detail: { running } })); } catch (_) {}
     const ar = $('#analysisRunBot'), as = $('#analysisStopBot');
@@ -948,10 +958,12 @@
       else if (loadedImportedBot !== id) loadImportedBot(id, false, true);
     }
     startBot();
+    if (source === 'dock' && realRun && window.ITC_RUNBOARD) window.ITC_RUNBOARD.open('summary');   // Analysis Tool / Charts: show Summary, Transactions and Journal as soon as Run is pressed
   }
   window.ITC_RUN = { toggle: runFrom, running: () => realRun };
   $('#runBot').addEventListener('click', () => runFrom('builder'));
   $('#dockRun').addEventListener('click', () => runFrom('dock'));
+  $('#dockPause')?.addEventListener('click', togglePauseBot); $('#pauseBot')?.addEventListener('click', togglePauseBot);
   $('#dockSpeed').addEventListener('click', () => {
     execSpeed = execSpeed === 'fast' ? 'slow' : 'fast';
     paintSpeedUi();
@@ -965,6 +977,7 @@
     const show = ['#page-signals', '#page-dtrader'].some(s => $(s).classList.contains('active'));
     dock.classList.toggle('hidden', !show);
     document.body.classList.toggle('has-dock', show);
+    if (window.ITC_RUNBOARD) window.ITC_RUNBOARD.sync(show);
   }
   window.addEventListener('resize', placeDock);
   window.addEventListener('itc:page-shown', placeDock);
@@ -1016,4 +1029,30 @@
   function setBB(mode) { document.dispatchEvent(new CustomEvent('itc:builder-mode', { detail: mode })); }
 
   window.ITC_APP = { addLog, sendToScannerBot, navigate, bots: importedBots, loadBot: id => loadImportedBot(id, true), startBot, stopBot, showToast, openBuilder: () => { navigate('botbuilder'); setBB('itc'); setBuilderMode(); } };
+})();
+
+
+// ===== Run board: Summary, Transactions and Journal above the Run bar on the Analysis Tool and Charts pages =====
+(() => {
+  const src = document.getElementById('dbotRunPanel'), dock = document.getElementById('botDock'); if (!src || !dock) return;
+  const board = document.createElement('aside'); board.id = 'runBoard'; board.className = 'run-board hidden'; board.setAttribute('aria-label', 'Run board');
+  board.innerHTML = '<div class="run-board-bar"><div class="run-board-tabs"><button class="active" data-t="summary">Summary</button><button data-t="transactions">Transactions</button><button data-t="journal">Journal</button></div><button class="run-board-x" type="button" aria-label="Close run board">⌄</button></div><div class="run-board-body"></div>';
+  document.body.appendChild(board);
+  const body = board.querySelector('.run-board-body'), btn = document.getElementById('dockBoard');
+  let tab = 'summary', want = false, onPage = false, timer = null;
+  function paint() {
+    const pane = src.querySelector('[data-run-pane="' + tab + '"]'); if (!pane) return;
+    const c = pane.cloneNode(true); c.classList.remove('hidden'); c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id')); c.querySelectorAll('.dbot-journal-head,.dbot-sumfoot').forEach(n => n.remove());
+    body.replaceChildren(c);
+  }
+  function apply() {
+    const show = want && onPage; board.classList.toggle('hidden', !show); if (btn) btn.setAttribute('aria-expanded', String(show));
+    const main = document.querySelector('.main-area'); if (main) board.style.left = main.getBoundingClientRect().left + 'px';
+    clearInterval(timer); if (show) { paint(); timer = setInterval(paint, 500); }
+  }
+  board.querySelector('.run-board-tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; tab = b.dataset.t; board.querySelectorAll('.run-board-tabs button').forEach(x => x.classList.toggle('active', x === b)); paint(); });
+  board.querySelector('.run-board-x').addEventListener('click', () => { want = false; apply(); });
+  if (btn) btn.addEventListener('click', () => { want = !want; apply(); });
+  window.addEventListener('resize', apply);
+  window.ITC_RUNBOARD = { open(t) { if (t) { tab = t; board.querySelectorAll('.run-board-tabs button').forEach(x => x.classList.toggle('active', x.dataset.t === tab)); } want = true; apply(); }, close() { want = false; apply(); }, sync(show) { onPage = Boolean(show); apply(); } };
 })();

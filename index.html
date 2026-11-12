@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=105">
+  <link rel="stylesheet" href="itc-theme.css?v=106">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -176,7 +176,7 @@
               <button class="dbot-tool" id="blocklyClear" type="button" title="Clear canvas" aria-label="Clear canvas">🗑</button>
             </div>
             <div class="dbot-runzone">
-              <button class="dbot-runbtn" id="runBot" type="button">▶ Run</button>
+              <button class="dbot-runbtn" id="runBot" type="button">▶ Run</button><button class="dbot-runbtn dbot-pausebtn hidden" id="pauseBot" type="button">❚❚ Pause</button>
               <div class="dbot-status"><span id="dbotStatus">Bot is not running</span><i></i></div>
               <button class="dock-speed dbot-runspeed is-fast" id="dbotRunSpeed" type="button" aria-pressed="true" aria-label="Toggle execution speed Fast or Slow"><span class="dock-bolt">⚡</span><span class="dock-speed-text"><small>Speed</small><b id="dbotRunSpeedLabel">FAST</b></span><span class="dock-switch"><i></i></span></button>
             </div>
@@ -531,12 +531,12 @@
       </section>
 
       <section class="page" id="page-markethunter">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Pick how much you are willing to risk and a risk level. The hunter finds the best market, sets the stake, target and stop loss, and trades for you.</p></div>
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Pick a stake and a risk level. The hunter finds the market where Even or Odd leads the most and trades that side: it waits for 3 digits of the other kind in a row, and the first digit of the leading side triggers the trade.</p></div>
         <article class="panel mh-card">
           <div class="mh-acct off" id="mhAcct">Log in with Deriv to start hunting</div>
-          <label class="mh-label" for="mhBudget">Amount you are willing to risk</label>
-          <input id="mhBudget" class="cp-in mh-input" type="number" min="5" step="1" value="100" inputmode="decimal">
-          <div class="mh-risk" id="mhRisk"><button type="button" data-r="low">Low risk</button><button type="button" data-r="medium" class="on">Medium risk</button><button type="button" data-r="high">High risk</button></div>
+          <label class="mh-label" for="mhBudget">Stake per trade (USD)</label>
+          <input id="mhBudget" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal">
+          <div class="mh-risk" id="mhRisk"><button type="button" data-r="low">Low risk<small>TP 3× · SL 6×</small></button><button type="button" data-r="medium">Medium risk<small>TP 5× · SL 10×</small></button><button type="button" data-r="high">High risk<small>TP 10× · SL 20×</small></button></div>
           <div class="mh-plan" id="mhPlan"></div>
           <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
           <div class="mh-row"><label class="mh-label" for="hunterMarkets">Markets</label><select id="hunterMarkets" class="cp-in"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div>
@@ -548,7 +548,7 @@
           <div class="mh-dots" id="mhDots"></div>
           <div class="mh-status" id="mhStatus">Ready</div><div class="mh-now" id="mhNow"></div>
         </article>
-        <p class="cp-fine">The percentages shown are what happened in the last 1,000 ticks. They do not predict the next tick. Automated trading carries risk and results are not guaranteed. It trades on the account selected in the top bar (Demo or Real). Stop any time.</p>
+        <p class="cp-fine">The percentages shown are what happened in the last 1,000 ticks. They do not predict the next tick, and martingale can lose several trades in a row. Automated trading carries risk and results are not guaranteed. It trades on the account selected in the top bar (Demo or Real). Stop any time.</p>
       </section>
 
       <section class="page" id="page-copytrading">
@@ -585,7 +585,7 @@
   </div>
 
   <div class="bot-dock hidden" id="botDock" role="region" aria-label="Run bot">
-    <button class="dock-run" id="dockRun" type="button"><span class="dock-run-icon">▶</span><b>Run</b></button>
+    <button class="dock-run" id="dockRun" type="button"><span class="dock-run-icon">▶</span><b>Run</b></button><button class="dock-pause hidden" id="dockPause" type="button" aria-label="Pause bot"><span class="dock-pause-icon">❚❚</span><b>Pause</b></button><button class="dock-board" id="dockBoard" type="button" aria-label="Show summary, transactions and journal" aria-expanded="false"><span>▤</span><b>Board</b></button>
     <button class="dock-speed is-fast" id="dockSpeed" type="button" aria-pressed="true" aria-label="Toggle execution speed"><span class="dock-bolt">⚡</span><span class="dock-speed-text"><small>Execution Speed</small><b id="dockSpeedLabel">FAST</b></span><span class="dock-switch"><i></i></span></button>
   </div>
   <button class="circle-ai-launcher" id="circleAILauncher" aria-label="Open ITC AI trading assistant" aria-expanded="false"><span class="circle-ai-orbit"><svg class="ci-scan" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="16" cy="16" r="12.5"/><circle cx="16" cy="16" r="7.5" opacity=".55"/><path class="ci-sweep" d="M16 16 L26 8"/><circle cx="16" cy="16" r="1.9" fill="currentColor" stroke="none"/><circle cx="22.5" cy="21.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="9.5" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></span><span class="circle-ai-label">SCAN</span></button>
@@ -627,16 +627,16 @@
   <script src="charts-live.js?v=8.8"></script>
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=91"></script>
-  <script src="app.js?v=9.31"></script>
+  <script src="app.js?v=9.50"></script>
   <script src="deriv-account.js?v=9.16"></script>
   <script src="account-display.js?v=7.8"></script>
   <script src="real-trading.js?v=9.42"></script>
-  <script src="bot-runner.js?v=9.42"></script>
+  <script src="bot-runner.js?v=9.50"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.42"></script>
+  <script src="market-hunter.js?v=9.50"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=4"></script>
-  <script src="circle-ai.js?v=9.45"></script>
+  <script src="circle-ai.js?v=9.50"></script>
   <script src="install-app.js"></script>
   <script src="signal-alerts.js"></script>
   <script src="speedbot.js?v=9.42"></script>

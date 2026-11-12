@@ -1042,3 +1042,26 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 .reset-pop button{border:1px solid #67532c;border-radius:7px;background:#272115;color:#f5d887;font:700 12px/1 inherit;padding:6px 10px;cursor:pointer}
 .reset-pop button[data-y]{background:#d3a93b;color:#241b06;border-color:#d3a93b}
 .reset-pop button:hover{filter:brightness(1.15)}
+
+.mh-risk button small{display:block;font-weight:500;font-size:10px;opacity:.75;margin-top:2px}
+
+/* Pause button + Board button on the Run bar, and the run board */
+.dock-pause{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;min-width:104px;padding:0 16px;border:0;border-radius:10px;background:linear-gradient(180deg,#ffb23d,#f08a00);color:#241500;font:700 15px/1 inherit;cursor:pointer}
+.dock-pause.hidden{display:none}
+.dock-pause.is-paused{background:linear-gradient(180deg,#38c98a,#1b9a63);color:#fff}
+.dock-pause-icon{font-size:13px;letter-spacing:-2px}
+.dock-board{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 14px;border:1px solid #67532c;border-radius:10px;background:#1b1810;color:#f5d887;font:700 14px/1 inherit;cursor:pointer}
+.dock-board[aria-expanded="true"]{background:#2b2312;border-color:#d3a93b}
+.dbot-pausebtn{background:linear-gradient(180deg,#ffb23d,#f08a00)!important;color:#241500!important;margin-left:6px}
+.dbot-pausebtn.hidden{display:none!important}
+@media(max-width:700px){.dock-pause{height:48px;min-width:84px;padding:0 10px;font-size:14px}.dock-board{height:48px;padding:0 10px}.dock-board b{display:none}}
+.run-board{position:fixed;right:0;bottom:70px;height:min(44vh,360px);z-index:70;display:flex;flex-direction:column;background:#fff;color:#1b2430;border-radius:14px 14px 0 0;box-shadow:0 -10px 30px #000a;border-top:3px solid #d3a93b}
+.run-board.hidden{display:none}
+.run-board-bar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e6ea;padding:0 8px}
+.run-board-tabs{display:flex;gap:2px}
+.run-board-tabs button{border:0;background:none;padding:12px 16px;font:600 14px/1 inherit;color:#5b6674;cursor:pointer;border-bottom:3px solid transparent}
+.run-board-tabs button.active{color:#0e4a9a;border-bottom-color:#0e4a9a}
+.run-board-x{border:0;background:none;font-size:20px;color:#5b6674;cursor:pointer;padding:6px 12px}
+.run-board-body{flex:1;overflow:auto;padding:10px 14px}
+.run-board-body .dbot-run-body{display:block!important}
+.run-board-body .dbot-hint{margin-bottom:8px}

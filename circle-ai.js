@@ -6,7 +6,7 @@
   const names = {overunder:'Over / Under', evenodd:'Even / Odd', matches:'Matches', differs:'Differs'};
   const rulesText = {
     overunder: t0 => { let t = t0; const side = $('#circleAISide')?.value || 'over'; t = side === 'over' ? 1 : 8; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
-    evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher.',
+    evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher. The bot trades the leading side: it waits for 3 digits of the other side in a row, then the first digit of the leading side triggers the trade.',
     matches: () => 'The most frequent digit (green bar) must be at least 12.5% and at least 1.5 points ahead of the second (blue bar). Prediction digit: the blue bar. Entry digit: the third most frequent digit. The bot waits for the entry digit, then trades Matches on the prediction digit. Past frequency only, not a forecast.',
     differs: () => 'Choose the least frequent digit in the selected sample. The contract wins only if the next last digit differs from that selected digit.'
   };
@@ -57,7 +57,7 @@
       if (dom) why.push(`${leader === 'even' ? 'Even' : 'Odd'} is at ${Math.max(even, odd).toFixed(1)}%`);
       if (byTop) why.push(`The top digits ${topSet.join(', ')} (green and blue bars) are all ${allEven ? 'even' : 'odd'}`);
       const rules = (edge ? 1 : 0) + (dom ? 1 : 0) + (byTop ? 1 : 0), eligible = rules > 0;
-      out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd',
+      out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd', entryPattern: { side, count: 3 },
         label: why.join(' · ') || `Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%`, entryDigits: nextTickEntries(digits, side === 'even' ? d => d % 2 === 0 : d => d % 2 === 1) });
     } else if (family === 'matches') {
       // Green bar = most frequent, blue bar = second. They must be at least 1.5 points apart.
@@ -171,6 +171,15 @@
     if ((kind === 'win' || kind === 'loss') && state.lastPick) state.avoid = state.lastPick.market;   // take profit or stop loss reached: the next scan skips this market
     if ((kind === 'win' || kind === 'loss') && window.ITC_BOTMSG) { try { window.ITC_BOTMSG.show({ kind, why, profit: net, bot: 'ITC AI' }); } catch (_) {} }
   }
+  async function waitForPattern(pick, run) {   // Even/Odd entry: 3 digits of the other side in a row, then the first digit of the leading side
+    const md = window.ITC_MARKET_DATA, par = d => (d % 2 === 0 ? 'even' : 'odd'), side = pick.entryPattern.side; let seen = ((md.getTicks(pick.symbol, 1) || [])[0] || {}).epoch || 0;
+    while (!run.stop) {
+      const t = md.getTicks(pick.symbol, 4) || [], last = t[t.length - 1];
+      if (last && last.epoch > seen) { seen = last.epoch; if (t.length === 4 && par(last.digit) === side && t.slice(0, 3).every(x => par(x.digit) !== side)) return true; }
+      await sleepMs(100);
+    }
+    return false;
+  }
   async function waitForEntry(pick, run) {   // resolves true when a NEW tick ends in the entry digit, false if you stop the bot
     const md = window.ITC_MARKET_DATA; let seen = ((md.getTicks(pick.symbol, 1) || [])[0] || {}).epoch || 0;
     while (!run.stop) {
@@ -199,6 +208,11 @@
       if (pick.entryDigit !== undefined) {   // Matches: wait for the entry digit, then trade the prediction digit on the next tick
         st.className = 'circle-ai-status success'; st.textContent = 'Waiting for entry digit ' + pick.entryDigit + ' on ' + pick.market + ' \u00B7 will trade Matches ' + pick.target + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
         if (!(await waitForEntry(pick, run))) return;
+      }
+      if (pick.entryPattern) {
+        const lead = pick.entryPattern.side === 'even' ? 'Even' : 'Odd', opp = lead === 'Even' ? 'Odd' : 'Even';
+        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for 3 ' + opp + ' in a row, then ' + lead + ' on ' + pick.market + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
+        if (!(await waitForPattern(pick, run))) return;
       }
       const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
       let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry, priority: true }); } catch (_) {}
