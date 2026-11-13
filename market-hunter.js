@@ -1,6 +1,5 @@
 // ITC Market Hunter (Even / Odd). It scans every market in the background (also while it is trading) for the one where Even or Odd
-// leads the most, trades the leading side, and enters like this: if Even leads, wait for 3 Odd digits in a row, then the first Even
-// that appears triggers an Even trade (and the other way round for Odd). Martingale x2 after a loss; one win recovers the whole loss.
+// leads the most and trades the leading side straight away (no waiting for a digit pattern). Martingale x2 after a loss; one win recovers the whole loss.
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -9,7 +8,6 @@
   const R2 = v => Math.round(v * 100) / 100, ceil2 = v => Math.ceil(v * 100 - 1e-9) / 100;
   const CT = { even: 'DIGITEVEN', odd: 'DIGITODD' };
   const MARTINGALE = 2;                                   // stake x2 after a loss
-  const ENTRY_RUN = 3;                                    // how many opposite digits in a row come before the entry
   const MIN_SHARE = 0.53;                                 // a market needs at least this share of the leading side (blend of the last 100 / 300 / 1000 ticks)
   const SWITCH_EDGE = 0.01;                               // switch market only when another one leads by 1 more point
   const RISK = { low: { tp: 3, sl: 6 }, medium: { tp: 5, sl: 10 }, high: { tp: 10, sl: 20 } };   // take profit and stop loss, as multiples of the stake
@@ -106,14 +104,11 @@
         status(was ? 'Switched to ' + setup.market : 'Hunting…'); 
       } else S.current = setup;
       const lead = setup.side === 'even' ? 'Even' : 'Odd', opp = setup.side === 'even' ? 'Odd' : 'Even';
-      const ticks = md.getTicks(setup.symbol, ENTRY_RUN + 1), last = ticks[ticks.length - 1];
-      if (!last || last.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(60); continue; }   // look at each new tick once
+      const ticks = md.getTicks(setup.symbol, 1), last = ticks[ticks.length - 1];
+      if (!last || last.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(60); continue; }   // one trade per new tick
       S.lastEpoch[setup.symbol] = last.epoch;
-      let run = 0; for (let i = ticks.length - 1; i >= 0 && parity(ticks[i].digit) !== setup.side; i--) run++;
-      $('mhNow').textContent = setup.market + ' · ' + lead + ' leads ' + (setup.share * 100).toFixed(1) + '% in the last 1,000 ticks · waiting for ' + ENTRY_RUN + ' ' + opp + ' then ' + lead + ' · ' + opp + ' in a row: ' + Math.min(run, ENTRY_RUN) + '/' + ENTRY_RUN;
-      const trigger = ticks.length === ENTRY_RUN + 1 && parity(last.digit) === setup.side && ticks.slice(0, ENTRY_RUN).every(x => parity(x.digit) !== setup.side);
-      if (!trigger) continue;
-      status('Entry: ' + ENTRY_RUN + ' ' + opp + ' then ' + lead + ' · trading ' + lead + ' on ' + setup.market);
+      $('mhNow').textContent = setup.market + ' · ' + lead + ' leads ' + (setup.share * 100).toFixed(1) + '% in the last 1,000 ticks · trading ' + lead;
+      status('Trading ' + lead + ' on ' + setup.market);
       let r;
       try { r = await round(setup); S.errors = 0; }
       catch (e) {

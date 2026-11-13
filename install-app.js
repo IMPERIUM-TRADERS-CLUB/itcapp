@@ -10,7 +10,7 @@
 
   let deferredInstallPrompt = null;
   let isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const dismissedKey = 'itc-install-prompt-dismissed-v2'; // remembers when it was dismissed (shown again after 3 days)
+  const dismissedKey = 'itc-install-prompt-dismissed-v3'; // remembers when it was dismissed (shown again after 3 days)
 
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
@@ -67,7 +67,6 @@
   }
   // Manual trigger from Settings -> Install the app.
   window.addEventListener('itc:show-install', () => { if (isInstalled) { const t = document.getElementById('toast'); if (window.ITC_APP) window.ITC_APP.showToast('ITC is already installed on this device.'); return; } promptBox.classList.remove('hidden'); });
-  // The install pop-up appears 30 seconds after someone logs in with Deriv.
-  let shownForSession = false;
-  window.addEventListener('itc:oauth-authorized', () => { if (shownForSession) return; shownForSession = true; window.setTimeout(showPrompt, 30000); });
+  // The install pop-up appears 15 seconds after the website is opened (not only after login).
+  window.setTimeout(showPrompt, 15000);
 })();

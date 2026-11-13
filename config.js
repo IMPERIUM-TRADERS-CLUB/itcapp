@@ -17,9 +17,10 @@ window.ITC_CONFIG = {
   // Community links shown in the side menu under "Join our community". Leave a link empty ("") and it stays hidden.
   SOCIAL: {
     telegram: "https://t.me/IMPTC",
-    whatsapp: "https://chat.whatsapp.com/GuWX2jy465cLxq3PZ",
+    whatsappChannel: "https://whatsapp.com/channel/0029VbDzhr22kNFqcKauiy0l",
     youtube: "",    // add your YouTube channel link here later
-    facebook: ""    // add your Facebook page or group link here later
+    facebook: "",   // add your Facebook page or group link here later
+    tiktok: "https://www.tiktok.com/@imperium_trader"
   },
   DEFAULT_SYMBOL: "1HZ100V",
   RECONNECT_MS: 3500,

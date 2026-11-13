@@ -914,8 +914,9 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 .social-item:hover,.social-item:focus-visible{border-color:var(--gold-line,#594929);background:#14110a;outline:0}
 .social-badge{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center}
 .social-badge svg{width:15px;height:15px;fill:#fff}
-.social-telegram .social-badge{background:#29a9eb}.social-whatsapp .social-badge{background:#25d366}
+.social-telegram .social-badge{background:#29a9eb}.social-whatsapp .social-badge,.social-whatsappChannel .social-badge{background:#25d366}
 .social-youtube .social-badge{background:#ff0000}.social-facebook .social-badge{background:#1877f2}
+.social-tiktok .social-badge{background:#000;box-shadow:inset 0 0 0 1px #25f4ee,inset 1px 1px 0 1px #fe2c55}
 .social-name{flex:1;min-width:0}.social-go{color:var(--gold,#d9a51b);font-size:12px}
 @media(min-width:701px) and (max-width:1040px){
   .social-label,.social-caret,.social-name,.social-go{display:none}

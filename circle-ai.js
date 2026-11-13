@@ -6,7 +6,7 @@
   const names = {overunder:'Over / Under', evenodd:'Even / Odd', matches:'Matches', differs:'Differs'};
   const rulesText = {
     overunder: t0 => { let t = t0; const side = $('#circleAISide')?.value || 'over'; t = side === 'over' ? 1 : 8; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
-    evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher. The bot trades the leading side: it waits for 3 digits of the other side in a row, then the first digit of the leading side triggers the trade.',
+    evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher. The bot trades the leading side straight away, with no waiting for a digit pattern.',
     matches: () => 'The most frequent digit (green bar) must be at least 12.5% and at least 1.5 points ahead of the second (blue bar). Prediction digit: the blue bar. Entry digit: the third most frequent digit. The bot waits for the entry digit, then trades Matches on the prediction digit. Past frequency only, not a forecast.',
     differs: () => 'Choose the least frequent digit in the selected sample. The contract wins only if the next last digit differs from that selected digit.'
   };
@@ -57,7 +57,7 @@
       if (dom) why.push(`${leader === 'even' ? 'Even' : 'Odd'} is at ${Math.max(even, odd).toFixed(1)}%`);
       if (byTop) why.push(`The top digits ${topSet.join(', ')} (green and blue bars) are all ${allEven ? 'even' : 'odd'}`);
       const rules = (edge ? 1 : 0) + (dom ? 1 : 0) + (byTop ? 1 : 0), eligible = rules > 0;
-      out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd', entryPattern: { side, count: 3 },
+      out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd',
         label: why.join(' · ') || `Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%`, entryDigits: nextTickEntries(digits, side === 'even' ? d => d % 2 === 0 : d => d % 2 === 1) });
     } else if (family === 'matches') {
       // Green bar = most frequent, blue bar = second. They must be at least 1.5 points apart.
