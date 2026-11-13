@@ -270,7 +270,7 @@ const itcWorker = {
     const url = new URL(request.url);
     if (url.pathname === '/' && request.method === 'GET') return json({ ok: true, service: 'itc-oauth-bridge', message: 'ITC backend is running. Open /health for details.' }, 200, headers);
     if (url.pathname === '/health' && request.method === 'GET') {
-      return json({ ok: true, service: 'itc-oauth-bridge', version: 8, reset_demo: true, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) || Boolean(env.AI) }, 200, headers);
+      return json({ ok: true, service: 'itc-oauth-bridge', version: 9, reset_demo: true, allowed_origins: [...okSet], redirect_uri: isSet(env.REDIRECT_URI) ? env.REDIRECT_URI : '', client_id_set: isSet(env.DERIV_CLIENT_ID), configured: isSet(env.DERIV_CLIENT_ID) && isSet(env.REDIRECT_URI), admin: Boolean(env.ADMIN_PASSWORD), telegram: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID), kv: Boolean(env.ITC_KV), ai: isSet(env.ANTHROPIC_API_KEY) || Boolean(env.AI) }, 200, headers);
     }
     if (url.pathname === '/ai/bot' && request.method === 'POST') return aiBot(request, env, headers);
     if (url.pathname === '/deriv/accounts' && request.method === 'GET') return derivProxy(request, headers, 'accounts');
@@ -314,10 +314,14 @@ const itcWorker = {
   }
 };
 
+// Public settings with safe defaults, so the login still works if a dashboard variable is missing, misspelled or not deployed yet.
+// (A client ID and a redirect address are public by design. Real secrets such as ADMIN_PASSWORD are never defaulted.)
+const PUBLIC_DEFAULTS = { DERIV_CLIENT_ID: '342Wd4IBGzV6S7LJ8MDkH', REDIRECT_URI: 'https://imperium-traders-club.github.io/itcapp/', SITE_URL: 'https://imperium-traders-club.github.io/itcapp/', ALLOWED_ORIGIN: 'https://imperium-traders-club.github.io', TELEGRAM_CHAT_ID: '@IMPTC' };
+const withDefaults = env => { const e = Object.assign({}, env); for (const k in PUBLIC_DEFAULTS) if (!isSet(e[k])) e[k] = PUBLIC_DEFAULTS[k]; return e; };
 export default {
-  scheduled(event, env, ctx) { return itcWorker.scheduled(event, env, ctx); },
+  scheduled(event, env, ctx) { return itcWorker.scheduled(event, withDefaults(env), ctx); },
   async fetch(request, env, ctx) {
-    try { return await itcWorker.fetch(request, env, ctx); }
+    try { return await itcWorker.fetch(request, withDefaults(env), ctx); }
     catch (e) {
       const allowed = DEFAULT_ORIGIN;
       return new Response(JSON.stringify({ error: 'worker_error', error_description: String((e && e.message) || e) }), { status: 500, headers: { 'Access-Control-Allow-Origin': allowed, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
