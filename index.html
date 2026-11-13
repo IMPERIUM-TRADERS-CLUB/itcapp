@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=106">
+  <link rel="stylesheet" href="itc-theme.css?v=108">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -609,14 +609,18 @@
 
   <div class="install-prompt-backdrop hidden" id="installPrompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle">
     <div class="install-prompt-card">
-      <button class="install-prompt-close" id="installPromptClose" aria-label="Not now">×</button>
+      <button class="install-prompt-close" id="installPromptClose" aria-label="Close" title="Close">×</button>
       <img src="imperium-logo.jpg" alt="Imperium Traders Club logo" class="install-prompt-logo">
-      <div class="install-kicker">YOUR TRADING WORKSPACE</div>
-      <h2 id="installPromptTitle">Get the <span>ITC</span> App</h2>
-      <p>Install Imperium Traders Club on your device for an app-style experience. The app opens this website in its own window and uses your Imperium logo.</p>
-      <button class="button primary full-button" id="installAppYes">Yes, install ITC</button>
-      <button class="install-later" id="installAppLater">Maybe later</button>
-      <p class="install-footnote" id="installPromptNote">Installation availability depends on your browser and how the website is hosted.</p>
+      <div class="install-kicker">A SMALL EXTRA FOR YOU</div>
+      <h2 id="installPromptTitle">Keep <span>ITC</span> close at hand</h2>
+      <p>Enjoying ITC? Pin it to your home screen and your trading tools are one tap away, whenever you feel like opening them. Entirely up to you.</p>
+      <ul class="install-perks">
+        <li><b>👆</b><span>Open it like any other app</span></li>
+        <li><b>🖥</b><span>A clean full-screen view</span></li>
+        <li><b>⚙️</b><span>Change your mind anytime in Settings</span></li>
+      </ul>
+      <button class="button primary full-button" id="installAppYes">Sure, add ITC</button>
+      <p class="install-footnote" id="installPromptNote">No pressure. It is free, takes a few seconds, and you can skip it and carry on.</p>
     </div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -637,7 +641,7 @@
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=4"></script>
   <script src="circle-ai.js?v=9.50"></script>
-  <script src="install-app.js?v=2"></script>
+  <script src="install-app.js?v=5"></script>
   <script src="signal-alerts.js"></script>
   <script src="speedbot.js?v=9.42"></script>
   <script src="quick-strategy.js?v=9.22"></script>

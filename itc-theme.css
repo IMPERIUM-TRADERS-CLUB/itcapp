@@ -1066,3 +1066,11 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 .run-board-body{flex:1;overflow:auto;padding:10px 14px}
 .run-board-body .dbot-run-body{display:block!important}
 .run-board-body .dbot-hint{margin-bottom:8px}
+
+/* install pop-up perks */
+.install-perks{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;text-align:left}
+.install-perks li{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid rgba(214,174,76,.22);border-radius:12px;background:rgba(214,174,76,.07);font-size:13px;font-weight:700;color:#e7ebf2}
+.install-perks li b{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(214,174,76,.16);font-size:14px}
+.install-prompt-card h2{line-height:1.2}
+
+.install-prompt-close{width:36px;height:36px;right:12px;top:12px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.07);color:#e7ebf2;font-size:24px;line-height:1}
