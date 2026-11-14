@@ -9,18 +9,22 @@ REDIRECT_URI = "https://imperium-traders-club.github.io/itcapp/"
 DERIV_CLIENT_ID = "342Wd4IBGzV6S7LJ8MDkH"
 SITE_URL = "https://imperium-traders-club.github.io/itcapp/"
 TELEGRAM_CHAT_ID = "@IMPTC"
-SCAN_WINDOW = "100"   # ticks per market
-EO_MIN = "60"         # Even/Odd minimum dominance %
+SCAN_WINDOW = "1000"  # ticks per market
+EO_MIN = "55"         # Even/Odd minimum share % (over 1,000 ticks even 55% is already a strong lead)
 MAX_PCT = "10"        # losing digits must be under this % for Over/Under
-COOLDOWN_MIN = "20"   # do not repeat the same signal for this many minutes
+COOLDOWN_MIN = "9"    # do not repeat the same signal for this many minutes (just under the 10-minute scan, so a still-strong market can be posted again)
 MAX_PER_RUN = "2"     # at most this many new signals per scan
 AI_MODEL = "claude-sonnet-5-5"   # model used by the Bot Forge (add the secret ANTHROPIC_API_KEY)
 CF_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"   # free Workers AI model, used when no ANTHROPIC_API_KEY is set (add an AI binding named AI)
 AI_PER_HOUR = "30"    # Bot Forge requests allowed per visitor per hour
 
-# Runs the scanner every 2 minutes, 24/7, without the website being open.
+# Free Workers AI for the Bot Forge (no API key needed). The variable name must be exactly AI.
+[ai]
+binding = "AI"
+
+# Runs the scanner every 10 minutes, 24/7, without the website being open.
 [triggers]
-crons = ["*/2 * * * *"]
+crons = ["*/10 * * * *"]
 
 # OPTIONAL (needed for the admin lockout, signal de-duplication and AI rate limit): create it with
 #   npx wrangler kv namespace create ITC_KV      (or Workers & Pages > KV in the dashboard)

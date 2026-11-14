@@ -34,6 +34,7 @@
   }
   function showPrompt() {
     if (isInstalled) return;
+    const sl = document.getElementById('signalLoad'); if (sl && !sl.classList.contains('hidden')) { clearTimeout(reshowTimer); reshowTimer = setTimeout(showPrompt, 60000); return; }   // never cover a signal the person is loading
     let dismissed = false;
     try { const v = localStorage.getItem(dismissedKey); dismissed = v === 'installed' || (v && Date.now() - Number(v) < REPEAT_MS - 2000); } catch (_) {}
     if (!dismissed) promptBox.classList.remove('hidden');

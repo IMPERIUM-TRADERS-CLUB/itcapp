@@ -7,11 +7,11 @@
   if (!E || !panel) return;
   const PUBLIC_WS_URL = 'wss://api.derivws.com/trading/v1/options/ws/public';
   const SITE = 'https://imperium-traders-club.github.io/itcapp/';
-  const KEY = 'itc.autoScan.v1';
-  const cfg = Object.assign({ on: true, window: 100, eoMin: 60, maxPct: 10 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) { return {}; } })());
+  const KEY = 'itc.autoScan.v2', SCAN_EVERY = 10 * 60 * 1000;   // scans every 10 minutes
+  const cfg = Object.assign({ on: true, window: 1000, eoMin: 55, maxPct: 10 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) { return {}; } })());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (_) {} };
   const data = {}; E.MARKETS.forEach(([name, sym]) => { data[sym] = { name, ticks: [], pip: 2 }; });
-  let ws = null, retry = null, current = [], seen = new Set(), selected = null, lastScan = 0;
+  let ws = null, retry = null, current = [], seen = new Set(), selected = null, lastScan = 0, firstScan = null;
 
   // ---- settings UI ----
   $('autoScanToggle').checked = cfg.on;
@@ -37,6 +37,7 @@
         const sym = m.echo_req && m.echo_req.ticks_history, d = data[sym]; if (!d) return;
         d.pip = Number(m.pip_size) || d.pip;
         d.ticks = (m.history.prices || []).map(p => E.lastDigit(p, d.pip));
+        clearTimeout(firstScan); firstScan = setTimeout(() => { if (!lastScan) scan(); }, 2000);   // first scan once the history has arrived
       } else if (m.msg_type === 'tick' && m.tick && data[m.tick.symbol]) {
         const d = data[m.tick.symbol]; if (Number.isInteger(m.tick.pip_size)) d.pip = m.tick.pip_size;
         d.ticks.push(E.lastDigit(m.tick.quote, d.pip)); if (d.ticks.length > 1000) d.ticks.shift();
@@ -56,7 +57,7 @@
       if (digits.length < Math.max(30, Math.round(cfg.window * 0.8))) return;
       E.analyse(digits, { eoMin: cfg.eoMin, maxPct: cfg.maxPct }).signals.forEach(s => out.push(Object.assign({}, s, { symbol: sym, market: d.name, n: digits.length })));
     });
-    out.sort((a, b) => b.score - a.score);
+    out.sort((a, b) => b.winPct - a.winPct);   // biggest percentage first
     const keys = new Set(out.map(s => s.symbol + E.label(s)));
     const fresh = out.filter(s => !seen.has(s.symbol + E.label(s)));
     seen = keys; current = out; lastScan = now;
@@ -69,7 +70,7 @@
     const el = $('autoScanStatus'); if (!el) return;
     if (!cfg.on) { el.textContent = 'Scanner is off. Turn it on to scan all 18 markets.'; return; }
     const ready = Object.values(data).filter(d => d.ticks.length >= 30).length;
-    el.textContent = (ws && ws.readyState === 1 ? 'Scanning ' : 'Connecting · ') + ready + ' of 18 markets' + (lastScan ? ' · last scan ' + new Date(lastScan).toLocaleTimeString() : '') + ' · runs while this site is open';
+    el.textContent = (ws && ws.readyState === 1 ? 'Scanning ' : 'Connecting · ') + ready + ' of 18 markets' + (lastScan ? ' · last scan ' + new Date(lastScan).toLocaleTimeString() + ' · next in about ' + Math.max(0, Math.ceil((lastScan + SCAN_EVERY - Date.now()) / 60000)) + ' min' : '') + ' · scans every 10 minutes while this site is open';
   }
 
   // ---- list ----
@@ -77,10 +78,10 @@
   function render() {
     const list = $('autoScanList'); if (!list) return;
     if (!cfg.on) { list.innerHTML = ''; return; }
-    if (!current.length) { list.innerHTML = '<div class="as-empty">No market meets your rules right now. The scanner keeps checking every few seconds.</div>'; renderRun(); return; }
+    if (!current.length) { list.innerHTML = '<div class="as-empty">No market meets your rules right now. It scans again every 10 minutes.</div>'; renderRun(); return; }
     list.innerHTML = current.map((s, i) => '<div class="as-card' + (selected && selected.symbol === s.symbol && E.label(selected) === E.label(s) ? ' is-selected' : '') + '" data-i="' + i + '">'
-      + '<div class="as-top"><strong>' + s.market + '</strong><span class="as-tag">' + E.label(s) + '</span></div>'
-      + '<p>' + s.reason + '</p>'
+      + '<div class="as-top"><strong>' + s.market + '</strong><span class="as-tag">' + E.label(s) + ' · ' + s.winPct.toFixed(1) + '%</span></div>'
+      + '<p><b>' + s.winPct.toFixed(1) + '%</b> of the last ' + s.n + ' ticks · ' + s.reason + '</p>'
       + '<div class="as-actions"><button type="button" class="button primary" data-act="pick">Use this signal</button>'
       + (window.ITC_ADMIN && window.ITC_ADMIN.canSend() ? '<button type="button" class="button secondary" data-act="send">Send to channel</button>' : '')
       + '<a class="button secondary" target="_blank" rel="noopener" href="https://t.me/share/url?url=' + encodeURIComponent(SITE) + '&text=' + encodeURIComponent(msg(s)) + '">Telegram</a>'
@@ -104,7 +105,7 @@
     if (!sig || !window.ITC_ADMIN || !window.ITC_ADMIN.canSend()) return;
     btn.disabled = true; btn.textContent = 'Sending…';
     try {
-      const res = await fetch(window.ITC_ADMIN.workerUrl + '/admin/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.ITC_ADMIN.token() }, body: JSON.stringify({ text: msg(sig) }) });
+      const res = await fetch(window.ITC_ADMIN.workerUrl + '/admin/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.ITC_ADMIN.token() }, body: JSON.stringify({ text: E.messageHtml(sig), html: true, button: { text: '📲 Load Signal in ITC', url: E.link(sig, SITE) } }) });
       toast(res.ok ? 'Signal sent to the Telegram channel.' : (res.status === 401 ? 'Admin session expired. Lock and log in again.' : 'Could not send the signal.'));
     } catch (_) { toast('Could not reach the server.'); }
     btn.disabled = false; btn.textContent = 'Send to channel';
@@ -131,26 +132,31 @@
       }
     });
   }
-  $('autoScanRunBtn').addEventListener('click', () => {
-    if (!selected) return;
-    const stake = Math.max(0.35, Number($('autoScanStake').value) || 1);
+  // o = { stake, tp, sl, martingale, multiplier }. Used by the admin "Run this signal" button and by the public signal link screen.
+  function runSignal(sig, o) {
+    const stake = Math.max(0.35, Number(o.stake) || 1);
     setVal('stakeInput', stake.toFixed(2));
-    setVal('takeProfitInput', Number($('autoScanTP').value || 0).toFixed(2));
-    setVal('stopLossInput', Number($('autoScanSL').value || 0).toFixed(2));
-    const mg = $('autoScanMartingale').checked, tog = $('martingaleToggle');
+    setVal('takeProfitInput', Number(o.tp || 0).toFixed(2));
+    setVal('stopLossInput', Number(o.sl || 0).toFixed(2));
+    const mg = Boolean(o.martingale), tog = $('martingaleToggle');
     if (tog) { tog.checked = mg; tog.dispatchEvent(new Event('change', { bubbles: true })); }
-    if (mg) setVal('multiplierInput', Number($('autoScanMultiplier').value) || 2);
-    setVal('contractSelect', selected.type === 'OVER' || selected.type === 'UNDER' ? 'Over / Under' : 'Even / Odd');
-    window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.selectMarket(selected.market);
-    const sig = selected;
+    if (mg) setVal('multiplierInput', Number(o.multiplier) || 2);
+    setVal('contractSelect', sig.type === 'OVER' || sig.type === 'UNDER' ? 'Over / Under' : 'Even / Odd');
+    window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.selectMarket(sig.market);
     window.ITC_APP && window.ITC_APP.openBuilder();
     setTimeout(() => { applyToBuilder(sig, stake); setTimeout(() => window.ITC_APP && window.ITC_APP.startBot(), 300); }, 500);
+  }
+  window.ITC_SIGNAL_RUN = runSignal;
+  $('autoScanRunBtn').addEventListener('click', () => {
+    if (!selected) return;
+    runSignal(selected, { stake: $('autoScanStake').value, tp: $('autoScanTP').value, sl: $('autoScanSL').value, martingale: $('autoScanMartingale').checked, multiplier: $('autoScanMultiplier').value });
   });
   $('autoScanMartingale').addEventListener('change', e => $('autoScanMultWrap').classList.toggle('hidden', !e.target.checked));
 
   window.addEventListener('itc:admin-changed', () => { if (isAdmin()) { start(); scan(); } else { stop(); } });
   start();
-  setInterval(scan, 4000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { start(); scan(); } });
+  setInterval(scan, SCAN_EVERY);
+  setInterval(status, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { start(); if (Date.now() - lastScan > SCAN_EVERY) scan(); } });
   status(); render();
 })();
