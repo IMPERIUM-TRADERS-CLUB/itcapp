@@ -57,7 +57,7 @@
       if (digits.length < Math.max(30, Math.round(cfg.window * 0.8))) return;
       E.analyse(digits, { eoMin: cfg.eoMin, maxPct: cfg.maxPct }).signals.forEach(s => out.push(Object.assign({}, s, { symbol: sym, market: d.name, n: digits.length })));
     });
-    out.sort((a, b) => b.winPct - a.winPct);   // biggest percentage first
+    out.sort((a, b) => b.edge - a.edge);   // furthest above the normal share first
     const keys = new Set(out.map(s => s.symbol + E.label(s)));
     const fresh = out.filter(s => !seen.has(s.symbol + E.label(s)));
     seen = keys; current = out; lastScan = now;
@@ -105,8 +105,9 @@
     if (!sig || !window.ITC_ADMIN || !window.ITC_ADMIN.canSend()) return;
     btn.disabled = true; btn.textContent = 'Sending…';
     try {
-      const res = await fetch(window.ITC_ADMIN.workerUrl + '/admin/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.ITC_ADMIN.token() }, body: JSON.stringify({ text: E.messageHtml(sig), html: true, button: { text: '📲 Load Signal in ITC', url: E.link(sig, SITE) } }) });
-      toast(res.ok ? 'Signal sent to the Telegram channel.' : (res.status === 401 ? 'Admin session expired. Lock and log in again.' : 'Could not send the signal.'));
+      const res = await fetch(window.ITC_ADMIN.workerUrl + '/admin/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.ITC_ADMIN.token() }, body: JSON.stringify({ text: E.message(sig, SITE), htmlText: E.messageHtml(sig), button: { text: '📲 Load Signal in ITC', url: E.link(sig, SITE) } }) });
+      const j = await res.json().catch(() => ({}));
+      toast(res.ok ? (j.v >= 3 ? 'Signal sent to the Telegram channel.' : 'Sent, but your Cloudflare Worker is the OLD version: the Load Signal button and bold text will not show. Redeploy the worker folder.') : (res.status === 401 ? 'Admin session expired. Lock and log in again.' : 'Could not send the signal.'));
     } catch (_) { toast('Could not reach the server.'); }
     btn.disabled = false; btn.textContent = 'Send to channel';
   }

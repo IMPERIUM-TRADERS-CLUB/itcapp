@@ -30,15 +30,15 @@ const json = (data, status, headers) => new Response(JSON.stringify(data), { sta
     if (oddPct >= o.eoMin) signals.push({ type: 'ODD', winPct: oddPct, score: oddPct, reason: 'Odd is ' + oddPct.toFixed(1) + '% of the last ' + n + ' ticks (needs ' + o.eoMin + '%+).' });
     const clean = set => set.every(d => pct[d] < o.maxPct && flags[d] !== 'green' && flags[d] !== 'blue');
     const describe = set => set.map(d => d + ' = ' + pct[d].toFixed(1) + '%').join(', ');
-    for (const b of [2, 1, 0]) { // Over b loses on digits 0..b
+    for (const b of [3, 2, 1]) { // Over b loses on digits 0..b
       const set = Array.from({ length: b + 1 }, (_, i) => i);
       if (clean(set)) { signals.push({ type: 'OVER', barrier: b, winPct: 100 - set.reduce((a, d) => a + pct[d], 0), loseMax: Math.max(...set.map(d => pct[d])), score: o.maxPct - Math.max(...set.map(d => pct[d])), reason: 'Losing digits (' + describe(set) + ') are all under ' + o.maxPct + '% and none is a top-2 digit.' }); break; }
     }
-    for (const b of [7, 8, 9]) { // Under b loses on digits b..9
+    for (const b of [6, 7, 8]) { // Under b loses on digits b..9
       const set = Array.from({ length: 10 - b }, (_, i) => b + i);
       if (clean(set)) { signals.push({ type: 'UNDER', barrier: b, winPct: 100 - set.reduce((a, d) => a + pct[d], 0), loseMax: Math.max(...set.map(d => pct[d])), score: o.maxPct - Math.max(...set.map(d => pct[d])), reason: 'Losing digits (' + describe(set) + ') are all under ' + o.maxPct + '% and none is a top-2 digit.' }); break; }
     }
-    signals.forEach(sg => { sg.n = n; });
+    signals.forEach(sg => { sg.n = n; const base = sg.type === 'OVER' ? (9 - sg.barrier) * 10 : sg.type === 'UNDER' ? sg.barrier * 10 : 50; sg.edge = sg.winPct - base; });   // edge = how far above the normal share of that contract
     return { n, counts, pct, flags, signals };
   }
   const label = s => s.type + (s.barrier !== undefined ? ' ' + s.barrier : '');
@@ -53,22 +53,18 @@ const json = (data, status, headers) => new Response(JSON.stringify(data), { sta
     return base + '?signal=' + sig.type + (sig.barrier !== undefined ? '&barrier=' + sig.barrier : '') + '&market=' + encodeURIComponent(sig.symbol) + '&ts=' + (ts || Date.now());
   }
   // What the audience sees. Every number is something that really happened in the scanned ticks (not a promise).
-  function stat(sig) {
-    const n = sig.n || 1000, w = Number(sig.winPct !== undefined ? sig.winPct : sig.score).toFixed(1);
-    return sig.type === 'EVEN' || sig.type === 'ODD'
-      ? nice(sig) + ' appeared ' + w + '% of the last ' + n + ' ticks'
-      : nice(sig) + ' would have won ' + w + '% of the last ' + n + ' ticks (each losing digit at most ' + Number(sig.loseMax).toFixed(1) + '%)';
-  }
-  function messageHtml(sig) {
+  const pctText = sig => Number(sig.winPct !== undefined ? sig.winPct : sig.score).toFixed(0) + '%';
+  const ticksText = sig => 'last ' + (sig.n || 1000) + ' ticks';
+  function messageHtml(sig) {   // what the Telegram channel shows (HTML)
     return '🚀 <b>ITC AI SIGNAL</b> 🚀\n━━━━━━━━━━━━━━━━━━\n\n'
       + dot(sig) + ' <b>' + esc(nice(sig)) + '</b>\n📍 <b>Market:</b> ' + esc(sig.market) + '\n\n'
-      + '📊 <b>Scan:</b> ' + esc(stat(sig)) + '\n⏱ <b>Timeframe:</b> ' + VALID_MIN + ' minutes\n\n'
-      + '🛡 <b>Risk checklist</b>\n<i>Tap the button, set your stake, take profit and stop loss (and martingale if you use it), then activate the signal.</i>\n\n'
-      + '⚠️ <i>This shows recent ticks, not a prediction. You can lose your stake.</i>';
+      + '🔥 <b>Strength:</b> ' + pctText(sig) + ' <i>(' + ticksText(sig) + ')</i>\n⏱ <b>Timeframe:</b> ' + VALID_MIN + ' minutes\n\n'
+      + '🛡 <b>Risk checklist</b>\n<i>Set stake, take profit, stop loss and martingale before running.</i>';
   }
-  function message(sig, siteUrl) {   // plain-text version (for WhatsApp / copy)
-    return '🚀 ITC AI SIGNAL 🚀\n━━━━━━━━━━━━━━━━━━\n\n' + dot(sig) + ' ' + nice(sig) + '\n📍 Market: ' + sig.market + '\n\n📊 Scan: ' + stat(sig) + '\n⏱ Timeframe: ' + VALID_MIN + ' minutes\n\n'
-      + '🛡 Risk checklist\nOpen the signal, set your stake, take profit and stop loss, then activate it:\n' + link(sig, siteUrl) + '\n\n⚠️ This shows recent ticks, not a prediction. You can lose your stake.';
+  function message(sig, siteUrl) {   // plain text with the link (works everywhere, also as the fallback)
+    return '🚀 ITC AI SIGNAL 🚀\n━━━━━━━━━━━━━━━━━━\n\n' + dot(sig) + ' ' + nice(sig) + '\n📍 Market: ' + sig.market + '\n\n'
+      + '🔥 Strength: ' + pctText(sig) + ' (' + ticksText(sig) + ')\n⏱ Timeframe: ' + VALID_MIN + ' minutes\n\n'
+      + '🛡 Risk checklist\nSet stake, take profit, stop loss and martingale before running.\n\n📲 Load the signal in ITC:\n' + link(sig, siteUrl);
   }
   root.ITC_SIGNAL_ENGINE = { MARKETS, lastDigit, rankDigits, analyse, label, purchaseCode, message, messageHtml, link, VALID_MIN };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -108,7 +104,7 @@ async function findSignals(env) {
     if (digits.length < Math.round(windowSize * 0.8)) return;
     E.analyse(digits, opts).signals.forEach(s => found.push({ ...s, symbol: sym, market: name }));
   });
-  return found.sort((a, b) => b.winPct - a.winPct);   // biggest percentage first
+  return found.sort((a, b) => b.edge - a.edge);   // furthest above the normal share first
 }
 async function runScan(env) {
   const E = globalThis.ITC_SIGNAL_ENGINE;
@@ -171,10 +167,11 @@ async function adminSend(request, env, headers) {
   if (!(await checkToken(request, env))) return json({ error: 'unauthorized' }, 401, headers);
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return json({ error: 'telegram_not_configured' }, 503, headers);
   let body = {}; try { body = await request.json(); } catch { /* bad json */ }
-  const text = typeof body.text === 'string' ? body.text.slice(0, 3500) : '';
+  const rich = typeof body.htmlText === 'string' ? body.htmlText : '';   // formatted version; "text" stays as the plain fallback
+  const text = (rich || (typeof body.text === 'string' ? body.text : '')).slice(0, 3500);
   if (!text) return json({ error: 'empty_message' }, 400, headers);
   const payload = { chat_id: env.TELEGRAM_CHAT_ID, text, disable_web_page_preview: true };
-  if (body.html === true) payload.parse_mode = 'HTML';
+  if (rich || body.html === true) payload.parse_mode = 'HTML';
   // Optional "Open Signal" button under the message. Only links to your own website are accepted.
   const site = String(env.SITE_URL || env.REDIRECT_URI || '').split('#')[0].split('?')[0];
   const b = body.button;
@@ -182,7 +179,7 @@ async function adminSend(request, env, headers) {
     payload.reply_markup = { inline_keyboard: [[{ text: b.text.slice(0, 60), url: b.url }]] };
   }
   const res = await fetch('https://api.telegram.org/bot' + env.TELEGRAM_BOT_TOKEN + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  return json({ ok: res.ok }, res.ok ? 200 : 502, headers);
+  return json({ ok: res.ok, v: 3 }, res.ok ? 200 : 502, headers);   // v: worker version, so the website can tell when it is out of date
 }
 
 // ---- Deriv API proxy: the browser talks to this Worker, never directly to api.derivws.com (avoids CORS problems) ----

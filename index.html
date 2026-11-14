@@ -531,10 +531,10 @@
       </section>
 
       <section class="page" id="page-markethunter">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Choose Over / Under or Even / Odd, then set only your take profit and stop loss. The hunter scans the markets, picks the best one, and chooses its own stake. In Over / Under it trades Over 1 then Under 8 in turns; in Even / Odd it trades the stronger side.</p></div>
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Choose Over 2 + recovery or Even / Odd, then set only your take profit and stop loss. The hunter scans the markets and chooses its own stake. Over 2 + recovery trades Over 2 on a 1-second market where the green and blue bars are above 3, and recovers a loss on Over 3. Even / Odd trades the stronger side.</p></div>
         <article class="panel mh-card">
           <div class="mh-acct off" id="mhAcct">Log in with Deriv to start hunting</div>
-          <div class="mh-risk two" id="mhMode"><button type="button" data-m="ou">Over / Under<small>Over 1 ⇄ Under 8, best market</small></button><button type="button" data-m="eo">Even / Odd<small>trades the stronger side</small></button></div>
+          <div class="mh-risk two" id="mhMode"><button type="button" data-m="o2">Over 2 + recovery<small>Over 2, recover on Over 3</small></button><button type="button" data-m="eo">Even / Odd<small>trades the stronger side</small></button></div>
           <div class="mh-tpsl"><div><label class="mh-label" for="mhTP">Take profit (USD)</label><input id="mhTP" class="cp-in mh-input" type="number" min="0.01" step="0.01" value="5" inputmode="decimal"></div><div><label class="mh-label" for="mhSL">Stop loss (USD)</label><input id="mhSL" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal"></div></div>
           <div class="mh-plan" id="mhPlan"></div>
           <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
@@ -658,7 +658,7 @@
   <script src="real-trading.js?v=9.42"></script>
   <script src="bot-runner.js?v=9.50"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.51"></script>
+  <script src="market-hunter.js?v=9.52"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=4"></script>
   <script src="circle-ai.js?v=9.50"></script>
@@ -671,7 +671,7 @@
   <script src="canvas-spec.js?v=9.24"></script>
   <script src="signal-engine.js"></script>
   <script src="admin-gate.js"></script>
-  <script src="auto-signals.js?v=9.1"></script>
+  <script src="auto-signals.js?v=9.2"></script>
   <script src="signal-link.js?v=3"></script>
   <script src="bots-library.js?v=9.1"></script>
   <script src="bot-maker.js?v=9.2"></script>
