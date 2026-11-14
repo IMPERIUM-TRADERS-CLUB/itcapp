@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=109">
+  <link rel="stylesheet" href="itc-theme.css?v=111">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -531,12 +531,11 @@
       </section>
 
       <section class="page" id="page-markethunter">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Pick a stake and a risk level. The hunter finds the market where Even or Odd leads the most and trades that side straight away, with no waiting for a digit pattern.</p></div>
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Choose Over / Under or Even / Odd, then set only your take profit and stop loss. The hunter scans the markets, picks the best one, and chooses its own stake. In Over / Under it trades Over 1 then Under 8 in turns; in Even / Odd it trades the stronger side.</p></div>
         <article class="panel mh-card">
           <div class="mh-acct off" id="mhAcct">Log in with Deriv to start hunting</div>
-          <label class="mh-label" for="mhBudget">Stake per trade (USD)</label>
-          <input id="mhBudget" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal">
-          <div class="mh-risk" id="mhRisk"><button type="button" data-r="low">Low risk<small>TP 3× · SL 6×</small></button><button type="button" data-r="medium">Medium risk<small>TP 5× · SL 10×</small></button><button type="button" data-r="high">High risk<small>TP 10× · SL 20×</small></button></div>
+          <div class="mh-risk two" id="mhMode"><button type="button" data-m="ou">Over / Under<small>Over 1 ⇄ Under 8, best market</small></button><button type="button" data-m="eo">Even / Odd<small>trades the stronger side</small></button></div>
+          <div class="mh-tpsl"><div><label class="mh-label" for="mhTP">Take profit (USD)</label><input id="mhTP" class="cp-in mh-input" type="number" min="0.01" step="0.01" value="5" inputmode="decimal"></div><div><label class="mh-label" for="mhSL">Stop loss (USD)</label><input id="mhSL" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal"></div></div>
           <div class="mh-plan" id="mhPlan"></div>
           <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
           <div class="mh-row"><label class="mh-label" for="hunterMarkets">Markets</label><select id="hunterMarkets" class="cp-in"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div>
@@ -630,6 +629,9 @@
       <h2 id="siglTitle">Over 2</h2>
       <p class="sigl-market" id="siglMarket"></p>
       <div class="sigl-timer" id="siglTimer"></div>
+      <div class="sigl-acct" id="siglAcct"></div>
+      <button class="button full-button sigl-login hidden" id="siglBrowser" type="button">Open in my browser (to use my Deriv login)</button>
+      <button class="button full-button sigl-login hidden" id="siglLogin" type="button">Login with Deriv here</button>
       <div class="sigl-grid">
         <div><label for="siglStake">Stake</label><input id="siglStake" class="regular-input" type="number" inputmode="decimal" min="0.35" step="0.01" value="1.00"></div>
         <div><label for="siglTP">Take profit</label><input id="siglTP" class="regular-input" type="number" inputmode="decimal" min="0.01" step="0.01" value="10.00"></div>
@@ -656,7 +658,7 @@
   <script src="real-trading.js?v=9.42"></script>
   <script src="bot-runner.js?v=9.50"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.50"></script>
+  <script src="market-hunter.js?v=9.51"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=4"></script>
   <script src="circle-ai.js?v=9.50"></script>
@@ -669,8 +671,8 @@
   <script src="canvas-spec.js?v=9.24"></script>
   <script src="signal-engine.js"></script>
   <script src="admin-gate.js"></script>
-  <script src="auto-signals.js?v=9.0"></script>
-  <script src="signal-link.js?v=1"></script>
+  <script src="auto-signals.js?v=9.1"></script>
+  <script src="signal-link.js?v=3"></script>
   <script src="bots-library.js?v=9.1"></script>
   <script src="bot-maker.js?v=9.2"></script>
   <script src="deriv-trader.js"></script>

@@ -143,8 +143,12 @@
     if (mg) setVal('multiplierInput', Number(o.multiplier) || 2);
     setVal('contractSelect', sig.type === 'OVER' || sig.type === 'UNDER' ? 'Over / Under' : 'Even / Odd');
     window.ITC_MARKET_DATA && window.ITC_MARKET_DATA.selectMarket(sig.market);
-    window.ITC_APP && window.ITC_APP.openBuilder();
-    setTimeout(() => { applyToBuilder(sig, stake); setTimeout(() => window.ITC_APP && window.ITC_APP.startBot(), 300); }, 500);
+    if (!window.ITC_APP || !window.ITC_APP.startSignal) return { error: 'The app is still loading. Try again in a moment.' };
+    const res = window.ITC_APP.startSignal({ type: sig.type, barrier: sig.barrier, symbol: sig.symbol, stake, tp: o.tp, sl: o.sl, martingale: mg, multiplier: o.multiplier });
+    if (res.error) { window.ITC_APP.showToast(res.error); return res; }
+    window.ITC_APP.openBuilder();
+    window.ITC_APP.showToast('Signal activated: ' + E.label(sig) + ' on ' + sig.market + '. Watch the log on this page.');
+    return res;
   }
   window.ITC_SIGNAL_RUN = runSignal;
   $('autoScanRunBtn').addEventListener('click', () => {

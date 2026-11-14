@@ -25,8 +25,18 @@
   const left = () => Math.max(0, sig.ts + VALID_MS - Date.now());
   const say = (t, ok) => { const m = $('siglMsg'); m.textContent = t || ''; m.classList.toggle('ok', Boolean(ok)); };
 
+  function acct() {
+    const T = window.ITC_TRADE, a = $('siglAcct'), lg = $('siglLogin'), br = $('siglBrowser'); if (!T || !a) return;
+    if (T.simulated()) {
+      a.className = 'sigl-acct warn'; lg.classList.remove('hidden'); br.classList.remove('hidden');
+      a.textContent = 'You are not logged in, so this will run in PRACTICE mode: simulated trades on live ticks, with no Deriv money. To trade your Deriv account, tap “Open in my browser” below, where you are already logged in. Telegram’s built-in browser does not share your browser login.';
+    } else {
+      const c = T.accountCheck(); lg.classList.add('hidden'); br.classList.add('hidden'); a.className = 'sigl-acct';
+      a.textContent = c && c.ok ? 'Logged in: this will trade your ' + String(c.type || '').toUpperCase() + ' account' + (c.id ? ' (' + c.id + ')' : '') + '.' : (c && c.message) || '';
+    }
+  }
   function tick() {
-    if (!sig) return;
+    if (!sig) return; acct();
     const ms = left(), t = $('siglTimer'), btn = $('siglRun');
     if (ms <= 0) {
       t.textContent = 'EXPIRED'; t.classList.add('expired'); btn.disabled = true;
@@ -58,11 +68,21 @@
     if (!(o.sl > 0)) return say('Set a stop loss above 0, so the signal stops when you reach your limit.');
     if (o.martingale && !(o.multiplier >= 1 && o.multiplier <= 10)) return say('The multiplier must be between 1 and 10.');
     const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck();
-    if (chk && !chk.ok) { say(chk.message + ' Your signal stays here while you do that.'); close(true); const lg = $('headerLoginButton'); if (lg && /Tap Login|No Deriv account/i.test(chk.message)) lg.focus(); return; }
+    if (chk && !chk.ok) return say(chk.message);
     if (typeof window.ITC_SIGNAL_RUN !== 'function') return say('The signal runner is still loading. Try again in a moment.');
+    const res = window.ITC_SIGNAL_RUN({ type: sig.type, barrier: sig.barrier, symbol: sig.symbol, market: sig.market }, o);
+    if (res && res.error) return say(res.error);   // stay on this screen so the person sees why nothing started
     write(PREFS, o); close();
-    window.ITC_SIGNAL_RUN({ type: sig.type, barrier: sig.barrier, symbol: sig.symbol, market: sig.market }, o);
   });
+  // Telegram can not force its links into your default browser, so this button does it from the page: it copies the link and, on Android, asks the phone to open it in the default browser.
+  $('siglBrowser').addEventListener('click', () => {
+    if (!sig) return;
+    const url = E.link(sig, location.origin + location.pathname, sig.ts);
+    try { navigator.clipboard && navigator.clipboard.writeText(url); } catch (_) {}
+    say('Link copied. If your browser did not open by itself, paste the link into Chrome or Safari.', true);
+    if (/Android/i.test(navigator.userAgent)) location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+  });
+  $('siglLogin').addEventListener('click', () => { close(true); const lg = $('headerLoginButton'); if (lg) lg.click(); });
 
   // Open from the link, or resume a signal that was waiting while the person logged in with Deriv.
   const start = fromUrl() || (() => { const p = read(PENDING); return p && p.ts + VALID_MS > Date.now() && TYPES.includes(p.type) ? p : null; })();

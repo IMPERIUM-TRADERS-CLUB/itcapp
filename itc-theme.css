@@ -1090,3 +1090,12 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 .sigl-card #siglMultWrap.hidden{display:none}
 .sigl-msg{min-height:18px;margin:6px 0 10px;font-size:12px;line-height:1.5;color:#ff9c9c}
 .sigl-msg.ok{color:#7be3a1}
+
+.sigl-acct{margin:0 0 12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(214,174,76,.25);background:rgba(214,174,76,.07);font-size:12px;line-height:1.55;text-align:left;color:#d6dbe5}
+.sigl-acct.warn{border-color:rgba(255,170,80,.45);background:rgba(255,150,60,.09)}
+.sigl-login{margin:-2px 0 12px}
+.sigl-login.hidden{display:none}
+
+.mh-risk.two{grid-template-columns:repeat(2,1fr)}
+.mh-tpsl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 8px}
+.mh-tpsl .mh-label{display:block;margin-bottom:4px}

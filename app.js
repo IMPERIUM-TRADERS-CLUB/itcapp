@@ -945,6 +945,21 @@
     if (res.error) { showToast(res.error); return; }
     realRun = true; paintRunUi(true);
   }
+  // Starts a digit signal straight from the bot runner (no Blockly builder needed). Returns { ok } or { error }.
+  function startSignal(o) {
+    const R = window.ITC_RUNNER; if (!R) return { error: 'The bot runner is still loading. Try again in a moment.' };
+    if (R.running()) return { error: 'A bot is already running. Stop it first, then activate the signal.' };
+    const overUnder = o.type === 'OVER' || o.type === 'UNDER';
+    const res = R.start({
+      botId: 'my_markettype', name: 'ITC signal', symbol: o.symbol, stake: Number(o.stake), maxLosses: Number($('#maxRunsInput').value) || 3,
+      tp: Number(o.tp || 0), sl: Number(o.sl || 0), martingale: Boolean(o.martingale), multiplier: Number(o.multiplier) || 2,
+      contract: overUnder ? 'Over / Under' : 'Even / Odd', side: o.type, digit: overUnder ? Number(o.barrier) : undefined, bulk: false,
+      log: (m, s) => addLog(m, s),
+      done: () => { realRun = false; paintRunUi(false); }
+    });
+    if (res.error) return { error: res.error };
+    realRun = true; paintRunUi(true); return { ok: true };
+  }
   const toggleBot = () => { if ($('#page-bulktrader').classList.contains('active')) { showToast('On the Bulk Trader, tap the Even/Odd (or other) button to place trades.'); return; } if (realRun) stopBot(); else startBot(); };
   // One controller for every Run button: Builder, Digit Circles (Analysis Tool) and the Charts / Signals dock.
   // Any of them starts the same live bot immediately, and any of them stops it; all labels stay in sync.
@@ -1028,7 +1043,7 @@
 
   function setBB(mode) { document.dispatchEvent(new CustomEvent('itc:builder-mode', { detail: mode })); }
 
-  window.ITC_APP = { addLog, sendToScannerBot, navigate, bots: importedBots, loadBot: id => loadImportedBot(id, true), startBot, stopBot, showToast, openBuilder: () => { navigate('botbuilder'); setBB('itc'); setBuilderMode(); } };
+  window.ITC_APP = { addLog, sendToScannerBot, navigate, bots: importedBots, loadBot: id => loadImportedBot(id, true), startBot, startSignal, stopBot, showToast, openBuilder: () => { navigate('botbuilder'); setBB('itc'); setBuilderMode(); } };
 })();
 
 
