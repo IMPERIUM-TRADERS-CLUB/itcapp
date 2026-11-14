@@ -942,7 +942,11 @@
       log: (m, s) => addLog(m, s),
       done: () => { realRun = false; paintRunUi(false); }
     });
-    if (res.error) { showToast(res.error); return; }
+    if (res.error) {   // show WHY it did not start where it stays visible (status line + journal), not only in a short pop-up
+      showToast(res.error);
+      try { setBotStatus(false, 'Not started: ' + res.error); const h = $('#dbotHint'); if (h) h.textContent = 'Not started: ' + res.error; addLog('Not started: ' + res.error, 'ERROR'); } catch (_) {}
+      return;
+    }
     realRun = true; paintRunUi(true);
   }
   // Starts a digit signal straight from the bot runner (no Blockly builder needed). Returns { ok } or { error }.
