@@ -46,10 +46,9 @@
     const t = state.tickTimes; if (t.length < 6) return 60;   // assume a 1-second market until we have measured it
     const gap = (t[t.length - 1] - t[0]) / (t.length - 1); return gap > 0 ? Math.min(120, 60 / gap) : 60;
   }
-  const simulated = () => Boolean(window.ITC_TRADE && window.ITC_TRADE.simulated && window.ITC_TRADE.simulated());
   function tradesNow() {   // what you asked for, lowered if the market's tick speed would push it over Deriv's limit
     const want = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
-    return simulated() ? want : Math.max(1, Math.min(want, Math.floor(TRADES_PER_MIN / ticksPerMin())));
+    return Math.max(1, Math.min(want, Math.floor(TRADES_PER_MIN / ticksPerMin())));
   }
   function stakeNow() {
     const base = Math.max(0.35, Number($('speedBotStake').value) || 0.35), n = tradesNow();
@@ -166,12 +165,12 @@
     if (!Number.isFinite(n) || n < 1 || n > 10) { addLog('Trades per tick must be 1 to 10.'); return; }
     if (!Number.isFinite(stake) || stake < 0.35) { addLog('Stake must be at least 0.35.'); return; }
     if (!(tp > 0) || !(sl > 0)) { addLog('Take profit and stop loss must be above 0.'); return; }
-    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Market feed not ready', 'Wait a moment for live ticks, then tap Start again.'); return; }
+    if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Not started', 'Log in with Deriv to trade.', 'l'); return; }
     { const chk = window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { addLog('Not started', chk.message, 'l'); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < stake) { addLog('Not started', 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.', 'l'); return; } }
     { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('ITC SpeedBot'); if (g && !g.ok) { addLog('Not started', g.by + ' is running. Stop it first: only one bot can trade at a time.', 'l'); return; } }
     Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
-    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('TRADING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}${window.ITC_TRADE.simulated && window.ITC_TRADE.simulated() ? ' · PRACTICE (simulated on live ticks)' : ''}`);
+    $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('TRADING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}`);
     fire(state.last, 'start-' + Date.now());   // trade immediately, do not wait for a tick or a digit
   });
   $('speedBotStop').addEventListener('click', () => { if (!state.running) return; finish('Stopped'); addLog('Stopped by you'); });

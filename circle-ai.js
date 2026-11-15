@@ -35,14 +35,16 @@
     const out = [];
     if (family === 'overunder') {
       const rarest = ranked.slice(-2).map(x => x.digit);   // the red bar and the yellow bar
-      [{ side: 'over', target: 1, lose: [0, 1], win: d => d > 1 }, { side: 'under', target: 8, lose: [8, 9], win: d => d < 8 }].forEach(s => {
-        const zone = s.lose.reduce((sum, d) => sum + rate(d), 0), zoneOk = zone <= 25 * s.lose.length / 3, /* 16.7% for two losing digits (normal is 20%) */ allRare = s.lose.every(d => rate(d) < 9.5 && !topTwo.includes(d));   // 9.5% keeps the pass rate about the same now that only two digits must be rare
-        const redYellow = rarest.every(d => s.lose.includes(d) && rate(d) < 9.5);
+      // Over 1 and Over 2, Under 8 and Under 7 are scanned together. Recovery: Over 1 -> Over 2, Over 2 -> Over 2, Under 8 -> Under 7, Under 7 -> Under 7.
+      [{ side: 'over', target: 1, lose: [0, 1], win: d => d > 1, rec: 2 }, { side: 'over', target: 2, lose: [0, 1, 2], win: d => d > 2, rec: 2 },
+       { side: 'under', target: 8, lose: [8, 9], win: d => d < 8, rec: 7 }, { side: 'under', target: 7, lose: [7, 8, 9], win: d => d < 7, rec: 7 }].forEach(s => {
+        const zone = s.lose.reduce((sum, d) => sum + rate(d), 0), zoneOk = zone <= 25 * s.lose.length / 3, /* 16.7% for two losing digits, 25% for three */ allRare = s.lose.every(d => rate(d) < (s.lose.length === 2 ? 9.5 : 10) && !topTwo.includes(d));
+        const redYellow = rarest.every(d => s.lose.includes(d) && rate(d) < (s.lose.length === 2 ? 9.5 : 10));
         const why = [`Losing digits ${s.lose.join(', ')} total only ${zone.toFixed(1)}%`];
         if (allRare) why.push(`Each losing digit is under 9.5% and none is a top digit`);
         if (redYellow) why.push(`The two rarest digits ${rarest.join(' and ')} are both in ${s.lose[0]}–${s.lose[s.lose.length - 1]}`);
         const rules = (zoneOk ? 1 : 0) + (allRare ? 1 : 0) + (redYellow ? 1 : 0);
-        out.push({ ...base, eligible: rules > 0, rules, score: 100 - zone, side: s.side, target: s.target, entry: `${s.side === 'over' ? 'Over' : 'Under'} ${s.target}`,
+        out.push({ ...base, eligible: rules > 0, rules, score: 100 - zone, side: s.side, target: s.target, recovery: s.rec, entry: `${s.side === 'over' ? 'Over' : 'Under'} ${s.target}`,
           label: why.join(' · '), entryDigits: nextTickEntries(digits, s.win) });
       });
     } else if (family === 'evenodd') {
@@ -198,7 +200,7 @@
     if (!T || !ct || !T.ready || !T.ready()) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = 'Trading is not available. Tap Login first.'; return; }
     { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = chk.message; return; } if (chk && Number.isFinite(chk.balance) && chk.balance < pick.stake) { if (window.ITC_LOCK) window.ITC_LOCK.release('ITC AI'); st.className = 'circle-ai-status error'; st.textContent = 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.'; return; } }
     const run = { stop: false }; auto = run; state.autoNet = 0;
-    let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0;
+    let stake = pick.stake, net = 0, wins = 0, losses = 0, errors = 0, inRec = false;   // inRec: after a loss with martingale on, trade the recovery contract (Over 1 -> Over 2, Under 8 -> Under 7)
     btn.textContent = '\u25A0 Stop trading';
     while (!run.stop) {
             let s = Math.min(stake, Math.floor((pick.sl + net) * 100) / 100);
@@ -214,15 +216,16 @@
         st.className = 'circle-ai-status success'; st.textContent = 'Waiting for 3 ' + opp + ' in a row, then ' + lead + ' on ' + pick.market + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
         if (!(await waitForPattern(pick, run))) return;
       }
-      const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: pick.target === undefined ? undefined : pick.target };
-      let list = []; try { list = await T.execute(params, { count: 1, label: pick.entry, priority: true }); } catch (_) {}
+      const useRec = inRec && pick.martingale && pick.recovery !== undefined, barrier = useRec ? pick.recovery : pick.target, entryNow = useRec ? (pick.side === 'over' ? 'Over ' : 'Under ') + pick.recovery + ' (recovery)' : pick.entry;
+      const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: barrier === undefined ? undefined : barrier };
+      let list = []; try { list = await T.execute(params, { count: 1, label: entryNow, priority: true }); } catch (_) {}
       if (run.stop) return;
       if (!list.length) { if (++errors >= 3) { stopAuto('Stopped: the trade could not be placed. Check the message and try again.', 'loss'); return; } await sleepMs(1500); continue; }
       errors = 0;
       const res = await Promise.race([list[0].settled, sleepMs(25000).then(() => ({ profit: 0, timeout: true }))]);
       if (run.stop) return;
       const p = Number(res.profit) || 0; net = R2(net + p); state.autoNet = net; state.paperTrades++;
-      if (p > 0) { wins++; stake = pick.stake; } else if (p < 0) { losses++; if (pick.martingale) stake = R2(stake * (pick.multiplier || 2)); }
+      if (p > 0) { wins++; stake = pick.stake; inRec = false; } else if (p < 0) { losses++; if (pick.martingale) { stake = R2(stake * (pick.multiplier || 2)); inRec = true; } }
       if (net >= pick.tp) { stopAuto('Take profit reached. Net +' + net.toFixed(2), 'win'); return; }
       if (net <= -pick.sl) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
       await sleepMs(250);

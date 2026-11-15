@@ -73,7 +73,7 @@
       balanceValue.textContent = fmt(amount, state.currency);
       note.textContent = account
         ? `Deriv ${account.type} account · ${account.id}${sourceCurrency !== state.currency ? ' · approximate conversion' : ''}`
-        : `Simulated demo balance · not real money${state.currency === 'KES' ? ' · approximate conversion' : ''}`;
+        : `Not logged in · log in with Deriv to see your balance`;
     }
   }
   modeToggle?.addEventListener('click', () => {

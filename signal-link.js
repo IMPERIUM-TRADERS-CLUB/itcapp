@@ -27,9 +27,9 @@
 
   function acct() {
     const T = window.ITC_TRADE, a = $('siglAcct'), lg = $('siglLogin'), br = $('siglBrowser'); if (!T || !a) return;
-    if (T.simulated()) {
+    if (!T.ready()) {
       a.className = 'sigl-acct warn'; lg.classList.remove('hidden'); br.classList.remove('hidden');
-      a.textContent = 'You are not logged in, so this will run in PRACTICE mode: simulated trades on live ticks, with no Deriv money. To trade your Deriv account, tap “Open in my browser” below, where you are already logged in. Telegram’s built-in browser does not share your browser login.';
+      a.textContent = 'You are not logged in, so nothing will trade. Log in with Deriv, or tap “Open in my browser” below, where you are already logged in. Telegram’s built-in browser does not share your browser login.';
     } else {
       const c = T.accountCheck(); lg.classList.add('hidden'); br.classList.add('hidden'); a.className = 'sigl-acct';
       a.textContent = c && c.ok ? 'Logged in: this will trade your ' + String(c.type || '').toUpperCase() + ' account' + (c.id ? ' (' + c.id + ')' : '') + '.' : (c && c.message) || '';

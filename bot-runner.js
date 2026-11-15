@@ -40,7 +40,7 @@
   function start(o) {
     const T = window.ITC_TRADE, A = window.ITC_DERIV_ACCOUNT;
     if (run) return { error: 'A bot is already running.' };
-    if (!T || !T.ready()) return { error: 'The market feed is not ready yet. Try again in a moment.' };
+    if (!T || !T.ready()) return { error: 'Log in with Deriv to run a bot.' };
     const base = SPECS[o.botId] || custom[o.botId];
     const spec = base ? { ...base } : null;
     if (!spec) return { error: 'This bot is imported XML. It can be viewed but not executed. Use a library bot or build one with the AI bot maker.' };
@@ -106,11 +106,10 @@
     { const chk = T.accountCheck && T.accountCheck(); if (chk && !chk.ok) { window.removeEventListener('itc:trade-halt', st.haltFn); if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: chk.message }; } }
     run = { stop: () => finish('Stopped by you'), paused: () => Boolean(st.paused), togglePause: () => { st.paused = !st.paused; log(st.paused ? 'Paused \u00B7 no new trades until you resume' : 'Resumed \u00B7 trading again', 'LIVE'); return st.paused; } };
     try {
-      if (T.simulated()) { const r = T.simTicks(sym, onTick, () => st.stopped); if (r.error) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: r.error }; } }
-      else A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
+      A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
     }
     catch (e) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: e.message || String(e) }; }
-    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (T.simulated() ? 'PRACTICE (simulated on live ticks, no Deriv login needed)' : (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account')) + ' · stake ' + st.base, 'LIVE');
+    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account') + ' · stake ' + st.base, 'LIVE');
     return { ok: true };
   }
   window.ITC_RUNNER = { start, stop: () => run && run.stop(), running: () => Boolean(run), togglePause: () => (run ? run.togglePause() : false), paused: () => Boolean(run && run.paused()), specs: SPECS, custom };
