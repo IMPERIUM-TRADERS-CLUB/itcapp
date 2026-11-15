@@ -96,9 +96,17 @@
         }
       } catch (_) { /* Ignore malformed frames without leaking account data. */ }
     });
+    // Keep the connection alive (Deriv closes idle sockets) and bring it back by itself if it drops while you are logged in.
+    const pingTimer = setInterval(() => { try { if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ ping: 1 })); } catch (_) {} }, 25000);
     socket.addEventListener('close', () => {
+      clearInterval(pingTimer);
       if (state.socket === socket) {
         state.socket = null; state.connected = false;
+        const tk = getAccessToken();
+        if (tk && !state.reopening && (state.reopenTries || 0) < 6) {
+          state.reopening = true; state.reopenTries = (state.reopenTries || 0) + 1;
+          setTimeout(() => { connectWithOAuth(tk).then(() => { state.reopenTries = 0; }).catch(() => {}).finally(() => { state.reopening = false; }); }, 1500 * state.reopenTries);
+        }
         for (const p of state.pending.values()) { clearTimeout(p.timer); p.reject(new Error('Deriv connection closed.')); }
         state.pending.clear();
         if (!getAccessToken()) { state.authorized = false; state.account = null; state.accounts = []; state.scope = []; label('Disconnected', false); window.dispatchEvent(new Event('itc:deriv-disconnected')); }
@@ -399,6 +407,14 @@
     }
     return request(payload, timeoutMs || 15000);
   }
+  // Makes sure the trading connection is open (reopens it if Deriv closed it). Used before a bot starts.
+  async function ensureOpen() {
+    if (state.socket && state.socket.readyState === WebSocket.OPEN) return true;
+    const token = getAccessToken(); if (!token) return false;
+    await connectWithOAuth(token);
+    if (!state.socket || state.socket.readyState !== WebSocket.OPEN) throw new Error('Could not open the trading connection' + (state.lastConnectError ? ': ' + state.lastConnectError : '. Tap Login to reconnect.'));
+    return true;
+  }
   function subscribe(payload, handler) {
     if (!state.socket || state.socket.readyState !== WebSocket.OPEN) throw new Error('Deriv connection is not open.');
     const req_id = ++state.requestId; state.subs.set(req_id, handler);
@@ -440,7 +456,7 @@
     demo.balance = amount; publishBalance(amount, currency, demo.id, 'demo');
   }
   window.ITC_DERIV_ACCOUNT = {
-    notice: showLoginError, request: tradeRequest, subscribe, switchTo, otpUrl, resetDemo,
+    notice: showLoginError, request: tradeRequest, subscribe, ensureOpen, switchTo, otpUrl, resetDemo,
     connect,
     disconnect,
     beginOAuth,

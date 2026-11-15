@@ -967,9 +967,13 @@
   const toggleBot = () => { if ($('#page-bulktrader').classList.contains('active')) { showToast('On the Bulk Trader, tap the Even/Odd (or other) button to place trades.'); return; } if (realRun) stopBot(); else startBot(); };
   // One controller for every Run button: Builder, Digit Circles (Analysis Tool) and the Charts / Signals dock.
   // Any of them starts the same live bot immediately, and any of them stops it; all labels stay in sync.
-  function runFrom(source) {
+  let runFromBusy = false;
+  async function runFrom(source) {
     if ($('#page-bulktrader').classList.contains('active')) { showToast('On the Bulk Trader, tap the Even/Odd (or other) button to place trades.'); return; }
     if (realRun) { stopBot(); return; }
+    if (runFromBusy) return;
+    { const A = window.ITC_DERIV_ACCOUNT;   // the Deriv connection can be closed even while you are logged in: reopen it before starting
+      if (A && A.ensureOpen) { runFromBusy = true; try { await A.ensureOpen(); } catch (e) { const m = 'Not started: ' + (e.message || e); try { showToast(m); setBotStatus(false, m); addLog(m, 'ERROR'); } catch (_) {} runFromBusy = false; return; } runFromBusy = false; } }
     if (source === 'builder') openRunPanel('summary');
     else {   // Digit Circles and Charts run the bot chosen in the bot selector (same bot the Builder has loaded)
       const id = $('#analysisBotSelect').value;
