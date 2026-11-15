@@ -7,7 +7,7 @@
   if (!E || !panel) return;
   const PUBLIC_WS_URL = 'wss://api.derivws.com/trading/v1/options/ws/public';
   const SITE = 'https://imperium-traders-club.github.io/itcapp/';
-  const KEY = 'itc.autoScan.v2', SCAN_EVERY = 10 * 60 * 1000;   // scans every 10 minutes
+  const KEY = 'itc.autoScan.v2', SCAN_EVERY = 5 * 60 * 1000;   // scans every 5 minutes
   const cfg = Object.assign({ on: true, window: 1000, eoMin: 55, maxPct: 10 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) { return {}; } })());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (_) {} };
   const data = {}; E.MARKETS.forEach(([name, sym]) => { data[sym] = { name, ticks: [], pip: 2 }; });
@@ -70,7 +70,7 @@
     const el = $('autoScanStatus'); if (!el) return;
     if (!cfg.on) { el.textContent = 'Scanner is off. Turn it on to scan all 18 markets.'; return; }
     const ready = Object.values(data).filter(d => d.ticks.length >= 30).length;
-    el.textContent = (ws && ws.readyState === 1 ? 'Scanning ' : 'Connecting · ') + ready + ' of 18 markets' + (lastScan ? ' · last scan ' + new Date(lastScan).toLocaleTimeString() + ' · next in about ' + Math.max(0, Math.ceil((lastScan + SCAN_EVERY - Date.now()) / 60000)) + ' min' : '') + ' · scans every 10 minutes while this site is open';
+    el.textContent = (ws && ws.readyState === 1 ? 'Scanning ' : 'Connecting · ') + ready + ' of 18 markets' + (lastScan ? ' · last scan ' + new Date(lastScan).toLocaleTimeString() + ' · next in about ' + Math.max(0, Math.ceil((lastScan + SCAN_EVERY - Date.now()) / 60000)) + ' min' : '') + ' · scans every 5 minutes while this site is open';
   }
 
   // ---- list ----
@@ -78,7 +78,7 @@
   function render() {
     const list = $('autoScanList'); if (!list) return;
     if (!cfg.on) { list.innerHTML = ''; return; }
-    if (!current.length) { list.innerHTML = '<div class="as-empty">No market meets your rules right now. It scans again every 10 minutes.</div>'; renderRun(); return; }
+    if (!current.length) { list.innerHTML = '<div class="as-empty">No market meets your rules right now. It scans again every 5 minutes.</div>'; renderRun(); return; }
     list.innerHTML = current.map((s, i) => '<div class="as-card' + (selected && selected.symbol === s.symbol && E.label(selected) === E.label(s) ? ' is-selected' : '') + '" data-i="' + i + '">'
       + '<div class="as-top"><strong>' + s.market + '</strong><span class="as-tag">' + E.label(s) + ' · ' + s.winPct.toFixed(1) + '%</span></div>'
       + '<p><b>' + s.winPct.toFixed(1) + '%</b> of the last ' + s.n + ' ticks · ' + s.reason + '</p>'

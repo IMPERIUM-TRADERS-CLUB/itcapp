@@ -240,7 +240,7 @@
     let reply = '', spec = null, basic = false;
     try {
       if (!workerUrl) throw new Error('no_server');
-      const out = await askServer(userText); reply = String(out.reply || ''); spec = out.spec ? sanitize(out.spec) : null;
+      const out = await askServer(userText); reply = typeof out.reply === 'string' && !/^\[object/i.test(out.reply) ? out.reply : ''; spec = out.spec ? sanitize(out.spec) : null;
     } catch (_) { basic = true; spec = localParse(userText, current); window.dispatchEvent(new Event('itc:forge-basic')); }
     wait.classList.remove('thinking');
     if (spec) {

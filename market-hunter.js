@@ -92,7 +92,7 @@
   const rescan = () => { S.scan = candidates(); };
   function pick() {   // the best market right now (only used while nothing is locked yet)
     const R = window.ITC_AI_RULES, now = Date.now(), one = x => (R && R.is1s && R.is1s(x.market)) ? 1 : 0;
-    const pref = ($('hunterMarkets') && $('hunterMarkets').value) || '1s-first';
+    const pref = '1s-only';   // the Market Hunter trades 1-second volatilities only
     const pool = S.scan.filter(x => !(S.cool.get(x.market) > now) && (pref !== '1s-only' || one(x)));
     pool.sort((a, b) => (pref === '1s-first' ? one(b) - one(a) : 0) || b.rules - a.rules || b.score - a.score);
     return pool[0] || null;
@@ -123,9 +123,9 @@
     while (S.running) {
       if (!canTrade()) { stop('Log in with Deriv to trade.'); return; }
       const setup = nextSetup();
-      if (!setup) { await sleep(400); continue; }
+      if (!setup) { await sleep(150); continue; }
       const ticks = md.getTicks(setup.symbol, 1), last = ticks[ticks.length - 1];
-      if (!last || last.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(60); continue; }   // one trade per new tick
+      if (!last || last.epoch <= (S.lastEpoch[setup.symbol] || 0)) { await sleep(25); continue; }   // one trade per new tick
       S.lastEpoch[setup.symbol] = last.epoch;
       $('mhNow').textContent = setup.text;
       status('Trading ' + setup.label + ' on ' + setup.market);
@@ -151,7 +151,7 @@
       if (S.net <= -S.plan.sl) { stop('Stop loss reached', 'loss'); return; }
       if (R2(S.plan.sl + S.net) < 0.35) { stop('Stop loss reached: what is left before it is below the smallest stake (0.35).', 'loss'); return; }
       if (Number.isFinite(balance) && nextStake(upcomingKey()) > balance + 1e-9) { stop('Stopped: the next stake (' + nextStake(upcomingKey()).toFixed(2) + ') is more than your balance.', 'loss'); return; }
-      await sleep(60);
+      await sleep(20);
     }
   }
   const lockUi = on => { ['mhTP', 'mhSL', 'mhMartingale'].forEach(id => { if ($(id)) $(id).disabled = on; }); };
@@ -164,7 +164,7 @@
     if (Number.isFinite(balance) && balance < plan.base) { if (window.ITC_LOCK) window.ITC_LOCK.release('Market Hunter'); status('Balance ' + balance.toFixed(2) + ' is below the starting stake of ' + plan.base.toFixed(2) + '. Lower the stop loss or fund the account.', 'warn'); return; }
     store.set('itc_mh_tp', plan.tp); store.set('itc_mh_sl', plan.sl);
     Object.assign(S, { running: true, plan, net: 0, cycle: 0, wins: 0, losses: 0, trades: 0, lastStake: 0, lastWon: false, lastKey: undefined, lock: null, errors: 0, dots: [], lastEpoch: {} });
-    rescan(); clearInterval(scanTimer); scanTimer = setInterval(rescan, 1500);   // keeps hunting for a better market even while a trade is open
+    rescan(); clearInterval(scanTimer); scanTimer = setInterval(rescan, 500);   // keeps hunting for a better market even while a trade is open
     $('mhStart').disabled = true; $('mhStop').disabled = false; lockUi(true);
     paintResults(); status('Hunting…'); loop();
   }

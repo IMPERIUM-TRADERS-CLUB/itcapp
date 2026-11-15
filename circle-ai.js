@@ -114,7 +114,7 @@
   $('#scannerSide')?.addEventListener('change', () => { $('#circleAISide').value = $('#scannerSide').value; updateRuleText(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
   let scanning = null;
-  const SCAN_MS = 30000, SCAN_STEP = 500, ENOUGH = 1;
+  const SCAN_MS = 30000, SCAN_STEP = 250, ENOUGH = 1;
   const entryText = p => p.entryDigits && p.entryDigits.length ? p.entryDigits.map(e => e.digit).join(' · ') : '';
   function scan() {
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), btn = $('#circleAIScan');
@@ -178,7 +178,7 @@
     while (!run.stop) {
       const t = md.getTicks(pick.symbol, 4) || [], last = t[t.length - 1];
       if (last && last.epoch > seen) { seen = last.epoch; if (t.length === 4 && par(last.digit) === side && t.slice(0, 3).every(x => par(x.digit) !== side)) return true; }
-      await sleepMs(100);
+      await sleepMs(40);
     }
     return false;
   }
@@ -187,7 +187,7 @@
     while (!run.stop) {
       const t = (md.getTicks(pick.symbol, 1) || [])[0];
       if (t && t.epoch > seen) { seen = t.epoch; if (t.digit === pick.entryDigit) return true; }
-      await sleepMs(100);
+      await sleepMs(40);
     }
     return false;
   }
@@ -228,7 +228,7 @@
       if (p > 0) { wins++; stake = pick.stake; inRec = false; } else if (p < 0) { losses++; if (pick.martingale) { stake = R2(stake * (pick.multiplier || 2)); inRec = true; } }
       if (net >= pick.tp) { stopAuto('Take profit reached. Net +' + net.toFixed(2), 'win'); return; }
       if (net <= -pick.sl) { stopAuto('Stop loss reached. Net ' + net.toFixed(2), 'loss'); return; }
-      await sleepMs(250);
+      await sleepMs(40);
     }
   }
   function executePaperTrade() {

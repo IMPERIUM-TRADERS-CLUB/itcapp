@@ -482,13 +482,13 @@
             <div class="signal-alert-actions">
               <button type="button" class="button secondary" id="copySignalAlert">Copy alert message</button>
               <a class="button social-button telegram-button" href="https://t.me/IMPTC" target="_blank" rel="noopener noreferrer">Open Telegram ↗</a>
-              <a class="button social-button whatsapp-button" href="https://chat.whatsapp.com/GuWX2jy465cLxq3PZ" target="_blank" rel="noopener noreferrer">Open WhatsApp ↗</a>
+              <a class="button social-button whatsapp-button" href="https://whatsapp.com/channel/0029VbDzhr22kNFqcKauiy0l" target="_blank" rel="noopener noreferrer">Open WhatsApp ↗</a>
             </div>
             <div class="signal-expiry-box" id="signalExpiryBox" hidden>
               <strong>⏰ This signal has expired.</strong>
               <p>The countdown is complete. Copy the expiry update and open your group to post it manually.</p>
               <pre class="signal-message-preview expiry-preview" id="signalExpiryPreview"></pre>
-              <div class="signal-alert-actions"><button type="button" class="button primary" id="copySignalExpiry">Copy expiry update</button><a class="button social-button telegram-button" href="https://t.me/IMPTC" target="_blank" rel="noopener noreferrer">Open Telegram to post ↗</a><a class="button social-button whatsapp-button" href="https://chat.whatsapp.com/GuWX2jy465cLxq3PZ" target="_blank" rel="noopener noreferrer">Open WhatsApp to post ↗</a></div>
+              <div class="signal-alert-actions"><button type="button" class="button primary" id="copySignalExpiry">Copy expiry update</button><a class="button social-button telegram-button" href="https://t.me/IMPTC" target="_blank" rel="noopener noreferrer">Open Telegram to post ↗</a><a class="button social-button whatsapp-button" href="https://whatsapp.com/channel/0029VbDzhr22kNFqcKauiy0l" target="_blank" rel="noopener noreferrer">Open WhatsApp to post ↗</a></div>
             </div>
             <div class="active-signal-footer"><span>Local timer only · no message is sent automatically.</span><button type="button" class="text-button" id="clearSignalAlert">Clear current alert</button></div>
           </section>
@@ -531,13 +531,13 @@
       </section>
 
       <section class="page" id="page-markethunter">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Set only your take profit and stop loss. The hunter scans the markets for the best Over 1, Over 2, Under 8 or Under 7 setup, stays on the market it finds, and chooses its own stake. After a loss, Over 1 recovers on Over 2 and Under 8 recovers on Under 7; Over 2 and Under 7 stay on themselves.</p></div>
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Set only your take profit and stop loss. The hunter scans the 1-second volatility markets for the best Over 1, Over 2, Under 8 or Under 7 setup, stays on the market it finds, and chooses its own stake. After a loss, Over 1 recovers on Over 2 and Under 8 recovers on Under 7; Over 2 and Under 7 stay on themselves.</p></div>
         <article class="panel mh-card">
           <div class="mh-acct off" id="mhAcct">Log in with Deriv to start hunting</div>
           <div class="mh-tpsl"><div><label class="mh-label" for="mhTP">Take profit (USD)</label><input id="mhTP" class="cp-in mh-input" type="number" min="0.01" step="0.01" value="5" inputmode="decimal"></div><div><label class="mh-label" for="mhSL">Stop loss (USD)</label><input id="mhSL" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal"></div></div>
           <div class="mh-plan" id="mhPlan"></div>
           <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
-          <div class="mh-row"><label class="mh-label" for="hunterMarkets">Markets</label><select id="hunterMarkets" class="cp-in"><option value="1s-first">1s volatilities first</option><option value="1s-only">1s volatilities only</option><option value="all">All markets</option></select></div>
+          <div class="mh-row"><span class="mh-label">Markets</span><b>1-second volatilities only</b></div>
           <div class="mh-btns"><button class="cp-btn mh-go" id="mhStart" type="button">▶ Hunt</button><button class="cp-btn cp-danger" id="mhStop" type="button" disabled>■ Stop</button></div>
         </article>
         <article class="panel mh-card" id="mhResults">

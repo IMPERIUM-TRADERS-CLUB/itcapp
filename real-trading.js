@@ -105,7 +105,7 @@
         toast((c.real ? 'REAL ' : 'DEMO ') + label + ' ' + (i + 1) + '/' + count + ' bought · ' + money(c.price, c.currency));
         c.settled.then(r => toast((r.won ? 'WON +' : 'LOST ') + money(r.profit, r.currency) + ' · ' + label));
       } catch (e) { toast('Not placed: ' + (e.message || e)); try { window.ITC_DERIV_ACCOUNT.notice('Trade not placed', String(e.message || e)); } catch (_) {} break; }
-      await new Promise(r => setTimeout(r, 150));
+      if (i < count - 1) await new Promise(r => setTimeout(r, 150));
     }
     return done;
   }

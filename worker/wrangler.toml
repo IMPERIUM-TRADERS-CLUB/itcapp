@@ -12,8 +12,8 @@ TELEGRAM_CHAT_ID = "@IMPTC"
 SCAN_WINDOW = "1000"  # ticks per market
 EO_MIN = "55"         # Even/Odd minimum share % (over 1,000 ticks even 55% is already a strong lead)
 MAX_PCT = "10"        # losing digits must be under this % for Over/Under
-COOLDOWN_MIN = "9"    # do not repeat the same signal for this many minutes (just under the 10-minute scan, so a still-strong market can be posted again)
-MAX_PER_RUN = "2"     # at most this many new signals per scan
+COOLDOWN_MIN = "30"   # do not repeat the same signal for this many minutes
+MAX_PER_RUN = "1"     # only the best new signal is posted per scan
 AI_MODEL = "claude-sonnet-5-5"   # model used by the Bot Forge (add the secret ANTHROPIC_API_KEY)
 CF_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"   # free Workers AI model, used when no ANTHROPIC_API_KEY is set (add an AI binding named AI)
 AI_PER_HOUR = "30"    # Bot Forge requests allowed per visitor per hour
@@ -22,9 +22,9 @@ AI_PER_HOUR = "30"    # Bot Forge requests allowed per visitor per hour
 [ai]
 binding = "AI"
 
-# Runs the scanner every 10 minutes, 24/7, without the website being open.
+# Runs the scanner every 5 minutes, 24/7, without the website being open.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/5 * * * *"]
 
 # OPTIONAL (needed for the admin lockout, signal de-duplication and AI rate limit): create it with
 #   npx wrangler kv namespace create ITC_KV      (or Workers & Pages > KV in the dashboard)

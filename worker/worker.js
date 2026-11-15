@@ -110,8 +110,8 @@ async function runScan(env) {
   const E = globalThis.ITC_SIGNAL_ENGINE;
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) { console.log('Scanner skipped: set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.'); return; }
   if (!env.ITC_KV) { console.log('Scanner skipped: bind a KV namespace named ITC_KV (it prevents repeat signals).'); return; }
-  const cooldown = Math.max(60, (Number(env.COOLDOWN_MIN) || 20) * 60);
-  const maxPerRun = Math.max(1, Number(env.MAX_PER_RUN) || 2);
+  const cooldown = Math.max(60, (Number(env.COOLDOWN_MIN) || 30) * 60);
+  const maxPerRun = Math.max(1, Number(env.MAX_PER_RUN) || 1);
   const site = env.SITE_URL || 'https://imperium-traders-club.github.io/itcapp/';
   let sent = 0;
   for (const sig of await findSignals(env)) {
@@ -226,6 +226,8 @@ Examples:
 "even, and if I lose go odd" -> {"contract":"evenodd","side":"EVEN","recovery":{"side":"ODD"}}
 "under 7 8 or 9 randomly, recovery under 6, stop after 2 losses in a row" -> {"contract":"overunder","side":"UNDER","barrier":8,"randomBarrier":{"from":7,"to":9},"recovery":{"barrier":6},"losses":2}
 "wait for 3 odd digits then an even digit and trade even" -> {"contract":"evenodd","side":"EVEN","entry":{"kind":"streak","count":3,"test":"odd","then":"even"}}`;
+// The AI sometimes returns "reply" as an object (or the whole answer already parsed): always turn it into plain text so the Forge never shows "[object Object]".
+const replyText = v => typeof v === 'string' ? v : (v && typeof v === 'object' ? String(v.text || v.message || v.reply || v.content || '') : '');
 async function aiBot(request, env, headers) {
   if (!isSet(env.ANTHROPIC_API_KEY) && !env.AI) return json({ error: 'ai_not_configured' }, 503, headers);
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown', key = 'ai:' + ip + ':' + Math.floor(Date.now() / 3600000);
@@ -251,10 +253,15 @@ async function aiBot(request, env, headers) {
   if (!isSet(env.ANTHROPIC_API_KEY) && env.AI) {   // free option: Cloudflare Workers AI (no API key needed)
     try {
       const out = await env.AI.run(env.CF_AI_MODEL || '@cf/meta/llama-3.1-8b-instruct-fp8-fast', { messages: [{ role: 'system', content: FORGE_PROMPT + (cur ? '\nCurrent bot spec: ' + cur : '') }, ...msgs], max_tokens: 900 });
-      const text = typeof out === 'string' ? out : String((out && (out.response || (out.result && out.result.response))) || '');
-      const s = text.indexOf('{'), e = text.lastIndexOf('}');
-      let parsed; try { parsed = s >= 0 && e > s ? JSON.parse(text.slice(s, e + 1)) : { reply: text.slice(0, 400), spec: null }; } catch { parsed = { reply: text.slice(0, 400), spec: null }; }
-      return json({ reply: String(parsed.reply || '').slice(0, 600), spec: parsed.spec && typeof parsed.spec === 'object' ? parsed.spec : null }, 200, headers);
+      const raw = typeof out === 'string' ? out : (out && (out.response !== undefined && out.response !== null ? out.response : (out.result && out.result.response)));
+      let parsed;
+      if (raw && typeof raw === 'object') parsed = raw;   // Workers AI already parsed the JSON for us
+      else {
+        const text = String(raw || '');
+        const s = text.indexOf('{'), e = text.lastIndexOf('}');
+        try { parsed = s >= 0 && e > s ? JSON.parse(text.slice(s, e + 1)) : { reply: text.slice(0, 400), spec: null }; } catch { parsed = { reply: text.slice(0, 400), spec: null }; }
+      }
+      return json({ reply: replyText(parsed.reply).slice(0, 600), spec: parsed.spec && typeof parsed.spec === 'object' ? parsed.spec : null }, 200, headers);
     } catch { return json({ error: 'ai_failed' }, 502, headers); }
   }
   try {
@@ -268,7 +275,7 @@ async function aiBot(request, env, headers) {
     const text = ((data.content || []).find(c => c.type === 'text') || {}).text || '';
     const a = text.indexOf('{'), z = text.lastIndexOf('}');
     const parsed = a >= 0 && z > a ? JSON.parse(text.slice(a, z + 1)) : { reply: text.slice(0, 400), spec: null };
-    return json({ reply: String(parsed.reply || '').slice(0, 600), spec: parsed.spec && typeof parsed.spec === 'object' ? parsed.spec : null }, 200, headers);
+    return json({ reply: replyText(parsed.reply).slice(0, 600), spec: parsed.spec && typeof parsed.spec === 'object' ? parsed.spec : null }, 200, headers);
   } catch { return json({ error: 'ai_failed' }, 502, headers); }
 }
 

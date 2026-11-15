@@ -5,7 +5,7 @@
   const FORM_KEY = 'itc-project1-active-signal-v1';
   const VALIDITY_MS = 10 * 60 * 1000;
   const TELEGRAM_URL = 'https://t.me/IMPTC';
-  const WHATSAPP_URL = 'https://chat.whatsapp.com/GuWX2jy465cLxq3PZ';
+  const WHATSAPP_URL = 'https://whatsapp.com/channel/0029VbDzhr22kNFqcKauiy0l';
   const form = $('signalAlertForm');
   if (!form) return;
 
@@ -209,7 +209,7 @@
   document.querySelectorAll(`a[href="${TELEGRAM_URL}"], a[href="${WHATSAPP_URL}"]`).forEach(link => {
     link.addEventListener('click', () => {
       if (active && Date.now() >= active.expiresAt) {
-        status.textContent = 'Signal is expired. Copy the expiry update before posting in the opened group.';
+        status.textContent = 'Signal is expired. Copy the expiry update before posting in the opened channel.';
       }
     });
   });

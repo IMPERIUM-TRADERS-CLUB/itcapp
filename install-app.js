@@ -72,7 +72,7 @@
   }
   // Manual trigger from Settings -> Install the app.
   window.addEventListener('itc:show-install', () => { if (isInstalled) { const t = document.getElementById('toast'); if (window.ITC_APP) window.ITC_APP.showToast('ITC is already installed on this device.'); return; } promptBox.classList.remove('hidden'); });
-  // The pop-up appears 15 seconds after the website opens. If it was closed with the X less than 10 minutes ago, it waits for the rest of those 10 minutes.
-  { let wait = 15000; try { const v = localStorage.getItem(dismissedKey); if (v && v !== 'installed') wait = Math.max(wait, REPEAT_MS - (Date.now() - Number(v))); } catch (_) {}
+  // The pop-up appears 30 seconds after the website opens. If it was closed with the X less than 10 minutes ago, it waits for the rest of those 10 minutes.
+  { let wait = 30000; try { const v = localStorage.getItem(dismissedKey); if (v && v !== 'installed') wait = Math.max(wait, REPEAT_MS - (Date.now() - Number(v))); } catch (_) {}
     reshowTimer = window.setTimeout(showPrompt, wait); }
 })();
