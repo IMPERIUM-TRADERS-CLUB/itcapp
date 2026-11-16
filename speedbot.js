@@ -7,7 +7,7 @@
   if (!market) return;
   const NEEDS_DIGIT = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
   const NAMES = { DIGITOVER: 'Over', DIGITUNDER: 'Under', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs', CALL: 'Rise', PUT: 'Fall', SAME: 'Same as main' };
-  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], win: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [], tickTimes: [], lastCap: 0 };
+  const state = { running: false, mode: 'main', steps: 0, busy: false, count: 0, batches: 0, tickets: 0, digits: [], win: [], last: null, previous: null, lastPrice: null, delta: 0, seen: 0, lastEligibleEpoch: null, profit: 0, log: [], tickTimes: [], lastCap: 0, run: 1, total: 0, pauseUntil: 0 };
   const R2 = v => Math.round(v * 100) / 100;
   const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 8 });
   const stamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -39,16 +39,15 @@
       case 'CALL': return delta > 0; case 'PUT': return delta < 0;
     } return false;
   }
-  // Deriv allows bots about 80 trades a minute (about 2 API calls per trade, 180-call bot budget). The cap below keeps
-  // trades per tick inside that, so the bot trades every tick instead of skipping ticks when it hits the limit.
+  // Deriv limits bots to about 180 API calls a minute (about 2 per trade). If your Trades per tick needs more than that on a fast market,
+  // the pacing check in fire() skips ticks; each batch that does go out still has the full number of contracts you set.
   const TRADES_PER_MIN = 80;
   function ticksPerMin() {
     const t = state.tickTimes; if (t.length < 6) return 60;   // assume a 1-second market until we have measured it
     const gap = (t[t.length - 1] - t[0]) / (t.length - 1); return gap > 0 ? Math.min(120, 60 / gap) : 60;
   }
-  function tradesNow() {   // what you asked for, lowered if the market's tick speed would push it over Deriv's limit
-    const want = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
-    return Math.max(1, Math.min(want, Math.floor(TRADES_PER_MIN / ticksPerMin())));
+  function tradesNow() {   // exactly what you set (1 to 10). Deriv's call limit is handled by the pacing check in fire(), which skips a tick rather than shrinking the batch.
+    return Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1));
   }
   function stakeNow() {
     const base = Math.max(0.35, Number($('speedBotStake').value) || 0.35), n = tradesNow();
@@ -94,35 +93,51 @@
     if (kind && window.ITC_BOTMSG) window.ITC_BOTMSG.show({ kind, why: text, profit: state.profit, bot: 'ITC SpeedBot' });
   }
   async function fire(d, epoch) {
-    if (!state.running) return;
+    if (!state.running || Date.now() < state.pauseUntil) return;
     const r = rule();
     // no entry rule: Run trades straight away and then on every tick, it never waits for a particular digit
     if (state.lastEligibleEpoch === epoch) return; state.lastEligibleEpoch = epoch;
     if (state.busy && recOn()) return;   // with recovery on, wait for the last batch's result before the next one
     const n = tradesNow(), stake = stakeNow();
-    { const want = Math.max(1, Math.min(10, Math.floor(Number($('speedBotTrades').value)) || 1)); if (n < want && state.lastCap !== n) { state.lastCap = n; addLog('Trades per tick set to ' + n, 'This market ticks about ' + Math.round(ticksPerMin()) + ' times a minute. ' + want + ' per tick would go over Deriv\'s limit, so it trades ' + n + ' every tick.'); } }
-    if (stake < 0.35) { finish('Stop loss reached', 'loss'); return; }
+    if (state.lastCap !== n && n * 2 * ticksPerMin() > 170) { state.lastCap = n; addLog(n + ' trades per tick', 'On this market that is more than Deriv allows every tick, so some ticks are skipped. Each batch still buys ' + n + ' contracts.'); }
+    if (stake < 0.35) { endRun('Stop loss reached', 'loss'); return; }
     if (window.ITC_TRADE && window.ITC_TRADE.busy && window.ITC_TRADE.busy()) { $('speedBotRuleState').textContent = 'Pacing (Deriv limit)'; if (Date.now() - (state.lastPaceLog || 0) > 10000) { state.lastPaceLog = Date.now(); addLog('Skipped a tick', 'Deriv call limit reached. Lower Trades per tick to trade every tick.', 'l'); } return; }
     // Deriv allows about 220 trade calls a minute; skip this signal rather than queue it
     state.batches++; state.tickets += n; state.busy = true;
     $('speedBotBatches').textContent = state.batches; $('speedBotTickets').textContent = state.tickets; $('speedBotRuleState').textContent = 'Trading';
     $('speedBotExposure').textContent = '$' + (n * stake).toFixed(2);
     addLog(`${label(r)} · tick ${d === null || d === undefined ? '–' : d}`, `Buying ${n} contract${n === 1 ? '' : 's'} · $${stake.toFixed(2)} each${state.steps ? ' · martingale step ' + state.steps : ''}${state.mode === 'recovery' && recOn() ? ' · recovery' : ''}`);
+    const run = state.run;
     const T = window.ITC_TRADE; if (!T) { state.busy = false; return; }
     const params = { symbol: symbolOf(), contract_type: r.type, amount: stake, duration: (r.type === 'CALL' || r.type === 'PUT') ? 5 : 1, barrier: NEEDS_DIGIT.includes(r.type) ? r.barrier : undefined };
     let list = []; try { list = await T.execute(params, { count: n, label: label(r) }); } catch (_) {}
     if (!list.length) { state.busy = false; return; }
     const results = await Promise.all(list.map(c => Promise.race([c.settled, new Promise(res => setTimeout(() => res({ profit: 0 }), 25000))])));
-    const net = R2(results.reduce((s, x) => s + (Number(x.profit) || 0), 0)); state.profit = R2(state.profit + net);
+    const net = R2(results.reduce((s, x) => s + (Number(x.profit) || 0), 0));
+    if (run !== state.run) { state.total = R2(state.total + net); addLog('Late result from run ' + run, `${net >= 0 ? '+' : ''}${net.toFixed(2)}`, net > 0 ? 'w' : 'l'); return; }   // a new run already started: do not mix it into the new run
+    state.profit = R2(state.profit + net);
     addLog(net > 0 ? 'WIN' : 'LOSS', `${net >= 0 ? '+' : ''}${net.toFixed(2)} · session ${state.profit.toFixed(2)}`, net > 0 ? 'w' : 'l');
     const maxSteps = Math.max(1, Math.floor(Number($('speedBotRecSteps').value)) || 5);
     if (net < 0) { state.steps = Math.min(maxSteps, state.steps + 1); if (recOn()) state.mode = 'recovery'; }
     else if (net > 0) { if (state.mode === 'recovery') addLog('Recovered', 'Back to your main trade'); state.mode = 'main'; state.steps = 0; }
     state.busy = false; paintPL(); paintRuleUi(); paintDigit();
     const tp = Number($('speedBotTP').value), sl = Number($('speedBotSL').value);
-    if (state.running && tp > 0 && state.profit >= tp) { finish('Take profit reached', 'win'); return; }
-    if (state.running && sl > 0 && state.profit <= -sl) { finish('Stop loss reached', 'loss'); return; }
-    if (state.running && !$('speedBotContinuous').checked) finish('One batch done');
+    if (state.running && tp > 0 && state.profit >= tp) { endRun('Take profit reached', 'win'); return; }
+    if (state.running && sl > 0 && state.profit <= -sl) { endRun('Stop loss reached', 'loss'); return; }
+  }
+  // Take profit or stop loss reached. Repeat on: this run is closed and a fresh run starts (profit back to 0, stake and recovery reset).
+  // Repeat off: the bot stops.
+  function endRun(text, kind) {
+    if (!state.running) return;
+    if (!$('speedBotContinuous').checked) { finish(text, kind); return; }
+    const stake = Number($('speedBotStake').value), chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck();
+    if (chk && chk.ok === false) { finish(text + ' · not restarted: ' + chk.message, kind); return; }
+    if (chk && Number.isFinite(chk.balance) && chk.balance < stake) { finish(text + ' · not restarted: balance is below your stake', kind); return; }
+    state.total = R2(state.total + state.profit);
+    addLog(`${text} · run ${state.run} closed`, `Run result ${state.profit >= 0 ? '+' : ''}${state.profit.toFixed(2)} · all runs ${state.total >= 0 ? '+' : ''}${state.total.toFixed(2)}`, kind === 'win' ? 'w' : 'l');
+    state.run++; Object.assign(state, { profit: 0, steps: 0, mode: 'main', busy: false, lastEligibleEpoch: null, pauseUntil: Date.now() + 1500 });
+    setState('TRADING · run ' + state.run, 'on'); paintPL(); paintRuleUi(); paintDigit();
+    addLog('Run ' + state.run + ' started', 'Fresh start · ' + label(MAIN()) + ' · ' + tradesNow() + ' trades per tick');
   }
   // Every live tick is handled the moment it arrives (no polling), so trading follows the tick movement continuously.
   function onLiveTick(t) {
@@ -168,7 +183,7 @@
     if (!(window.ITC_TRADE && window.ITC_TRADE.ready())) { addLog('Not started', 'Log in with Deriv to trade.', 'l'); return; }
     { const chk = window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { addLog('Not started', chk.message, 'l'); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < stake) { addLog('Not started', 'Balance ' + chk.balance.toFixed(2) + ' is below your stake. Fund the account first.', 'l'); return; } }
     { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('ITC SpeedBot'); if (g && !g.ok) { addLog('Not started', g.by + ' is running. Stop it first: only one bot can trade at a time.', 'l'); return; } }
-    Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null });
+    Object.assign(state, { running: true, mode: 'main', steps: 0, busy: false, profit: 0, batches: 0, tickets: 0, lastEligibleEpoch: null, run: 1, total: 0, pauseUntil: 0 });
     $('speedBotBatches').textContent = 0; $('speedBotTickets').textContent = 0; paintPL(); paintRuleUi();
     $('speedBotStart').disabled = true; $('speedBotStop').disabled = false; setState('TRADING', 'on'); addLog('Started', `${label(MAIN())}${recOn() ? ' · recovery on' : ''}`);
     fire(state.last, 'start-' + Date.now());   // trade immediately, do not wait for a tick or a digit

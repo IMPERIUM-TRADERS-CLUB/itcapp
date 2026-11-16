@@ -308,11 +308,31 @@
     window.addEventListener('itc:forge-basic', () => set(false));
   })();
   add('ai', 'Welcome to ITC Bot Forge. Describe a strategy in your own words, or choose an example above. I will build the blocks and show you a risk estimate. Review the settings before opening or testing the bot.');
+  const modal = $('forgeModal');
+  function showForge() {
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    document.body.classList.add('forge-open');
+    setTimeout(() => input && input.focus({ preventScroll: true }), 100);
+  }
+  function hideForge() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.classList.remove('forge-open');
+    const launcher = $('openBotForge'); if (launcher) launcher.focus({ preventScroll: true });
+  }
+  const launcher = $('openBotForge'), close = $('forgeClose');
+  if (launcher) launcher.addEventListener('click', showForge);
+  if (close) close.addEventListener('click', hideForge);
+  if (modal) {
+    modal.addEventListener('click', e => { if (e.target === modal) hideForge(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) hideForge(); });
+  }
   window.ITC_AI = { open() {
     if (!window.ITC_APP) return;
     window.ITC_APP.navigate('freebots');
     const tab = document.querySelector('[data-mybots-tab="ai"]'); if (tab) tab.click();
-    setTimeout(() => { root.scrollIntoView({ behavior: 'smooth', block: 'center' }); input.focus({ preventScroll: true }); }, 350);
+    setTimeout(showForge, 350);
   } };
 })();
 

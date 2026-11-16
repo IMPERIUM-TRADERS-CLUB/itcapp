@@ -6,9 +6,9 @@
   const names = {overunder:'Over / Under', evenodd:'Even / Odd', matches:'Matches', differs:'Differs'};
   const rulesText = {
     overunder: t0 => { let t = t0; const side = $('#circleAISide')?.value || 'over'; t = side === 'over' ? 1 : 8; const digits = side === 'over' ? `0–${t}` : `${t}–9`; const n = side === 'over' ? t + 1 : 10 - t; return `${side === 'over' ? 'Over' : 'Under'} ${t}: a good market if EITHER the losing digits ${digits} are each below 10% and none is a top-two digit, OR the losing digits ${digits} total ${(25 * n / 3).toFixed(1)}% or less (25% for three losing digits).`; },
-    evenodd: () => 'A good market if EITHER one side (Even or Odd) leads the other by 10% or more, OR it reaches 60% of the sample. 60%+ and bigger leads rank higher. The bot trades the leading side straight away, with no waiting for a digit pattern.',
-    matches: () => 'The most frequent digit (green bar) must be at least 12.5% and at least 1.5 points ahead of the second (blue bar). Prediction digit: the blue bar. Entry digit: the third most frequent digit. The bot waits for the entry digit, then trades Matches on the prediction digit. Past frequency only, not a forecast.',
-    differs: () => 'Choose the least frequent digit in the selected sample. The contract wins only if the next last digit differs from that selected digit.'
+    evenodd: () => 'A good market if a side is at 55% or more, OR Even and Odd are 10 points apart, OR the green bar, blue bar and third digit are all on one side. Meeting more of these ranks higher; a 55%+ market with the top three digits on that side is super strong. The bot trades that side straight away.',
+    matches: () => 'The most frequent digit (green bar) must be more than 2 points ahead of the second (blue bar). Prediction digit: the blue bar. Entry digit: the third most frequent digit. The bot waits for the entry digit, then trades Matches on the prediction digit. Past frequency only, not a forecast.',
+    differs: () => 'Choose the least frequent digit in the selected sample (under 9%). The contract wins only if the next last digit differs from that digit. Markets with the rarest digit rank first.'
   };
   function updateRuleText() {
     
@@ -50,26 +50,28 @@
     } else if (family === 'evenodd') {
       const even = digits.filter(d => d % 2 === 0).length / total * 100, odd = 100 - even, lead = Math.abs(even - odd);
       const leader = even >= odd ? 'even' : 'odd';
-      // green + blue bars: the three most frequent digits; digits tied with the third place count too
-      const thirdCount = ranked[2].count, topSet = ranked.filter(x => x.count >= thirdCount).map(x => x.digit);
-      const allEven = topSet.every(d => d % 2 === 0), allOdd = topSet.every(d => d % 2 === 1);
-      const dom = Math.max(even, odd) >= 60, edge = lead >= 12, byTop = allEven || allOdd, byLead = dom || edge;
-      const side = byLead ? leader : (allEven ? 'even' : 'odd'), sidePct = side === 'even' ? even : odd, why = [];
-      if (edge) why.push(`${leader === 'even' ? 'Even' : 'Odd'} leads by ${lead.toFixed(1)}% (Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%)`);
-      if (dom) why.push(`${leader === 'even' ? 'Even' : 'Odd'} is at ${Math.max(even, odd).toFixed(1)}%`);
-      if (byTop) why.push(`The top digits ${topSet.join(', ')} (green and blue bars) are all ${allEven ? 'even' : 'odd'}`);
-      const rules = (edge ? 1 : 0) + (dom ? 1 : 0) + (byTop ? 1 : 0), eligible = rules > 0;
-      out.push({ ...base, eligible, rules, score: sidePct + (byTop && (allEven ? 'even' : 'odd') === side ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd',
+      // Three rules, each counts on its own (a market needs at least one to qualify; more rules rank higher):
+      //  1) a side is at 55% or more   2) Even and Odd are 10 points apart or more   3) the green bar, blue bar and third digit are all on one side.
+      // Rule 3 makes that side stronger: with rule 1 or 2 as well, the market is "super strong".
+      const topSide = topThree.every(d => d % 2 === 0) ? 'even' : topThree.every(d => d % 2 === 1) ? 'odd' : null;
+      const dom = Math.max(even, odd) >= 55, edge = lead >= 10, byTop = topSide !== null, byLead = dom || edge;
+      const side = byLead ? leader : topSide, sidePct = side === 'even' ? even : odd, aligned = byTop && topSide === side, why = [];
+      if (dom) why.push(`${side === 'even' ? 'Even' : 'Odd'} is at ${sidePct.toFixed(1)}%`);
+      if (edge) why.push(`Even and Odd are ${lead.toFixed(1)} points apart (Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%)`);
+      if (byTop) why.push(`The green bar, blue bar and third digit (${topThree.join(', ')}) are all ${topSide}`);
+      if (aligned && byLead) why.unshift('Super strong');
+      const rules = (dom ? 1 : 0) + (edge ? 1 : 0) + (byTop ? 1 : 0), eligible = rules > 0;
+      out.push({ ...base, eligible, rules, score: sidePct + (aligned ? 1.5 : 0), side, target: undefined, entry: side === 'even' ? 'Even' : 'Odd',
         label: why.join(' · ') || `Even ${even.toFixed(1)}% · Odd ${odd.toFixed(1)}%`, entryDigits: nextTickEntries(digits, side === 'even' ? d => d % 2 === 0 : d => d % 2 === 1) });
     } else if (family === 'matches') {
-      // Green bar = most frequent, blue bar = second. They must be at least 1.5 points apart.
+      // Green bar = most frequent, blue bar = second. They must be more than 2 points apart.
       // Prediction digit = the blue bar (second most frequent). Entry digit = the third most frequent digit.
-      const top = ranked[0], second = ranked[1], third = ranked[2], topRate = rate(top.digit), secondRate = rate(second.digit), thirdRate = rate(third.digit), gap = topRate - secondRate, ok = topRate >= 12.5 && gap >= 1.5;
+      const top = ranked[0], second = ranked[1], third = ranked[2], topRate = rate(top.digit), secondRate = rate(second.digit), thirdRate = rate(third.digit), gap = topRate - secondRate, ok = gap > 2;
       out.push({ ...base, eligible: ok, rules: ok ? 1 : 0, score: topRate + gap, seen: secondRate, side: 'matches', target: second.digit, entryDigit: third.digit, entry: `Matches ${second.digit} · entry ${third.digit}`,
         label: `Green ${top.digit} ${topRate.toFixed(1)}% leads blue ${second.digit} ${secondRate.toFixed(1)}% by ${gap.toFixed(1)}. Prediction digit: ${second.digit}. Entry digit: ${third.digit} (third most, ${thirdRate.toFixed(1)}%)`, entryDigits: [{ digit: third.digit, n: counts[third.digit], rate: thirdRate }] });
     } else {
       const low = ranked[ranked.length - 1], score = 100 - rate(low.digit);
-      out.push({ ...base, eligible: score >= 93, rules: score >= 93 ? 1 : 0, score, side: 'differs', target: low.digit, entry: `Differs ${low.digit}`, label: `Digit ${low.digit} is the least seen (${rate(low.digit).toFixed(1)}%)`, entryDigits: [] });
+      out.push({ ...base, eligible: score > 91, rules: score > 91 ? 1 : 0, score, side: 'differs', target: low.digit, entry: `Differs ${low.digit}`, label: `Digit ${low.digit} is the least seen (${rate(low.digit).toFixed(1)}%)`, entryDigits: [] });
     }
     return out;
   }

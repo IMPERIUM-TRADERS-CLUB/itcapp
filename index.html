@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050607">
+  <script>try{if(localStorage.getItem("itc_theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}</script>
   <meta name="description" content="Imperium Traders Club (ITC): market observation, bots, risk planning and signal alerts.">
   <link rel="icon" type="image/svg+xml" href="imperium-logo.svg">
   <link rel="manifest" href="manifest.webmanifest">
@@ -11,8 +12,9 @@
   <meta name="apple-mobile-web-app-title" content="ITC">
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>Imperium Traders Club</title>
-  <link rel="stylesheet" href="style.css?v=9.30">
-  <link rel="stylesheet" href="itc-theme.css?v=111">
+  <link rel="stylesheet" href="style.css?v=9.31">
+  <link rel="stylesheet" href="itc-theme.css?v=114">
+  <link rel="stylesheet" href="theme.css?v=1">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style id="itcSplashCss">
@@ -58,7 +60,7 @@
         <button class="nav-link" data-page="markethunter"><span class="nav-icon">◎</span> Market Hunter <span class="nav-tag">NEW</span></button>
         <button class="nav-link" data-page="copytrading"><span class="nav-icon">⧉</span> Copy Trading</button>
         <button class="nav-link" data-page="riskcalc"><span class="nav-icon">◍</span> Risk Calculator</button>
-        <button class="nav-link" data-page="dtrader"><span class="nav-icon">⌇</span> Charts</button>
+        <button class="nav-link" data-page="dtrader"><span class="nav-icon">⌇</span> Trading View</button>
         <button class="nav-link" data-page="signalalerts"><span class="nav-icon">◔</span> Signals</button>
         <button class="nav-link" data-page="history"><span class="nav-icon">◷</span> Trade History</button>
         <a class="nav-link" href="https://app.abepayy.com/?ref=LEVON" target="_blank" rel="noopener noreferrer"><span class="nav-icon">$</span><span>Deposit / Withdraw</span></a>
@@ -72,6 +74,7 @@
       <nav class="nav">
         <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
         <button class="nav-link" id="soundToggle" type="button" aria-pressed="true"><span class="nav-icon">🔔</span> Sound: On</button>
+        <button class="nav-link theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false"><span class="nav-icon tt-icon">☾</span><span class="tt-label">Theme: Dark</span><span class="tt-track" aria-hidden="true"><i></i></span></button>
         <button class="nav-link" data-page="help"><span class="nav-icon">?</span> Help centre</button>
       </nav>
       <div class="sidebar-bottom">
@@ -83,7 +86,7 @@
         </div>
         <div class="profile-row">
           <div class="avatar">IT</div>
-          <div class="profile-copy"><strong>Imperium Member</strong><small>Demo workspace</small></div>
+          <div class="profile-copy"><strong>Imperium Member</strong></div>
           <button class="dots-button" title="Profile options" aria-label="Profile options">···</button>
         </div>
       </div>
@@ -128,7 +131,7 @@
         <button class="workspace-switch" data-page="markethunter" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span><em>Market Hunter</em></button>
         <button class="workspace-switch" data-page="copytrading" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg></span><em>Copy Trading</em></button>
         <button class="workspace-switch" data-page="riskcalc" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><em>Risk Calculator</em></button>
-        <button class="workspace-switch" data-page="dtrader" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16l4-5 3 3 5-7"/></svg></span><em>Charts</em></button>
+        <button class="workspace-switch" data-page="dtrader" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16l4-5 3 3 5-7"/></svg></span><em>Trading View</em></button>
         <button class="workspace-switch" data-page="signalalerts" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg></span><em>Signals</em></button>
       </nav>
 
@@ -284,8 +287,14 @@
             <div class="mybots-switch" role="tablist" aria-label="Bot library type"><button class="mybots-tab active" type="button" data-mybots-tab="ai" role="tab" aria-selected="true">ITC AI Bots <span>5</span></button><button class="mybots-tab" type="button" data-mybots-tab="mine" role="tab" aria-selected="false">My Bots <span>5</span></button></div></div>
           <div class="mybots-content hidden" id="myBotsContent"><div class="itc-bot-grid" id="botGrid"><article class="itc-bot skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></article><article class="itc-bot skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></article><article class="itc-bot skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></article></div></div>
           <div class="mybots-content" id="aiBotsContent"><div class="ai-bots-note"><strong>ITC AI Bots</strong><p>Smart bots built by Imperium Traders Club. Load one to see every block on the canvas, then set your stake, take profit and stop loss before you run it.</p></div><div class="itc-bot-grid" id="aiBotGrid"><article class="itc-bot skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></article></div>
-          <section class="forge" id="botForge" aria-labelledby="forgeTitle">
-            <div class="forge-head"><button type="button" class="forge-icon forge-icon-btn" id="forgeHow" aria-label="How the Bot Forge works" title="Tap to see how it works"><span class="forge-bot">🤖</span><span class="forge-q">?</span></button><div><h3 id="forgeTitle">ITC Bot Forge <span class="forge-status off" id="forgeStatus">○ Basic mode</span></h3><p>Build your own bot from your own thoughts. Type or speak what you want, and the Forge builds every block for you. <a href="#" id="forgeHowLink">How it works</a></p></div></div>
+          <button type="button" class="forge-launch" id="openBotForge" aria-haspopup="dialog" aria-controls="forgeModal">
+              <span class="forge-launch-mark" aria-hidden="true"><span>⚒</span><i>✦</i></span>
+              <span class="forge-launch-copy"><strong>ITC Bot Forge</strong><small>Create a custom trading bot from your own strategy</small><em>Tap to open the Bot Forge</em></span>
+              <span class="forge-launch-arrow" aria-hidden="true">↗</span>
+            </button>
+            <div class="forge-modal hidden" id="forgeModal" role="dialog" aria-modal="true" aria-labelledby="forgeTitle">
+            <section class="forge" id="botForge" aria-labelledby="forgeTitle">
+            <div class="forge-head"><button type="button" class="forge-icon forge-icon-btn" id="forgeHow" aria-label="How the Bot Forge works" title="Tap to see how it works"><span class="forge-bot">🤖</span><span class="forge-q">?</span></button><div><h3 id="forgeTitle">ITC Bot Forge <span class="forge-status off" id="forgeStatus">○ Basic mode</span></h3><p>Build your own bot from your own thoughts. Type or speak what you want, and the Forge builds every block for you. <a href="#" id="forgeHowLink">How it works</a></p></div><button type="button" class="forge-close" id="forgeClose" aria-label="Close Bot Forge" title="Close">×</button></div>
             <div class="forge-steps" aria-label="Bot Forge steps"><span class="active">1. Describe</span><span>2. Review</span><span>3. Test on demo</span></div>
             <div class="forge-chips" id="forgeChips"><button type="button" data-forge-chip="Trade Over 1 on Volatility 100 (1s), stake 0.35, take profit 2, stop loss 3, no martingale">Simple Over 1</button><button type="button" data-forge-chip="Trade Under 8 with recovery Under 7, stake 0.35, stop loss 3">Under 8 + recovery</button><button type="button" data-forge-chip="Trade Even on Volatility 50, stake 0.50, take profit 2, stop loss 2, no martingale">Even / flat stake</button><button type="button" data-forge-chip="Trade Over 2 only when the last 3 digits are above 4">Entry conditions</button><button type="button" data-forge-chip="Trade Rise on Volatility 25, 5 ticks, stake 0.35, take profit 2, stop loss 2">Rise / Fall</button></div>
             <div class="forge-chat" id="forgeChat" aria-live="polite" aria-relevant="additions text"></div>
@@ -294,36 +303,18 @@
             <section class="forge-preview hidden" id="forgePreview" aria-live="polite" aria-label="Generated bot review"><div class="forge-preview-head"><div><span class="panel-overline">STRATEGY REVIEW</span><h4 id="forgePreviewName">Your strategy</h4></div><span class="forge-review-tag">READY TO REVIEW</span></div><p id="forgePreviewDescription"></p><div class="forge-metrics"><div><span>Base stake</span><strong id="forgeMetricStake">$0.35</strong></div><div><span>Loss sequence exposure</span><strong id="forgeMetricExposure">$0.35</strong></div><div><span>Max consecutive losses</span><strong id="forgeMetricLosses">3</strong></div><div><span>Multiplier</span><strong id="forgeMetricMultiplier">1×</strong></div></div><p class="forge-risk-warning" id="forgeRiskWarning">Review your risk settings before testing.</p></section>
             <div class="forge-actions hidden" id="forgeActions"><button type="button" id="forgeSave">💾 Save to My Bots</button><button type="button" id="forgeTest">▶ Test on demo</button><button type="button" id="forgeOpen">🧩 Open on canvas</button></div>
             <p class="forge-note">Bots are saved in this browser. Test on a Deriv demo account first. Martingale can increase losses rapidly; the exposure estimate is not a guarantee of outcomes.</p>
-          </section></div>
+          </section></div></div>
         </section>
-        <div class="filter-row hidden"><div class="search-box"><span>⌕</span><input id="botSearch" placeholder="Search templates..." aria-label="Search bot templates"></div><div class="filter-chips"><button class="chip selected" data-filter="all">All templates</button><button class="chip" data-filter="digits">Digits</button><button class="chip" data-filter="trend">Trend</button><button class="chip" data-filter="risk">Risk tools</button></div></div>
-        <div class="bots-grid hidden" id="botsGrid">
-          <article class="bot-card" data-kind="digits" data-title="Even Odd Starter"><div class="bot-card-top"><span class="bot-icon purple-bg">½</span><span class="template-tag">BEGINNER</span></div><h2>Even / Odd Starter</h2><p>A simple condition-based flow for understanding digit contracts.</p><div class="bot-tags"><span>Digits</span><span>3 blocks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Even / Odd Starter">Open template ↗</button></div></article>
-          <article class="bot-card" data-kind="trend" data-title="Rise Fall Observer"><div class="bot-card-top"><span class="bot-icon blue-bg">↗</span><span class="template-tag">BEGINNER</span></div><h2>Rise / Fall Observer</h2><p>Explore a basic directional condition with demo-only actions.</p><div class="bot-tags"><span>Trend</span><span>4 blocks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Rise / Fall Observer">Open template ↗</button></div></article>
-          <article class="bot-card" data-kind="risk" data-title="TP SL Guard"><div class="bot-card-top"><span class="bot-icon amber-bg">◎</span><span class="template-tag">RISK TOOL</span></div><h2>TP / SL Guard</h2><p>A starter flow showing how profit and loss limits can stop a session.</p><div class="bot-tags"><span>Risk tools</span><span>2 checks</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="TP / SL Guard">Open template ↗</button></div></article>
-          <article class="bot-card" data-kind="digits" data-title="Digit Watchlist"><div class="bot-card-top"><span class="bot-icon mint-bg">◈</span><span class="template-tag">EXPLORER</span></div><h2>Digit Watchlist</h2><p>Use a sample tick stream to watch how last digits change.</p><div class="bot-tags"><span>Digits</span><span>Monitor</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Digit Watchlist">Open template ↗</button></div></article>
-          <article class="bot-card" data-kind="risk" data-title="Flat Stake Practice"><div class="bot-card-top"><span class="bot-icon red-bg">≋</span><span class="template-tag">RISK TOOL</span></div><h2>Flat Stake Practice</h2><p>Keep a constant stake on every trade.</p><div class="bot-tags"><span>Risk tools</span><span>Flat stake</span></div><div class="bot-card-bottom"><span class="template-free">FREE TEMPLATE</span><button class="button secondary use-template" data-template="Flat Stake Practice">Open template ↗</button></div></article>
-          <article class="bot-card custom-card"><div class="custom-plus">+</div><h2>Build your own</h2><p>Start with an empty strategy canvas and add the blocks you need.</p><button class="button primary" data-page="botbuilder">Open Bot Builder ↗</button></article>
-        </div><div class="empty-search hidden" id="emptyBots">No templates match that search. Try another keyword.</div>
       </section>
 
-      <section class="page" id="page-dtrader" data-chart="deriv">
-        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> ADVANCED CHARTING</div><h1>Live <span>Charts.</span></h1><p>Live Deriv charts for all Volatility and Jump indices, plus TradingView for forex, stocks and crypto.</p></div><span class="demo-pill"><span class="status-dot"></span> LIVE CHARTS</span></div>
-        <div class="chart-switch" role="tablist" aria-label="Chart source"><button type="button" class="active" data-chart="deriv" role="tab">Deriv Markets</button><button type="button" data-chart="tv" role="tab">TradingView</button></div>
-        <article class="panel dchart-panel" id="dchartPanel">
-          <div class="panel-heading"><div><div class="panel-overline">DERIV LIVE CHART</div><h2 id="dchartTitle">Volatility 100 (1s) Index</h2></div><span class="template-tag" id="dchartStatus">CONNECTING</span></div>
-          <div class="dchart-controls">
-            <select id="dchartMarket" class="dark-select" aria-label="Market"></select>
-            <div class="dchart-seg" id="dchartFrames" role="group" aria-label="Timeframe"><button type="button" data-g="ticks" class="active">Ticks</button><button type="button" data-g="60">1m</button><button type="button" data-g="300">5m</button><button type="button" data-g="900">15m</button><button type="button" data-g="3600">1h</button></div>
-            <div class="dchart-seg" id="dchartTypes" role="group" aria-label="Chart type"><button type="button" data-t="line" class="active">Line</button><button type="button" data-t="candles">Candles</button></div>
-          </div>
-          <div class="dchart-price"><strong id="dchartPrice">—</strong><span id="dchartChange"></span><small id="dchartHover"></small></div>
-          <div class="dchart-canvas-wrap"><canvas id="dchartCanvas" aria-label="Live price chart"></canvas></div>
-        </article>
+      <section class="page" id="page-dtrader" data-chart="tv">
+        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> ADVANCED CHARTING</div><h1>Trading <span>View.</span></h1><p>TradingView charts with indicators and drawing tools: Deriv Volatility indices, forex, stocks and crypto.</p></div><span class="demo-pill"><span class="status-dot"></span> LIVE CHARTS</span></div>
         <article class="panel tradingview-panel">
           <div class="panel-heading"><div><div class="panel-overline">TRADINGVIEW ADVANCED CHART</div><h2>Market analysis workspace</h2></div><span class="template-tag">INDICATORS · DRAWING TOOLS</span></div>
-          <div class="tradingview-note"><strong>TradingView is best for forex, stocks and crypto.</strong> Deriv synthetic indices usually are not available there, so use the <b>Deriv Markets</b> tab for Volatility and Jump indices. This chart does not place trades.</div>
-          <div class="tradingview-widget-frame">
+          <div class="tv-tabs" role="tablist"><button type="button" class="tv-tab active" data-tv="deriv">Deriv Volatility &amp; Derived</button><button type="button" class="tv-tab" data-tv="general">Forex · Stocks · Crypto</button></div>
+          <div class="tradingview-note"><strong>Deriv chart:</strong> TradingView charts with Deriv's Derived markets (Volatility 10–100, 1s indices, Crash/Boom and more). Tap the search box on the chart, then the <b>Derived</b> tab. This chart does not place trades. <a id="tvDerivOpen" href="https://charts.deriv.com/deriv" target="_blank" rel="noopener noreferrer">Not loading? Open it in a new tab ↗</a></div>
+          <div class="tradingview-widget-frame" id="tvDerivFrame"><iframe id="tvDerivIframe" title="Deriv TradingView chart" data-src="https://charts.deriv.com/deriv" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:100%;border:0;background:#0b0e14"></iframe></div>
+          <div class="tradingview-widget-frame" id="tvGeneralFrame" hidden>
             <div class="tradingview-widget-container" style="height:100%;width:100%">
               <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
               <div class="tradingview-attribution"><a href="https://www.tradingview.com/" rel="noopener noreferrer" target="_blank"><span>Charts powered by TradingView</span></a></div>
@@ -377,7 +368,7 @@
           <div class="sb-row">
             <div class="sb-f"><label for="speedBotRecMult">Martingale ×</label><input id="speedBotRecMult" class="regular-input" type="number" min="1" max="5" step="0.1" value="1.8"></div>
             <div class="sb-f sb-sw"><label for="speedBotMartingale">Martingale on</label><label class="sb-switch"><input id="speedBotMartingale" type="checkbox" checked><span></span></label></div>
-            <div class="sb-f sb-sw"><label for="speedBotContinuous">Repeat trades</label><label class="sb-switch"><input id="speedBotContinuous" type="checkbox" checked><span></span></label></div>
+            <div class="sb-f sb-sw"><label for="speedBotContinuous">Repeat after TP / SL</label><label class="sb-switch"><input id="speedBotContinuous" type="checkbox"><span></span></label></div>
           </div>
           <div class="sb-row sb-recrow">
             <div class="sb-f sb-sw"><label for="speedBotRecovery">Recovery</label><label class="sb-switch"><input id="speedBotRecovery" type="checkbox"><span></span></label></div>
@@ -521,7 +512,7 @@
               <div><b>Bot Builder</b><span>A Deriv-style block canvas with a Run panel, load, save and a Fast/Slow Run bar.</span><button class="subtle-link" data-page="botbuilder">Open ↗</button></div>
               <div><b>Free Bots</b><span>Ready-made bots in My Bots and ITC AI Bots, plus the <em>ITC Bot Forge</em> to build your own by typing or speaking.</span><button class="subtle-link" data-page="freebots">Open ↗</button></div>
               <div><b>Analysis Tool</b><span>Live digit circles for 13 Volatility and 5 Jump indices. Your market, contract and digit are copied into your bot.</span><button class="subtle-link" data-page="signals">Open ↗</button></div>
-              <div><b>Charts</b><span>Live Deriv charts with ticks and candles, or TradingView for other markets.</span><button class="subtle-link" data-page="dtrader">Open ↗</button></div>
+              <div><b>Trading View</b><span>TradingView advanced charts for forex, stocks and crypto.</span><button class="subtle-link" data-page="dtrader">Open ↗</button></div>
               <div><b>Bulk Trader and Deriv Trader</b><span>Live statistics and instant trades on your selected account.</span><button class="subtle-link" data-page="bulktrader">Open ↗</button></div>
               <div><b>Install the app</b><span>Add ITC to your home screen for a full-screen app.</span><button class="subtle-link" id="installFromSettings" type="button">Install ↗</button></div>
             </div>
@@ -571,7 +562,7 @@
           <article class="panel help-card"><div class="help-card-icon purple-bg">⠿</div><h2>Bot Builder</h2><p>Load a bot, change its blocks, set your stake, take profit, stop loss, martingale and number of runs, then press Run. Runs trade live on your selected account. Use the 💾 button to keep your bot in My Bots.</p><button class="subtle-link" data-page="botbuilder">Open Bot Builder ↗</button></article>
           <article class="panel help-card"><div class="help-card-icon blue-bg">⚒</div><h2>Bot Forge</h2><p>Describe the bot you want, typed or spoken, for example “Over 1 with recovery Over 3”. The Forge builds the blocks, then you can test it, change it or save it. The badge shows Online AI or Basic mode.</p><button class="subtle-link" data-page="freebots">Open Free Bots ↗</button></article>
           <article class="panel help-card"><div class="help-card-icon purple-bg">◎</div><h2>Analysis Tool</h2><p>Watch live digit statistics. The green digit appears most, blue second most, red least and orange second least. Pick Over/Under, Even/Odd or Matches/Differs and a side, and your bot follows.</p><button class="subtle-link" data-page="signals">Open Analysis Tool ↗</button></article>
-          <article class="panel help-card"><div class="help-card-icon blue-bg">⌁</div><h2>Charts</h2><p>Live Volatility and Jump charts with ticks or candles. TradingView is there for forex, stocks and crypto. No orders are placed.</p><button class="subtle-link" data-page="dtrader">Open Charts ↗</button></article>
+          <article class="panel help-card"><div class="help-card-icon blue-bg">⌁</div><h2>Trading View</h2><p>TradingView advanced charts for forex, stocks and crypto, with indicators and drawing tools. No orders are placed.</p><button class="subtle-link" data-page="dtrader">Open Charts ↗</button></article>
           <article class="panel help-card"><div class="help-card-icon purple-bg">▤</div><h2>Bulk Trader and Deriv Trader</h2><p>Live digit pies, last results and chances for the trade you set. Trades are placed on your selected account.</p><button class="subtle-link" data-page="bulktrader">Open Bulk Trader ↗</button></article>
           <article class="panel help-card"><div class="help-card-icon blue-bg">⚙</div><h2>Account and safety</h2><p>Log in with Deriv from Settings. Your password never reaches this site. Always test a bot with small stakes first, and never trade money you cannot afford to lose.</p><button class="subtle-link" data-page="settings">Open Settings ↗</button></article>
         </div>
@@ -647,10 +638,10 @@
   <div class="modal-backdrop hidden" id="modalBackdrop"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Close dialog">×</button><div class="eyebrow"><span class="eyebrow-line"></span> IMPERIUM TRADERS CLUB</div><h2 id="modalTitle">Workspace notice</h2><p id="modalBody">Trades placed here are real contracts on your selected Deriv account (Demo or Real).</p><button class="button primary" id="modalOk">Understood</button></div></div>
   <script src="config.js?v=9.0"></script>
   <script src="market-live.js?v=9.5"></script>
-  <script src="charts-live.js?v=8.8"></script>
+  <script src="charts-live.js?v=8.9"></script>
   <script src="https://unpkg.com/blockly@12.3.1/blockly.min.js"></script>
   <script src="bots-data.js?v=91"></script>
-  <script src="app.js?v=9.51"></script>
+  <script src="app.js?v=9.53"></script>
   <script src="deriv-account.js?v=9.16"></script>
   <script src="account-display.js?v=7.8"></script>
   <script src="real-trading.js?v=9.42"></script>
@@ -659,10 +650,10 @@
   <script src="market-hunter.js?v=9.52"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=4"></script>
-  <script src="circle-ai.js?v=9.50"></script>
+  <script src="circle-ai.js?v=9.10"></script>
   <script src="install-app.js?v=5"></script>
   <script src="signal-alerts.js"></script>
-  <script src="speedbot.js?v=9.42"></script>
+  <script src="speedbot.js?v=9.9"></script>
   <script src="quick-strategy.js?v=9.22"></script>
   <script src="run-panel.js?v=9.25"></script>
   <script src="social-links.js?v=4"></script>
@@ -671,10 +662,11 @@
   <script src="admin-gate.js"></script>
   <script src="auto-signals.js?v=9.2"></script>
   <script src="signal-link.js?v=3"></script>
-  <script src="bots-library.js?v=9.1"></script>
-  <script src="bot-maker.js?v=9.2"></script>
+  <script src="bots-library.js?v=9.2"></script>
+  <script src="bot-maker.js?v=9.3"></script>
   <script src="deriv-trader.js"></script>
   <script src="settings-page.js"></script>
+  <script src="theme.js?v=1"></script>
   <script src="live-feed.js?v=8.9"></script>
   <script src="trader-ui.js?v=9.19"></script>
   <script src="dbot-template.js"></script>

@@ -1099,3 +1099,38 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 .mh-risk.two{grid-template-columns:repeat(2,1fr)}
 .mh-tpsl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 8px}
 .mh-tpsl .mh-label{display:block;margin-bottom:4px}
+
+
+/* ITC Bot Forge: launch tile + focused overlay workspace */
+.forge-launch{width:100%;display:flex;align-items:center;gap:16px;text-align:left;margin:18px 0 4px;padding:18px;border:1px solid #8b7135;border-radius:18px;background:radial-gradient(100% 140% at 0% 0%,#6b4c1680,transparent 58%),linear-gradient(115deg,#17130a,#090b0b 72%);color:#fff;cursor:pointer;box-shadow:0 14px 36px -24px #e8bd4e;transition:transform .2s,border-color .2s,box-shadow .2s}
+.forge-launch:hover,.forge-launch:focus-visible{transform:translateY(-2px);border-color:#f5d77e;box-shadow:0 18px 40px -22px #d8a82d;outline:none}
+.forge-launch-mark{position:relative;flex:none;display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:linear-gradient(145deg,#f5d77e,#a87920);color:#171108;font-size:29px;box-shadow:0 8px 24px #c99b3038}
+.forge-launch-mark i{position:absolute;right:-5px;top:-6px;font-size:17px;color:#fff4bf;font-style:normal;text-shadow:0 2px 8px #000}
+.forge-launch-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.forge-launch-copy strong{font-size:17px;letter-spacing:.02em;color:#f8df9b}
+.forge-launch-copy small{font-size:12px;line-height:1.45;color:#c6c0b2}
+.forge-launch-copy em{font-size:10px;font-style:normal;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#e9bd59;margin-top:4px}
+.forge-launch-arrow{font-size:25px;color:#f2d17c}
+.forge-modal{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#020405df;backdrop-filter:blur(9px);overflow-y:auto}
+.forge-modal.hidden{display:none!important}
+.forge-modal:not(.hidden){display:flex}
+.forge-modal .forge{width:min(860px,100%);max-height:calc(100dvh - 36px);overflow-y:auto;margin:0;padding:22px;border-color:#8b7135;background:radial-gradient(110% 70% at 0% 0%,#47340f80,transparent 60%),linear-gradient(180deg,#11120f,#070908);box-shadow:0 28px 90px #000c}
+.forge-modal .forge-head{align-items:center}
+.forge-modal .forge-head h3{color:#f4d47d}
+.forge-modal .forge-icon{background:linear-gradient(135deg,#f5d77e,#a87920);color:#1b1609;box-shadow:0 10px 24px -10px #e3b94d}
+.forge-close{flex:none;width:38px;height:38px;border:1px solid #63532c;border-radius:11px;background:#17150e;color:#f4d47d;font-size:25px;cursor:pointer}
+.forge-close:hover{background:#34280e;border-color:#e6c46b}
+.forge-modal .forge-chips button{border-color:#69562c;background:#17150e;color:#f4e4b8}
+.forge-modal .forge-chips button:hover{border-color:#e2bf62;background:#29210f}
+.forge-modal .forge-input textarea{border-color:#74602e;background:#080a09}
+.forge-modal .forge-send{background:linear-gradient(135deg,#f1d27a,#b98224);color:#171108}
+.forge-modal .forge-mic{border-color:#74602e;background:#1b190f;color:#f5d77e}
+@media(max-width:600px){.forge-launch{padding:14px;gap:12px}.forge-launch-mark{width:50px;height:50px;font-size:25px}.forge-launch-copy strong{font-size:15px}.forge-launch-copy small{font-size:11px}.forge-modal{padding:8px;align-items:flex-start}.forge-modal .forge{max-height:calc(100dvh - 16px);padding:15px;border-radius:15px}.forge-modal .forge-head{gap:9px}.forge-modal .forge-head h3{font-size:17px}.forge-modal .forge-head p{font-size:11px}.forge-modal .forge-input{flex-wrap:wrap}.forge-modal .forge-input textarea{min-width:0}.forge-modal .forge-send{padding:0 14px}}
+
+/* ITC SpeedBot: no bordered card around the controls. The page uses the whole screen, edge to edge. */
+#page-speedbot.active{max-width:none!important;padding:10px 14px 22px!important;min-height:calc(100dvh - 140px)}
+#page-speedbot.active .sb-sheet{max-width:none!important;width:100%!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:4px 2px 12px!important}
+#page-speedbot .sb-title{margin:2px 0 12px!important}
+#page-speedbot .sb-f select,#page-speedbot .sb-f input[type=number],#page-speedbot .sb-row1 select{min-height:46px}
+#page-speedbot .sb-sheet .speedbot-log,#page-speedbot .speedbot-log{max-height:none!important;min-height:140px}
+@media(min-width:900px){#page-speedbot.active{padding:14px 28px 24px!important}#page-speedbot.active .sb-sheet{column-gap:36px!important}#page-speedbot .sb-sheet .speedbot-log,#page-speedbot .speedbot-log{min-height:220px;max-height:calc(100dvh - 520px)!important}}

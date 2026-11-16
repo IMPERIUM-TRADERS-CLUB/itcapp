@@ -84,7 +84,10 @@
     setTimeout(() => window.dispatchEvent(new Event('itc:page-shown')), 0);
     if (page === 'botbuilder') { setTimeout(() => { if (typeof fitDbot === 'function') fitDbot(); }, 120); setTimeout(() => { if (typeof fitDbot === 'function') fitDbot(); }, 500); }
     if (page === 'dashboard') drawCanvas($('#marketChart'), currentMarket, currentTf);
-    if (page === 'dtrader') { /* TradingView's embedded chart loads from its own widget script. */ }
+    if (page === 'dtrader') {
+      const f = $('#tvDerivIframe');
+      if (f && !f.getAttribute('src') && $('#tvDerivFrame') && !$('#tvDerivFrame').hidden) f.setAttribute('src', f.dataset.src);
+    }
     if (page === 'manualtrader') drawCanvas($('#manualChart'), currentMarket, '1m');
   }
 
@@ -453,6 +456,7 @@
   }
 
   function applyBotFilters() {
+    if (!$('#botsGrid')) return;   // the template catalogue was removed from Free Bots
     const query = ($('#botSearch').value || '').trim().toLowerCase();
     let shown = 0;
     $$('.bot-card[data-kind]').forEach(card => {
@@ -651,7 +655,7 @@
   pickerBackdrop.addEventListener('click', e => { if (e.target === pickerBackdrop) closePicker(); });
   $('#botPickerList').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (!b) return; closePicker(); loadImportedBot(b.dataset.pick, true); });
   $('#clearLog').addEventListener('click', () => { $('#logContent').innerHTML = '<div class="log-empty">Simulation log cleared.</div>'; showToast('Run log cleared.'); });
-  $('#botSearch').addEventListener('input', applyBotFilters);
+  $('#botSearch')?.addEventListener('input', applyBotFilters);
   $$('.chip[data-filter]').forEach(chip => chip.addEventListener('click', () => {
     activeFilter = chip.dataset.filter;
     $$('.chip[data-filter]').forEach(c => c.classList.toggle('selected', c === chip));
@@ -744,44 +748,64 @@
   }
   function setArrangeMode(enabled) {
     arrangingTabs = enabled;
-    arrangeButton.setAttribute('aria-pressed', String(enabled));
+    arrangeButton.setAttribute('aria-pressed', String(enabled)); switcher.classList.toggle('arranging', enabled); if (!enabled) endDrag(false);
     arrangeButton.textContent = enabled ? '✓' : '☷';
     arrangeButton.title = enabled ? 'Finish arranging tabs' : 'Customize tab order';
     arrangeButton.setAttribute('aria-label', arrangeButton.title);
     $$('.workspace-switch', switcher).forEach(tab => {
-      tab.draggable = enabled;
       tab.title = enabled ? 'Drag this tab to a new position' : 'Open ' + tab.textContent.trim();
     });
-    if (enabled) showToast('Drag the tabs left or right, then tap Done arranging.');
+    if (enabled) showToast('Hold a tab and drag it left or right, then tap ✓ when done.');
   }
   restoreWorkspacePreferences();
   arrangeButton.addEventListener('click', () => setArrangeMode(!arrangingTabs));
-  let draggedWorkspaceTab = null;
-  $$('.workspace-switch', switcher).forEach(tab => {
-    tab.addEventListener('dragstart', event => {
-      if (!arrangingTabs) { event.preventDefault(); return; }
-      draggedWorkspaceTab = tab;
-      tab.classList.add('dragging');
-      if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', tab.dataset.page); }
-    });
-    tab.addEventListener('dragover', event => {
-      if (!arrangingTabs || !draggedWorkspaceTab || draggedWorkspaceTab === tab) return;
-      event.preventDefault(); tab.classList.add('drop-target');
-    });
-    tab.addEventListener('dragleave', () => tab.classList.remove('drop-target'));
-    tab.addEventListener('drop', event => {
-      if (!arrangingTabs || !draggedWorkspaceTab || draggedWorkspaceTab === tab) return;
-      event.preventDefault();
-      const bounds = tab.getBoundingClientRect();
-      switcher.insertBefore(draggedWorkspaceTab, event.clientX < bounds.left + bounds.width / 2 ? tab : tab.nextSibling);
-      tab.classList.remove('drop-target');
-      try { localStorage.setItem('imperium.workspace.order.v3', JSON.stringify($$('.workspace-switch', switcher).map(item => item.dataset.page))); } catch (_) {}
-      showToast('Tab order saved on this device.');
-    });
-    tab.addEventListener('dragend', () => {
-      tab.classList.remove('dragging'); $$('.workspace-switch', switcher).forEach(item => item.classList.remove('drop-target'));
-      draggedWorkspaceTab = null;
-    });
+  // Arranging works with finger or mouse (pointer events). While a tab is held it never scrolls the bar by itself:
+  // the bar only moves, slowly and steadily, when the held tab is near its left or right edge.
+  const saveWorkspaceOrder = () => { try { localStorage.setItem('imperium.workspace.order.v3', JSON.stringify($$('.workspace-switch', switcher).map(item => item.dataset.page))); } catch (_) {} };
+  const tabsNow = () => $$('.workspace-switch', switcher);
+  let drag = null;
+  function moveHeldTab(x) {   // swap the held tab with a neighbour once the pointer passes that neighbour's middle
+    const held = drag.tab, list = tabsNow(), at = list.indexOf(held);
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i]; if (t === held) continue;
+      const r = t.getBoundingClientRect(), mid = r.left + r.width / 2;
+      if (i > at && x > mid && x < r.right) { switcher.insertBefore(held, t.nextSibling); drag.moved = true; break; }
+      if (i < at && x < mid && x > r.left) { switcher.insertBefore(held, t); drag.moved = true; break; }
+    }
+  }
+  function autoScroll() {
+    if (!drag) return;
+    const r = switcher.getBoundingClientRect(), zone = 56, x = drag.x;
+    let v = 0; if (x < r.left + zone) v = -Math.ceil((r.left + zone - x) / zone * 5); else if (x > r.right - zone) v = Math.ceil((x - (r.right - zone)) / zone * 5);   // at most 5px a frame
+    if (v) { switcher.scrollLeft += v; moveHeldTab(x); }
+    drag.raf = requestAnimationFrame(autoScroll);
+  }
+  function endDrag(save) {
+    if (!drag) return; cancelAnimationFrame(drag.raf);
+    drag.tab.classList.remove('dragging'); switcher.classList.remove('is-dragging');
+    try { drag.tab.releasePointerCapture(drag.id); } catch (_) {}
+    const moved = drag.moved; drag = null;
+    if (save && moved) { saveWorkspaceOrder(); showToast('Tab order saved on this device.'); }
+  }
+  switcher.addEventListener('pointerdown', event => {
+    if (!arrangingTabs || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    const tab = event.target.closest('.workspace-switch'); if (!tab) return;
+    event.preventDefault();
+    drag = { tab, id: event.pointerId, x: event.clientX, moved: false, raf: 0 };
+    try { tab.setPointerCapture(event.pointerId); } catch (_) {}
+    tab.classList.add('dragging'); switcher.classList.add('is-dragging');
+    drag.raf = requestAnimationFrame(autoScroll);
+  });
+  switcher.addEventListener('pointermove', event => { if (!drag || event.pointerId !== drag.id) return; event.preventDefault(); drag.x = event.clientX; moveHeldTab(drag.x); });
+  switcher.addEventListener('pointerup', event => { if (drag && event.pointerId === drag.id) endDrag(true); });
+  switcher.addEventListener('pointercancel', () => endDrag(true));
+  switcher.addEventListener('click', event => { if (arrangingTabs && event.target.closest('.workspace-switch')) { event.preventDefault(); event.stopPropagation(); } }, true);   // while arranging, tapping a tab must not open it
+  switcher.addEventListener('keydown', event => {   // keyboard: arrow keys move the focused tab while arranging
+    if (!arrangingTabs || !/^Arrow(Left|Right)$/.test(event.key)) return;
+    const tab = event.target.closest('.workspace-switch'); if (!tab) return; event.preventDefault();
+    const sib = event.key === 'ArrowLeft' ? tab.previousElementSibling : tab.nextElementSibling;
+    if (!sib || !sib.classList.contains('workspace-switch')) return;
+    switcher.insertBefore(tab, event.key === 'ArrowLeft' ? sib : sib.nextSibling); tab.focus(); saveWorkspaceOrder();
   });
 
   // Initialize demo-only widgets.
@@ -800,10 +824,6 @@
       $$('.mybots-tab').forEach(button => { const active = button === tab; button.classList.toggle('active', active); button.setAttribute('aria-selected', String(active)); });
       $('#myBotsContent')?.classList.toggle('hidden', !mine);
       $('#aiBotsContent')?.classList.toggle('hidden', mine);
-      // Keep the personal library and free/AI template catalogue as distinct views on Free Bots.
-      $('#botsGrid')?.classList.toggle('hidden', mine);
-      $('.filter-row')?.classList.toggle('hidden', mine);
-      $('#emptyBots')?.classList.add('hidden');
       return;
     }
     const load = event.target.closest('[data-load-personal-bot]');
@@ -1079,3 +1099,14 @@
   window.addEventListener('resize', apply);
   window.ITC_RUNBOARD = { open(t) { if (t) { tab = t; board.querySelectorAll('.run-board-tabs button').forEach(x => x.classList.toggle('active', x.dataset.t === tab)); } want = true; apply(); }, close() { want = false; apply(); }, sync(show) { onPage = Boolean(show); apply(); } };
 })();
+
+// Trading View page: switch between Deriv's chart (Derived/Volatility indices) and the general TradingView widget.
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest?.('.tv-tab'); if (!tab) return;
+  const deriv = tab.dataset.tv === 'deriv';
+  document.querySelectorAll('.tv-tab').forEach(t => t.classList.toggle('active', t === tab));
+  const d = document.getElementById('tvDerivFrame'), g = document.getElementById('tvGeneralFrame'), n = document.querySelector('#page-dtrader .tradingview-note');
+  if (d) d.hidden = !deriv; if (g) g.hidden = deriv;
+  if (n) n.style.display = deriv ? '' : 'none';
+  const f = document.getElementById('tvDerivIframe'); if (deriv && f && !f.getAttribute('src')) f.setAttribute('src', f.dataset.src);
+});

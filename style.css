@@ -722,3 +722,12 @@ body.itc-account-authorized .overview-account{display:inline-flex!important}
 .overview-hero .overview-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .overview-account{margin:22px auto 0!important}
 .overview-hero .overview-disclaimer{margin-top:auto!important;padding-top:26px}
+
+/* Arranging the workspace tabs: a held tab never scrolls the bar; only its edge auto-scroll (slow) does */
+.workspace-switcher.arranging .workspace-switch{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;-webkit-touch-callout:none;animation:tabwiggle .9s ease-in-out infinite}
+.workspace-switcher.arranging .workspace-switch.dragging{cursor:grabbing;animation:none;opacity:1;transform:scale(1.06);box-shadow:0 6px 18px #000a;z-index:2;position:relative}
+.workspace-switcher.is-dragging{scroll-behavior:auto;overscroll-behavior-x:none}
+@keyframes tabwiggle{0%,100%{transform:rotate(-.8deg)}50%{transform:rotate(.8deg)}}
+@media(prefers-reduced-motion:reduce){.workspace-switcher.arranging .workspace-switch{animation:none}}
+
+.tv-tabs{display:flex;gap:8px;margin:14px 0 0;flex-wrap:wrap}.tv-tab{padding:9px 14px;border:1px solid #2b3342;border-radius:9px;background:#10141d;color:#a9b1c1;font-size:12px;cursor:pointer}.tv-tab.active{border-color:#e6c77b;color:#e6c77b;background:#1a1710}.tradingview-note a{color:#e6c77b;text-decoration:underline}.tradingview-widget-frame[hidden]{display:none}

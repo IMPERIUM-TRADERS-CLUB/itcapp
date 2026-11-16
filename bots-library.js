@@ -29,11 +29,10 @@
       + '<div class="itc-bot-progress" aria-hidden="true"><i></i></div></article>';
   }
   const compact = (bot, id) => '<button type="button" class="picker-item itc-pick" data-pick="' + esc(id) + '"><span class="itc-bot-icon" aria-hidden="true">' + esc(bot.icon || '🤖') + '</span><span><strong>' + esc(bot.name) + '</strong><small>' + esc(bot.market) + ' · ' + esc(bot.contract) + '</small></span></button>';
-  const aiCard = '<button type="button" class="itc-bot itc-add" data-open-ai style="--a1:#a78bfa;--a2:#ec4899"><span class="itc-add-plus">🤖</span><strong>Create a bot with AI</strong><small>Tell the AI what you want. It builds the whole bot for you.</small></button>';
 
   function render() {
     const mine = library.filter(b => b.section !== 'ai').concat(custom), ai = library.filter(b => b.section === 'ai');
-    grid.innerHTML = mine.map((b, i) => card(b, i)).join('') + aiCard;
+    grid.innerHTML = mine.map((b, i) => card(b, i)).join('');
     const aiGrid = document.getElementById('aiBotGrid'); if (aiGrid) aiGrid.innerHTML = ai.map((b, i) => card(b, i)).join('');
     const c1 = document.querySelector('[data-mybots-tab="mine"] span'); if (c1) c1.textContent = String(mine.length);
     const c2 = document.querySelector('[data-mybots-tab="ai"] span'); if (c2) c2.textContent = String(ai.length);
