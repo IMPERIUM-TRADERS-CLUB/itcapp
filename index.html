@@ -48,7 +48,7 @@
         <span class="brand-mark" aria-hidden="true"><span>I</span></span>
         <span class="brand-copy"><strong>IMPERIUM</strong><small>TRADERS CLUB</small></span>
       </a>
-      <div class="workspace-label">WORKSPACE</div>
+      <div class="workspace-label workspace-label-row"><span>WORKSPACE</span><button type="button" class="community-quick" id="communityQuick" aria-label="Our social links" title="Our social links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></button></div>
       <nav class="nav" aria-label="Main navigation">
         <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span> Dashboard</button>
         <button class="nav-link" data-page="botbuilder"><span class="nav-icon">⠿</span> Bot Builder</button>
@@ -307,46 +307,9 @@
         </section>
       </section>
 
-      <section class="page" id="page-dtrader" data-chart="tv">
-        <div class="page-heading heading-row"><div><div class="eyebrow"><span class="eyebrow-line"></span> ADVANCED CHARTING</div><h1>Trading <span>View.</span></h1><p>TradingView charts with indicators and drawing tools: Deriv Volatility indices, forex, stocks and crypto.</p></div><span class="demo-pill"><span class="status-dot"></span> LIVE CHARTS</span></div>
-        <article class="panel tradingview-panel">
-          <div class="panel-heading"><div><div class="panel-overline">TRADINGVIEW ADVANCED CHART</div><h2>Market analysis workspace</h2></div><span class="template-tag">INDICATORS · DRAWING TOOLS</span></div>
-          <div class="tv-tabs" role="tablist"><button type="button" class="tv-tab active" data-tv="deriv">Deriv Volatility &amp; Derived</button><button type="button" class="tv-tab" data-tv="general">Forex · Stocks · Crypto</button></div>
-          <div class="tradingview-note"><strong>Deriv chart:</strong> TradingView charts with Deriv's Derived markets (Volatility 10–100, 1s indices, Crash/Boom and more). Tap the search box on the chart, then the <b>Derived</b> tab. This chart does not place trades. <a id="tvDerivOpen" href="https://charts.deriv.com/deriv" target="_blank" rel="noopener noreferrer">Not loading? Open it in a new tab ↗</a></div>
-          <div class="tradingview-widget-frame" id="tvDerivFrame"><iframe id="tvDerivIframe" title="Deriv TradingView chart" data-src="https://charts.deriv.com/deriv" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:100%;border:0;background:#0b0e14"></iframe></div>
-          <div class="tradingview-widget-frame" id="tvGeneralFrame" hidden>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-              <div class="tradingview-attribution"><a href="https://www.tradingview.com/" rel="noopener noreferrer" target="_blank"><span>Charts powered by TradingView</span></a></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-              {
-                "autosize": true,
-                "symbol": "FX:EURUSD",
-                "interval": "5",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "allow_symbol_change": true,
-                "calendar": false,
-                "support_host": "https://www.tradingview.com",
-                "details": true,
-                "hotlist": false,
-                "withdateranges": true,
-                "hide_side_toolbar": false,
-                "hide_top_toolbar": false,
-                "save_image": true,
-                "watchlist": [],
-                "studies": ["STD;EMA", "STD;RSI", "STD;MACD"],
-                "show_popup_button": true,
-                "popup_width": "1000",
-                "popup_height": "650"
-              }
-              </script>
-            </div>
-          </div>
-          <div class="tradingview-footnote">TradingView is a third-party service and requires an internet connection. Available symbols, indicators and features depend on TradingView’s data and embed capabilities. The embed does not execute Deriv trades.</div>
-        </article>
+      <section class="page tv-fullpage" id="page-dtrader" data-chart="tv">
+        <button type="button" class="tv-menu-btn" id="tvMenuBtn" aria-label="Open menu">☰</button>
+        <div class="tradingview-widget-frame tv-full" id="tvDerivFrame"><iframe id="tvDerivIframe" title="Deriv TradingView chart" data-src="https://charts.deriv.com/deriv" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
       </section>
 
       <section class="page" id="page-speedbot">

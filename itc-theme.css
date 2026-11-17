@@ -1134,3 +1134,12 @@ body.has-dock .circle-ai-launcher{bottom:86px!important;right:12px!important}
 #page-speedbot .sb-f select,#page-speedbot .sb-f input[type=number],#page-speedbot .sb-row1 select{min-height:46px}
 #page-speedbot .sb-sheet .speedbot-log,#page-speedbot .speedbot-log{max-height:none!important;min-height:140px}
 @media(min-width:900px){#page-speedbot.active{padding:14px 28px 24px!important}#page-speedbot.active .sb-sheet{column-gap:36px!important}#page-speedbot .sb-sheet .speedbot-log,#page-speedbot .speedbot-log{min-height:220px;max-height:calc(100dvh - 520px)!important}}
+
+/* Trading View: chart fills everything under the top bar + swipe tabs */
+body.on-tv .circle-ai-launcher{display:none!important}
+body.on-tv .tv-menu-btn{display:none!important}
+body.on-tv #page-dtrader.tv-fullpage{padding:0!important;margin:0!important;max-width:none!important;width:100%}
+body.on-tv #page-dtrader .tv-full{margin:0!important;border:0!important;border-radius:0!important;width:100%;min-height:0!important;height:calc(100vh - 92px)!important;height:calc(100dvh - 92px)!important;background:#fff}
+body.on-tv #page-dtrader .tv-full iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+@media(max-width:700px){body.on-tv #page-dtrader .tv-full{height:calc(100vh - 127px)!important;height:calc(100dvh - 127px)!important}}
+body.on-tv .main-area{padding-bottom:0!important}

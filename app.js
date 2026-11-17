@@ -81,6 +81,7 @@
     document.body.classList.toggle('on-builder', page === 'botbuilder');
     document.body.classList.toggle('on-bulk', page === 'bulktrader');
     document.body.classList.toggle('on-manual', page === 'manualtrader');
+    document.body.classList.toggle('on-tv', page === 'dtrader');
     setTimeout(() => window.dispatchEvent(new Event('itc:page-shown')), 0);
     if (page === 'botbuilder') { setTimeout(() => { if (typeof fitDbot === 'function') fitDbot(); }, 120); setTimeout(() => { if (typeof fitDbot === 'function') fitDbot(); }, 500); }
     if (page === 'dashboard') drawCanvas($('#marketChart'), currentMarket, currentTf);
@@ -1100,13 +1101,27 @@
   window.ITC_RUNBOARD = { open(t) { if (t) { tab = t; board.querySelectorAll('.run-board-tabs button').forEach(x => x.classList.toggle('active', x.dataset.t === tab)); } want = true; apply(); }, close() { want = false; apply(); }, sync(show) { onPage = Boolean(show); apply(); } };
 })();
 
-// Trading View page: switch between Deriv's chart (Derived/Volatility indices) and the general TradingView widget.
+// Small call-log style icon next to WORKSPACE: opens the social links list in the side menu.
 document.addEventListener('click', (e) => {
-  const tab = e.target.closest?.('.tv-tab'); if (!tab) return;
-  const deriv = tab.dataset.tv === 'deriv';
-  document.querySelectorAll('.tv-tab').forEach(t => t.classList.toggle('active', t === tab));
-  const d = document.getElementById('tvDerivFrame'), g = document.getElementById('tvGeneralFrame'), n = document.querySelector('#page-dtrader .tradingview-note');
-  if (d) d.hidden = !deriv; if (g) g.hidden = deriv;
-  if (n) n.style.display = deriv ? '' : 'none';
-  const f = document.getElementById('tvDerivIframe'); if (deriv && f && !f.getAttribute('src')) f.setAttribute('src', f.dataset.src);
+  if (!e.target.closest?.('#communityQuick')) return;
+  const toggle = document.getElementById('socialToggle'), list = document.getElementById('socialList'), menu = document.getElementById('socialMenu');
+  if (!toggle || !list || !menu || menu.hidden) return;
+  if (list.hidden) toggle.click();
+  setTimeout(() => menu.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
 });
+
+document.addEventListener('click', (e) => { if (e.target.closest?.('#tvMenuBtn')) document.getElementById('menuToggle')?.click(); });
+
+// Trading View: size the chart to exactly the space under the top bar and swipe tabs.
+(function () {
+  function fitTv() {
+    const f = document.getElementById('tvDerivFrame'); if (!f) return;
+    if (!document.body.classList.contains('on-tv')) { f.style.removeProperty('height'); return; }
+    const top = (document.querySelector('.topbar')?.offsetHeight || 0) + (document.querySelector('.workspace-switcher')?.offsetHeight || 0);
+    const dock = document.body.classList.contains('has-dock') ? (document.getElementById('botDock')?.offsetHeight || 0) : 0;
+    f.style.setProperty('height', Math.max(300, window.innerHeight - top - dock) + 'px', 'important');
+  }
+  window.addEventListener('resize', fitTv); window.addEventListener('orientationchange', () => setTimeout(fitTv, 200));
+  window.addEventListener('itc:page-shown', () => setTimeout(fitTv, 30));
+  setTimeout(fitTv, 300);
+})();
