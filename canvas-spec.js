@@ -3,7 +3,21 @@
   'use strict';
   const SIDE = { DIGITOVER: 'OVER', DIGITUNDER: 'UNDER', DIGITEVEN: 'EVEN', DIGITODD: 'ODD', DIGITMATCH: 'MATCH', DIGITDIFF: 'DIFFER', CALL: 'RISE', PUT: 'FALL' };
   const KIND = { overunder: 'overunder', evenodd: 'evenodd', matchesdiffers: 'matchesdiffers', risefall: 'risefall', callput: 'risefall' };
-  const num = (block, input) => { try { const t = block && block.getInput(input) && block.getInput(input).connection && block.getInput(input).connection.targetBlock(); if (!t) return NaN; const v = t.getFieldValue('NUM'); return v === null || v === undefined ? NaN : Number(v); } catch (_) { return NaN; } };
+  const targetOf = (block, input) => { try { const i = block && block.getInput(input); return i && i.connection && i.connection.targetBlock(); } catch (_) { return null; } };
+  const varName = b => { try { const f = b.getField('VAR'); return f ? String(f.getText()).trim() : ''; } catch (_) { return ''; } };
+  // A value block is either a plain number or a variable (e.g. Stake -> Initial Stake -> 1): follow variables back to the number you typed.
+  const valueOf = (t, blocks, depth) => {
+    if (!t || depth > 5) return NaN;
+    if (t.type === 'variables_get') {
+      const name = varName(t), setters = blocks.filter(b => b.type === 'variables_set' && varName(b) === name);
+      setters.sort((a, b) => (b.getRootBlock().type === 'trade_definition') - (a.getRootBlock().type === 'trade_definition'));
+      for (const s of setters) { const v = valueOf(targetOf(s, 'VALUE'), blocks, depth + 1); if (Number.isFinite(v)) return v; }
+      return NaN;
+    }
+    try { const v = t.getFieldValue('NUM'); return v === null || v === undefined ? NaN : Number(v); } catch (_) { return NaN; }
+  };
+  const num = (block, input, blocks) => valueOf(targetOf(block, input), blocks || [], 0);
+  const namedVar = (blocks, name) => { const s = blocks.filter(b => b.type === 'variables_set' && varName(b).toLowerCase() === name).sort((a, b) => (b.getRootBlock().type === 'trade_definition') - (a.getRootBlock().type === 'trade_definition')); for (const b of s) { const v = valueOf(targetOf(b, 'VALUE'), blocks, 0); if (Number.isFinite(v)) return v; } return NaN; };
   function canvasSpec() {
     const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace();
     if (!ws) return { error: 'The block canvas is not ready yet.' };
@@ -15,9 +29,12 @@
     let code = pu && pu.getFieldValue('PURCHASE_LIST'); if (!code || code === 'both') code = ct && ct.getFieldValue('TYPE_LIST');
     if (!code || String(code).toLowerCase() === 'both') code = kind === 'risefall' ? 'CALL' : kind === 'evenodd' ? 'DIGITEVEN' : kind === 'overunder' ? 'DIGITOVER' : 'DIGITDIFF';
     const side = SIDE[code]; if (!side) return { error: 'Choose a contract type in the Purchase conditions block.' };
-    const stake = num(op, 'AMOUNT'), pred = num(op, 'PREDICTION'), dur = num(op, 'DURATION');
+    const stake = num(op, 'AMOUNT', blocks), pred = num(op, 'PREDICTION', blocks), dur = num(op, 'DURATION', blocks);
+    const tpv = namedVar(blocks, 'target profit'), slv = namedVar(blocks, 'stop loss');
     const needsBarrier = kind === 'overunder' || kind === 'matchesdiffers';
     const spec = { contract: kind, side, symbol: mk.getFieldValue('SYMBOL_LIST') || '1HZ100V', duration: kind === 'risefall' ? Math.max(5, Number.isFinite(dur) ? Math.floor(dur) : 5) : 1, stake: Number.isFinite(stake) && stake >= 0.35 ? stake : 1, stakeFromBlock: Number.isFinite(stake) && stake >= 0.35 };
+    if (Number.isFinite(tpv) && tpv >= 0) spec.tp = tpv;
+    if (Number.isFinite(slv) && slv >= 0) spec.sl = slv;
     if (needsBarrier) spec.barrier = Number.isFinite(pred) ? Math.max(0, Math.min(9, Math.floor(pred))) : (kind === 'overunder' ? 1 : 5);
     return spec;
   }

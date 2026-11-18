@@ -13,8 +13,8 @@
     const p = load();
     avatars().forEach(a => {
       if (!a.dataset.itText) a.dataset.itText = a.textContent.trim() || 'IT';
-      if (p.photo) { a.style.backgroundImage = 'url("' + p.photo + '")'; a.classList.add('has-photo'); a.textContent = ''; }
-      else { a.style.backgroundImage = ''; a.classList.remove('has-photo'); a.textContent = a.dataset.itText; }
+      if (p.photo) { a.style.setProperty('background-image', 'url("' + p.photo + '")', 'important'); a.classList.add('has-photo'); a.textContent = ''; }
+      else { a.style.removeProperty('background-image'); a.classList.remove('has-photo'); a.textContent = a.dataset.itText; }
     });
     const n = nameEl();
     if (n) {
