@@ -186,6 +186,17 @@
     Blockly.svgResize(blocklyWorkspace);
     fitContent();
   }
+  // Trade parameters stays open; Before purchase, Sell conditions and After purchase start collapsed. Tap a collapsed block to open it.
+  function collapseSections() {
+    if (!blocklyWorkspace) return;
+    try {
+      blocklyWorkspace.getTopBlocks(false).forEach(b => {
+        if (b.type === 'trade_definition') { if (b.isCollapsed()) b.setCollapsed(false); }
+        else if (/^(before_purchase|during_purchase|after_purchase)$/.test(b.type) && !b.isCollapsed()) b.setCollapsed(true);
+      });
+      blocklyWorkspace.cleanUp();
+    } catch (_) {}
+  }
   function importSuppliedBotXml(xmlText) {
     if (!blocklyWorkspace || !window.Blockly) throw new Error('Blockly is not ready yet. Open the Blockly Editor tab and try again.');
     if (typeof xmlText !== 'string' || !xmlText.trim()) throw new Error('The bundled original DBot XML is missing.');
@@ -194,11 +205,12 @@
     blocklyWorkspace.clear();
     Blockly.Xml.domToWorkspace(xml, blocklyWorkspace);
     // Imported DBot positions were made for another renderer and overlap here; stack the sections in a clean column.
+    collapseSections();
     try { blocklyWorkspace.cleanUp(); } catch (_) {}
     const status = $('#blocklyStatus');
     if (status) { status.textContent = 'IMPORTED XML · VIEW / EDIT'; status.classList.remove('blockly-unavailable'); }
     const footnote = $('#blocklyFootnote');
-    if (footnote) footnote.textContent = 'Original supplied XML loaded into Blockly. Unsupported Deriv DBot block types are shown using generic editable wrappers that preserve their field values and named connections. This is an inspection/editing view, not a faithful executable DBot runtime; live trading is disabled.';
+    if (footnote) footnote.textContent = 'Original supplied XML loaded into Blockly. Unsupported Deriv DBot block types are shown using generic editable wrappers that preserve their field values and named connections. Tap a collapsed block to open it.';
     if (window.ITC_MARKET_DATA?.getStatus) {
       const chosen = window.ITC_MARKET_DATA.getStatus().selected;
       const symbolBlock = blocklyWorkspace.getAllBlocks(false).find(block => block.type === 'trade_definition_market');
@@ -208,7 +220,7 @@
     }
     Blockly.svgResize(blocklyWorkspace);
     setTimeout(fitContent, 60);
-    setTimeout(() => { paintLightBlocks(); window.dispatchEvent(new CustomEvent('itc:bot-loaded')); }, 90);
+    setTimeout(() => { collapseSections(); paintLightBlocks(); window.dispatchEvent(new CustomEvent('itc:bot-loaded')); }, 90);
     return true;
   }
   window.ITC_BLOCKLY = { importXml: importSuppliedBotXml, getWorkspace: () => blocklyWorkspace, resize: () => { if (blocklyWorkspace) { Blockly.svgResize(blocklyWorkspace); applyResponsiveScale(false); } } };
@@ -347,6 +359,13 @@
         blocklyWorkspace.getAllBlocks(false).forEach(b => { ['TYPE_LIST', 'PURCHASE_LIST'].forEach(f => { const fld = b.getField(f); if (fld && !codes.includes(fld.getValue())) { try { fld.setValue(codes[0]); } catch (_) {} } }); });
       });
       blocklyWorkspace.addChangeListener(ev => { if (ev.type === Blockly.Events.BLOCK_CREATE || ev.type === Blockly.Events.FINISHED_LOADING || ev.type === Blockly.Events.BLOCK_CHANGE) requestAnimationFrame(paintLightBlocks); });
+      blocklyWorkspace.addChangeListener(ev => {
+        if (ev.type !== (Blockly.Events.CLICK || 'click') || !ev.blockId) return;
+        const blk = blocklyWorkspace.getBlockById(ev.blockId);
+        if (!blk || blk.getParent() || !blk.isCollapsed()) return;
+        blk.setCollapsed(false);
+        try { blocklyWorkspace.cleanUp(); } catch (_) {}
+      });
       paintLightBlocks();
       applyResponsiveScale(true);
       $('#resetBot')?.addEventListener('click', loadDbotStarter);

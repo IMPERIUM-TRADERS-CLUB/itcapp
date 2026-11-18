@@ -1,7 +1,7 @@
-const CACHE_NAME = 'itc-version9-82-tv-dock';
+const CACHE_NAME = 'itc-version9-87-profile-clean';
 const APP_SHELL = [
   './', './index.html', './style.css', './itc-theme.css', './app.js', './config.js', './market-live.js', './charts-live.js', './signal-engine.js', './auto-signals.js', './admin-gate.js', './bots-library.js', './deriv-trader.js', './bot-maker.js', './settings-page.js', './trader-ui.js', './dbot-template.js', './speedbot.js', './quick-strategy.js', './run-panel.js', './social-links.js', './signal-link.js', './canvas-spec.js',
-  './enhancements.js', './deriv-account.js', './account-display.js', './real-trading.js', './bot-runner.js', './copy-trading.js', './market-hunter.js', './live-feed.js', './sound.js', './circle-ai.js', './install-app.js', './signal-alerts.js', './bots-data.js', './theme.css', './theme.js', './manifest.webmanifest',
+  './enhancements.js', './profile.js', './deriv-account.js', './account-display.js', './real-trading.js', './bot-runner.js', './copy-trading.js', './market-hunter.js', './live-feed.js', './sound.js', './circle-ai.js', './install-app.js', './signal-alerts.js', './bots-data.js', './theme.css', './theme.js', './manifest.webmanifest',
   './imperium-logo.jpg', './imperium-logo.svg', './icons/itc-192.png', './icons/itc-512.png'
 ];
 self.addEventListener('install', event => {

@@ -109,7 +109,7 @@
       A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
     }
     catch (e) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: e.message || String(e) }; }
-    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account') + ' · stake ' + st.base, 'LIVE');
+    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account') + ' · stake ' + st.base + ' · take profit ' + (st.tp || 'off') + ' · stop loss ' + (st.sl || 'off'), 'LIVE');
     return { ok: true };
   }
   window.ITC_RUNNER = { start, stop: () => run && run.stop(), running: () => Boolean(run), togglePause: () => (run ? run.togglePause() : false), paused: () => Boolean(run && run.paused()), specs: SPECS, custom };

@@ -164,6 +164,9 @@
               <button class="dbot-tool" id="resetBot" type="button" title="Reset" aria-label="Reset"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.6L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.6L20 15.5"/><path d="M20 20v-4.5h-4.5"/></svg></button>
               <button class="dbot-tool" id="openBotPicker" type="button" title="Load a bot" aria-label="Load a bot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h9v10H3z"/><path d="M3 8.5l2-4h6l2 2"/></svg></button>
               <button class="dbot-tool" id="blocklyDownload" type="button" title="Save to My Bots" aria-label="Save to My Bots"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3"/><circle cx="12" cy="15" r="2.6"/></svg></button>
+              <button class="dbot-tool" id="dbotImport" type="button" title="Import a bot (XML file)" aria-label="Import a bot from an XML file"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 15v5h16v-5"/></svg></button>
+              <button class="dbot-tool" id="dbotExport" type="button" title="Export this bot (XML file)" aria-label="Export this bot as an XML file"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 15v5h16v-5"/></svg></button>
+              <input id="personalBotUpload" type="file" accept=".xml,text/xml,application/xml" hidden>
               <button class="dbot-tool dbot-menu-btn" id="dbotMenu" type="button" title="Show or hide the block menu" aria-label="Show or hide the block menu">▤ Blocks</button>
               <span class="dbot-sep"></span>
               <button class="dbot-tool" id="dbotUndo" type="button" title="Undo" aria-label="Undo"><svg class="dbot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5"/><path d="M4 10h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -620,6 +623,7 @@
   <script src="quick-strategy.js?v=9.22"></script>
   <script src="run-panel.js?v=9.25"></script>
   <script src="social-links.js?v=4"></script>
+  <script src="profile.js?v=1"></script>
   <script src="canvas-spec.js?v=9.24"></script>
   <script src="signal-engine.js"></script>
   <script src="admin-gate.js"></script>

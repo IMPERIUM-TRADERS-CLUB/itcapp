@@ -942,7 +942,9 @@
       addLog(`Scanner Bot set to ${pick.market} · ${pick.entry}.${ed}`, 'LIVE');
     }, 150);
   }
-  let realRun = false;
+  let realRun = false, stakeTouched = false, lastCanvasStake;
+  $('#stakeInput').addEventListener('input', () => { stakeTouched = true; });
+  $('#stakeInput').addEventListener('change', () => { stakeTouched = true; });
   function stopBot() { if (window.ITC_RUNNER && window.ITC_RUNNER.running()) window.ITC_RUNNER.stop(); }
   function symbolFromMarket(name) { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } }
   function startBot() {
@@ -954,8 +956,19 @@
       if (cs) { R.custom.__canvas = cs; id = '__canvas'; canvas = cs; }
     }
     const bot = importedBots[id] || (canvas ? { name: 'Canvas bot' } : {}), ui = currentUi(), forged = Boolean(R.forced) || Boolean(canvas);
+    // Stake: the Trade parameters box is what you set, so it wins. A canvas bot only uses the amount inside its own
+    // blocks when you edited that block after the box (or when the box was never touched), so your stake is never ignored.
+    const panelStake = Number($('#stakeInput').value);
+    let runStake = panelStake;
+    if (canvas) {
+      const blockChanged = canvas.stakeFromBlock && canvas.stake !== lastCanvasStake;
+      lastCanvasStake = canvas.stake;
+      if (blockChanged) stakeTouched = false;
+      if (canvas.stakeFromBlock && !stakeTouched) runStake = canvas.stake;
+    }
+    if (!Number.isFinite(runStake) || runStake < 0.35) { showToast('Enter a stake of at least $0.35 in Trade parameters.'); return; }
     const res = R.start({
-      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: canvas ? canvas.stake : Number($('#stakeInput').value), maxLosses: Number($('#maxRunsInput').value) || 3,
+      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: runStake, maxLosses: Number($('#maxRunsInput').value) || 3,
       tp: Number($('#takeProfitInput').value || 0), sl: Number($('#stopLossInput').value || 0),
       martingale: forged ? undefined : $('#martingaleToggle').checked, multiplier: forged ? bot.multiplier : (Number($('#multiplierInput').value) || 2),
       contract: $('#contractSelect').value, side: ui.includes('side') ? $('#xSide').value : undefined, digit: ui.includes('digit') ? Number($('#xDigit').value) : undefined,

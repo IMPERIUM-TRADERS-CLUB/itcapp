@@ -1143,3 +1143,18 @@ body.on-tv #page-dtrader .tv-full{margin:0!important;border:0!important;border-r
 body.on-tv #page-dtrader .tv-full iframe{width:100%;height:100%;border:0;display:block;background:#fff}
 @media(max-width:700px){body.on-tv #page-dtrader .tv-full{height:calc(100vh - 127px)!important;height:calc(100dvh - 127px)!important}}
 body.on-tv .main-area{padding-bottom:0!important}
+
+.itc-bot footer{display:flex;gap:8px;align-items:center}.itc-bot footer .itc-export{height:46px;padding:0 14px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(255,255,255,.06);color:inherit;font-size:12px;font-weight:700;cursor:pointer}.itc-bot footer .itc-export:hover{background:rgba(255,255,255,.14)}
+
+.avatar.has-photo,.top-avatar.has-photo{background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;color:transparent!important}
+.profile-copy .profile-sub{display:block;font-size:11px;color:#9aa6ab;font-weight:500;margin-top:1px}
+.pf-pop h3{margin:0 0 12px;text-align:center}
+.pf-preview{width:104px;height:104px;margin:0 auto 14px;border-radius:50%;border:2px solid #d4a82b;background:#171407 center/cover no-repeat;display:grid;place-items:center;color:#ffdf72;font-weight:800;font-size:28px}
+.pf-btns{display:grid;gap:8px;margin-bottom:14px}
+.pf-btn{display:block;text-align:center;padding:12px;border:1px solid #5b4718;border-radius:12px;background:#15130a;color:#ffdf72;font-weight:700;cursor:pointer}
+.pf-label{display:block;font-size:12px;color:#9aa6ab;margin:0 0 6px}
+.pf-input{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #3a3320;background:#090b0c;color:#eef2f4;font-size:16px}
+.pf-err{min-height:18px;margin:6px 0 0;font-size:12px;color:#ff8a80}
+.pf-actions{display:flex;gap:8px;margin-top:6px}.pf-actions .pf-save{flex:2}
+.pf-cancel{flex:1;padding:12px;border:1px solid #3a3320;border-radius:12px;background:transparent;color:#cfd6d9;font-weight:700;cursor:pointer}
+.pf-remove{display:block;margin:12px auto 0;background:none;border:0;color:#9aa6ab;font-size:12px;text-decoration:underline;cursor:pointer}

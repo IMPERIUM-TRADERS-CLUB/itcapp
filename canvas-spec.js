@@ -17,7 +17,7 @@
     const side = SIDE[code]; if (!side) return { error: 'Choose a contract type in the Purchase conditions block.' };
     const stake = num(op, 'AMOUNT'), pred = num(op, 'PREDICTION'), dur = num(op, 'DURATION');
     const needsBarrier = kind === 'overunder' || kind === 'matchesdiffers';
-    const spec = { contract: kind, side, symbol: mk.getFieldValue('SYMBOL_LIST') || '1HZ100V', duration: kind === 'risefall' ? Math.max(5, Number.isFinite(dur) ? Math.floor(dur) : 5) : 1, stake: Number.isFinite(stake) && stake >= 0.35 ? stake : 1 };
+    const spec = { contract: kind, side, symbol: mk.getFieldValue('SYMBOL_LIST') || '1HZ100V', duration: kind === 'risefall' ? Math.max(5, Number.isFinite(dur) ? Math.floor(dur) : 5) : 1, stake: Number.isFinite(stake) && stake >= 0.35 ? stake : 1, stakeFromBlock: Number.isFinite(stake) && stake >= 0.35 };
     if (needsBarrier) spec.barrier = Number.isFinite(pred) ? Math.max(0, Math.min(9, Math.floor(pred))) : (kind === 'overunder' ? 1 : 5);
     return spec;
   }
