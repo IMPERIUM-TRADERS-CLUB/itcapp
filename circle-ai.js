@@ -140,6 +140,12 @@
     window.ITC_SOUND?.startScan?.('ai');
     step(); if (scanning) scanning.timer = setInterval(step, SCAN_STEP);
   }
+  function entryRuleText(p) {
+    if (p.side === 'over') return `wait for ${Array.from({ length: p.target + 1 }, (_, k) => k).join(' or ')}, then trade on the first digit above ${p.target}`;
+    if (p.side === 'under') return `wait for ${Array.from({ length: 10 - p.target }, (_, k) => p.target + k).join(' or ')}, then trade on the first digit below ${p.target}`;
+    if (p.side === 'even' || p.side === 'odd') { const o = p.side === 'even' ? 'odd' : 'even'; return `wait for the least-seen ${o} digit (red or yellow bar), then another ${o}; the first ${p.side} that appears is the entry`; }
+    return '';
+  }
   function finish(evaluated, ctx, note) {
     window.ITC_SOUND?.stopScan?.('ai');
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), { stake, tp, sl, windowSize } = ctx;
@@ -150,11 +156,11 @@
       status.textContent = evaluated.some(x=>x.sample < Math.min(100,windowSize)) ? 'Not enough ticks yet for this scan. Wait for the stream and try again.' : 'No market qualified right now, so no trade was placed. Try scanning again in a moment.';
       return;
     }
-    const pick = eligible[0]; state.avoid = null; state.lastPick = {...pick, stake, tp, sl, martingale:$('#circleAIMartingale').checked, multiplier:Math.max(1,Number($('#circleAIMultiplier').value)||2)};
+    const pick = eligible[0]; state.avoid = null; state.lastPick = {...pick, windowSize, stake, tp, sl, martingale:$('#circleAIMartingale').checked, multiplier:Math.max(1,Number($('#circleAIMultiplier').value)||2)};
     status.className='circle-ai-status success'; status.textContent=`${note ? note + ' ' : ''}Trading ${pick.market} · ${pick.entry}. This is not a forecast.`;
     resultBox.classList.remove('hidden');
     const ed = entryText(pick);
-    resultBox.innerHTML = `<h3>${pick.market} · ${pick.entry}</h3><p><strong>Rules met:</strong> ${pick.rules || 1}</p><p><strong>Why:</strong> ${pick.label}</p>${ed ? `<p><strong>Entry digits:</strong> ${ed}</p>` : ''}<p><strong>Sample:</strong> ${pick.sample.toLocaleString()} ticks · <strong>Seen in that sample:</strong> ${(pick.seen !== undefined ? pick.seen : pick.score).toFixed(1)}% (past ticks, not a forecast)</p><p><strong>Stake:</strong> ${money(stake)} · <strong>TP / SL:</strong> ${money(tp)} / ${money(sl)}</p><p><strong>Markets that qualified:</strong> ${new Set(eligible.map(x => x.market)).size}</p><button class="button primary circle-ai-execute" id="circleAIExecute">▶ Trade again</button>`;
+    resultBox.innerHTML = `<h3>${pick.market} · ${pick.entry}</h3><p><strong>Rules met:</strong> ${pick.rules || 1}</p><p><strong>Why:</strong> ${pick.label}</p>${entryRuleText(pick) ? `<p><strong>Entry rule:</strong> ${entryRuleText(pick)}</p>` : ''}${ed && !(pick.side === 'over' || pick.side === 'under' || pick.side === 'even' || pick.side === 'odd') ? `<p><strong>Entry digits:</strong> ${ed}</p>` : ''}<p><strong>Sample:</strong> ${pick.sample.toLocaleString()} ticks · <strong>Seen in that sample:</strong> ${(pick.seen !== undefined ? pick.seen : pick.score).toFixed(1)}% (past ticks, not a forecast)</p><p><strong>Stake:</strong> ${money(stake)} · <strong>TP / SL:</strong> ${money(tp)} / ${money(sl)}</p><p><strong>Markets that qualified:</strong> ${new Set(eligible.map(x => x.market)).size}</p><button class="button primary circle-ai-execute" id="circleAIExecute">▶ Trade again</button>`;
     $('#circleAIExecute')?.addEventListener('click', executePaperTrade);
     runAuto();   // trades the best market straight away and keeps going until take profit or stop loss
     const sc = $('#scannerContract'), sw = $('#scannerWindow');
@@ -184,6 +190,40 @@
     }
     return false;
   }
+  // ---- ITC AI entry rules ----
+  // Over / Under: the market must first print one of the LOSING digits for that contract (Over 1: 0 or 1 · Over 2: 0, 1 or 2 ·
+  // Under 8: 8 or 9 · Under 7: 7, 8 or 9). Then the first WINNING digit that follows is the entry: the trade is placed right then.
+  async function waitForOverUnder(pick, run, side, t) {
+    const md = window.ITC_MARKET_DATA, lose = d => (side === 'over' ? d <= t : d >= t), win = d => (side === 'over' ? d > t : d < t);
+    const last = (md.getTicks(pick.symbol, 1) || [])[0]; let seen = last ? last.epoch : 0, armed = last ? lose(last.digit) : false;
+    while (!run.stop) {
+      for (const k of (md.getTicks(pick.symbol, 8) || []).filter(x => x.epoch > seen)) { seen = k.epoch; if (armed && win(k.digit)) return true; armed = lose(k.digit); }
+      await sleepMs(30);
+    }
+    return false;
+  }
+  // Even / Odd: to trade EVEN, wait for the least-seen digit that is ODD (the red or yellow bar), then another odd, and when an even
+  // appears that is the entry. To trade ODD it is the mirror: the least-seen EVEN digit, another even, then an odd.
+  function leastOpposite(pick, opp) {
+    const md = window.ITC_MARKET_DATA, c = Array(10).fill(0); (md.getTicks(pick.symbol, pick.windowSize || 1000) || []).forEach(t => { if (Number.isInteger(t.digit)) c[t.digit]++; });
+    const asc = c.map((n, d) => ({ d, n })).sort((a, b) => a.n - b.n || a.d - b.d), two = asc.slice(0, 2).map(x => x.d).filter(d => d % 2 === opp);   // red bar and yellow bar
+    if (two.length) return two; const one = asc.find(x => x.d % 2 === opp); return one ? [one.d] : [];   // none of them has the right parity: the least-seen digit that does
+  }
+  async function waitForParity(pick, run) {
+    const md = window.ITC_MARKET_DATA, side = pick.side === 'even' ? 0 : 1, opp = 1 - side;
+    const last = (md.getTicks(pick.symbol, 1) || [])[0]; let seen = last ? last.epoch : 0, stage = last && leastOpposite(pick, opp).includes(last.digit) ? 1 : 0;
+    while (!run.stop) {
+      for (const k of (md.getTicks(pick.symbol, 8) || []).filter(x => x.epoch > seen)) {
+        seen = k.epoch; const par = k.digit % 2;
+        if (stage === 0) { if (par === opp && leastOpposite(pick, opp).includes(k.digit)) stage = 1; }
+        else if (stage === 1) { stage = par === opp ? 2 : 0; }   // another odd (even) keeps the pattern; the wrong side straight after the first digit breaks it
+        else if (par === side) return true;   // stage 2: the entry digit has appeared
+      }
+      await sleepMs(30);
+    }
+    return false;
+  }
+  window.ITC_AI_ENTRY = { waitForOverUnder, waitForParity, leastOpposite };
   async function waitForEntry(pick, run) {   // resolves true when a NEW tick ends in the entry digit, false if you stop the bot
     const md = window.ITC_MARKET_DATA; let seen = ((md.getTicks(pick.symbol, 1) || [])[0] || {}).epoch || 0;
     while (!run.stop) {
@@ -219,6 +259,15 @@
         if (!(await waitForPattern(pick, run))) return;
       }
       const useRec = inRec && pick.martingale && pick.recovery !== undefined, barrier = useRec ? pick.recovery : pick.target, entryNow = useRec ? (pick.side === 'over' ? 'Over ' : 'Under ') + pick.recovery + ' (recovery)' : pick.entry;
+      if (pick.side === 'over' || pick.side === 'under') {
+        const o = pick.side === 'over', lz = o ? Array.from({ length: barrier + 1 }, (_, k) => k) : Array.from({ length: 10 - barrier }, (_, k) => barrier + k);
+        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for ' + lz.join(' or ') + ', then any digit ' + (o ? 'above ' : 'below ') + barrier + ' on ' + pick.market + ' \u00B7 will trade ' + entryNow + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
+        if (!(await waitForOverUnder(pick, run, pick.side, barrier))) return;
+      } else if (pick.side === 'even' || pick.side === 'odd') {
+        const t1 = pick.side === 'even' ? 'odd' : 'even';
+        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for the least-seen ' + t1 + ' digit (red/yellow bar), then another ' + t1 + ', then an ' + pick.side + ' on ' + pick.market + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
+        if (!(await waitForParity(pick, run))) return;
+      }
       const params = { symbol: pick.symbol, symbolName: pick.market, contract_type: ct, amount: s, duration: 1, barrier: barrier === undefined ? undefined : barrier };
       let list = []; try { list = await T.execute(params, { count: 1, label: entryNow, priority: true }); } catch (_) {}
       if (run.stop) return;

@@ -114,7 +114,7 @@
         '<div class="tx-spots"><span class="tx-line"><i class="tx-dot in"></i>' + (x.entry ? x.entry.slice(0, -1) + '<u class="tx-u">' + x.entry.slice(-1) + '</u>' : '…') + '</span><span class="tx-line"><i class="tx-dot out"></i>' + (x.exit ? x.exit.slice(0, -1) + '<u class="tx-u">' + x.exit.slice(-1) + '</u>' : (x.profit === null ? '…' : '-')) + '</span></div>' +
         '<div class="tx-money"><span class="tx-buy">' + money(x.price) + ' ' + S.cur + '</span><span class="tx-pl ' + (x.profit === null ? '' : x.won ? 'g' : 'r') + '">' + pl + '</span></div></div>';
     }
-    liveBox.innerHTML = '<div class="sum-top">' + pill + '<span class="sum-chips">' + chips + '</span></div>' + stats + '<div class="sum-label">Latest contract</div>' + card;
+    liveBox.innerHTML = '<div class="sum-top">' + pill + '<span class="sum-chips">' + chips + '</span></div><div class="sum-label">Latest contract</div>' + card;
   };
   window.addEventListener('itc:trade-placed', e => { const d = e.detail || {}; L.last = { id: d.id, i: info(d), price: d.price || 0, entry: d.entryTick ? String(d.entryTick) : '', exit: '', profit: null, won: false }; L.hist.unshift(null); paintLive(); });
   window.addEventListener('itc:trade-result', e => { const d = e.detail || {}; if (L.last && L.last.id === d.id) { L.last.profit = d.profit || 0; L.last.won = Boolean(d.won); if (d.entryTick !== undefined) L.last.entry = String(d.entryTick); if (d.exitTick !== undefined) L.last.exit = String(d.exitTick); } const k = L.hist.indexOf(null); if (k > -1) L.hist[k] = Boolean(d.won); paintLive(); });

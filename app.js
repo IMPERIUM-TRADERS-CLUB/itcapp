@@ -1160,7 +1160,7 @@
   let tab = 'summary', want = false, onPage = false, timer = null;
   function paint() {
     const pane = src.querySelector('[data-run-pane="' + tab + '"]'); if (!pane) return;
-    const c = pane.cloneNode(true); c.classList.remove('hidden'); c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id')); c.querySelectorAll('.dbot-journal-head,.dbot-sumfoot').forEach(n => n.remove());
+    const c = pane.cloneNode(true); c.classList.remove('hidden'); c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id')); c.querySelectorAll('.dbot-journal-head').forEach(n => n.remove());   // the Summary keeps its six numbers, exactly like the Bot Builder
     body.replaceChildren(c);
   }
   function apply() {

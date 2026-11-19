@@ -1217,3 +1217,9 @@ body.on-tv .main-area{padding-bottom:0!important}
 .sum-active{overflow:auto}
 #page-botbuilder .dbot-run-body.sum-active .sum-live{flex:1 0 auto}
 .dbot-run-body[data-run-pane="summary"] .dbot-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+/* v9.61: board (Analysis Tool / Trading View) shows the same full Summary as the Bot Builder: live contract on top, six numbers at the bottom */
+.run-board-body{display:flex;flex-direction:column}
+.run-board-body .dbot-run-body[data-run-pane="summary"]{display:flex!important;flex-direction:column;flex:1;min-height:100%}
+.run-board-body .dbot-run-body[data-run-pane="summary"] .sum-live,.run-board-body .dbot-run-body[data-run-pane="summary"] .dbot-hint{flex:1 0 auto}
+.run-board-body .dbot-sumfoot{display:block!important;margin-top:auto}
+.run-board-body .dbot-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
