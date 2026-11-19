@@ -88,11 +88,36 @@
     const info = { id: bought.buy.contract_id, payout: Number(bought.buy.payout) || 0, time: Date.now(), price: Number(bought.buy.buy_price), ref: bought.buy.transaction_id, currency: cur, real: a.account_type === 'real', symbol: p.symbol, type: p.contract_type, barrier: p.barrier };
     try { window.dispatchEvent(new CustomEvent('itc:trade-placed', { detail: { ...info } })); } catch (_) {}
     await pace(manual);
+    // Entry / exit spots: Deriv sends them under different names and not always in the final message, so keep the
+    // best value seen across every update, and fetch the finished contract once more if something is still missing.
+    const spots = { entry: '', exit: '' }, has = v => v !== undefined && v !== null && v !== '';
+    const pickSpots = c => {
+      if (!c) return;
+      const e = [c.entry_tick_display_value, c.entry_spot_display_value, c.entry_tick, c.entry_spot].find(has); if (has(e)) spots.entry = e;
+      const x = [c.exit_tick_display_value, c.exit_spot_display_value, c.exit_tick, c.exit_spot].find(has); if (has(x)) spots.exit = x;
+      const t = c.audit_details && c.audit_details.all_ticks;
+      if (Array.isArray(t) && t.length) {
+        const st = Number(c.date_start || c.purchase_time) || 0, disp = k => (has(k.tick_display_value) ? k.tick_display_value : k.tick);
+        if (!has(spots.entry)) { const k = t.find(q => Number(q.epoch) > st); if (k && has(disp(k))) spots.entry = disp(k); }
+        if (!has(spots.exit) && (c.is_sold || c.is_expired || c.status === 'won' || c.status === 'lost')) { const k = t[t.length - 1]; if (k && has(disp(k))) spots.exit = disp(k); }
+      }
+      if (!has(spots.exit) && (c.is_sold || c.is_expired) && has(c.current_spot_display_value)) spots.exit = c.current_spot_display_value;
+    };
     const settled = new Promise(res => A.subscribe({ proposal_open_contract: 1, contract_id: info.id, subscribe: 1 }, m => {
-      const c = m.proposal_open_contract; if (c && p.onUpdate) { try { p.onUpdate(c); } catch (_) {} }
+      const c = m.proposal_open_contract; if (c) pickSpots(c); if (c && p.onUpdate) { try { p.onUpdate(c); } catch (_) {} }
       if (!c || !(c.is_sold || c.is_expired || c.status === 'won' || c.status === 'lost')) return false;
-      const out = { ...info, sell: Number(c.sell_price) || 0, profit: Number(c.profit), won: Number(c.profit) > 0, entryTick: c.entry_tick_display_value || c.entry_tick, exitTick: c.exit_tick_display_value || c.exit_tick };
-      window.dispatchEvent(new CustomEvent('itc:trade-result', { detail: out })); res(out); return true;
+      const out = { ...info, sell: Number(c.sell_price) || 0, profit: Number(c.profit), won: Number(c.profit) > 0, entryTick: has(spots.entry) ? spots.entry : undefined, exitTick: has(spots.exit) ? spots.exit : undefined };
+      window.dispatchEvent(new CustomEvent('itc:trade-result', { detail: out })); res(out);
+      if (!has(spots.entry) || !has(spots.exit)) {   // fill the gaps afterwards, without slowing the bot down
+        const fetchTicks = n => A.request({ proposal_open_contract: 1, contract_id: info.id }).then(r => {
+          pickSpots(r && r.proposal_open_contract);
+          if (has(spots.entry) && has(spots.exit)) window.dispatchEvent(new CustomEvent('itc:trade-ticks', { detail: { id: info.id, entryTick: spots.entry, exitTick: spots.exit } }));
+          else if (n < 3) setTimeout(() => fetchTicks(n + 1), 900 * (n + 1));
+          else window.dispatchEvent(new CustomEvent('itc:trade-ticks', { detail: { id: info.id, entryTick: has(spots.entry) ? spots.entry : undefined, exitTick: has(spots.exit) ? spots.exit : undefined } }));
+        }).catch(() => { if (n < 3) setTimeout(() => fetchTicks(n + 1), 900 * (n + 1)); });
+        setTimeout(() => fetchTicks(0), 400);
+      }
+      return true;
     }));
     info.settled = settled; return info;
   }

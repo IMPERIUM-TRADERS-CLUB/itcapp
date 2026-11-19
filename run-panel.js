@@ -45,8 +45,14 @@
     if (d.won) S.won++; else S.lost++;
     S.profit = Math.round((S.profit + (d.profit || 0)) * 100) / 100; S.payout = Math.round((S.payout + (d.sell || 0)) * 100) / 100;
     const r = recs.find(x => x.id === d.id); if (r) { r.entry = d.entryTick ?? ''; r.exit = d.exitTick ?? ''; r.pl = d.profit; }
-    if (tr) { if (d.entryTick !== undefined) setSpot(tr, 'in', d.entryTick); setSpot(tr, 'out', d.exitTick); const pl = tr.querySelector('.tx-pl'); pl.textContent = (d.profit >= 0 ? '+' : '') + money(d.profit || 0) + ' ' + S.cur; pl.className = 'tx-pl ' + (d.won ? 'g' : 'r'); tr.classList.add(d.won ? 'won' : 'lost'); }
+    if (tr) { if (d.entryTick !== undefined) setSpot(tr, 'in', d.entryTick); if (d.exitTick !== undefined) setSpot(tr, 'out', d.exitTick); const pl = tr.querySelector('.tx-pl'); pl.textContent = (d.profit >= 0 ? '+' : '') + money(d.profit || 0) + ' ' + S.cur; pl.className = 'tx-pl ' + (d.won ? 'g' : 'r'); tr.classList.add(d.won ? 'won' : 'lost'); }
     paint();
+  });
+  // Late entry/exit spots (fetched just after the contract settles)
+  window.addEventListener('itc:trade-ticks', e => {
+    const d = e.detail || {}, tr = rows.get(d.id); if (!tr) return;
+    const r = recs.find(x => x.id === d.id); if (r) { if (d.entryTick !== undefined) r.entry = d.entryTick; if (d.exitTick !== undefined) r.exit = d.exitTick; }
+    ['in', 'out'].forEach(k => { const v = k === 'in' ? d.entryTick : d.exitTick, el = tr.querySelector('[data-k="' + k + '"]'); if (v !== undefined) setSpot(tr, k, v); else if (el && el.textContent === '…') el.textContent = '-'; });
   });
   // Download (CSV) and View Detail work from the panel and from the run board copy on other pages.
   document.addEventListener('click', e => {
