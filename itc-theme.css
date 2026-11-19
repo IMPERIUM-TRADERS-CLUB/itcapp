@@ -1194,3 +1194,26 @@ body.on-tv .main-area{padding-bottom:0!important}
 .tx-detail{display:none;grid-column:1/-1;font-size:12px;color:#6b7886;padding-top:2px}
 .tx-wrap.show-detail .tx-detail{display:block}
 .tx-empty{text-align:center;color:#6b7886;padding:30px 10px}.tx-empty strong{display:block;color:#1c2630;margin-bottom:4px}
+/* v9.58: contract symbols + live Summary */
+.tx-ico svg{display:block}
+.tx-ico{width:34px;height:34px;border-radius:9px}
+.tx-ico.down{color:#fff}
+.tx-bar{font-weight:900;font-size:22px;color:#1b2430;line-height:1}
+.tx-sp u,.tx-u{text-decoration:none}.tx-u{color:#0e7a3c;font-size:1.1em;font-weight:800}
+.sum-live{margin:6px 4px 10px}
+.sum-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sum-pill{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;background:#e8f1ee;color:#44525c}
+.sum-pill i{width:9px;height:9px;border-radius:50%;background:#9aa3a8}
+.sum-pill.on{background:#d8ffe8;color:#0a6b35}.sum-pill.on i{background:#22ff7a;box-shadow:0 0 8px #22ff7a;animation:sumPulse 1.1s infinite}
+.sum-pill.pa{background:#fff2cf;color:#8a5a00}.sum-pill.pa i{background:#f5a524}
+@keyframes sumPulse{50%{opacity:.35;transform:scale(1.4)}}
+.sum-chips{display:flex;gap:4px;flex-wrap:wrap}
+.sum-chip{font-style:normal;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
+.sum-chip.w{background:#0f9d58}.sum-chip.l{background:#e03131}.sum-chip.op{background:#9aa3a8}
+.sum-label{font-size:12px;font-weight:800;color:#6b7886;text-transform:uppercase;letter-spacing:.06em;margin:4px 2px}
+.sum-card{border:1px solid #e1e6ea;border-radius:12px}
+.sum-wait{padding:18px 8px;text-align:center;color:#44525c;font-weight:700;border:1px dashed #b9c3ca;border-radius:12px}
+/* v9.60: Summary keeps the standard Deriv mobile layout: live contract on top, the six numbers at the bottom (2 rows of 3) */
+.sum-active{overflow:auto}
+#page-botbuilder .dbot-run-body.sum-active .sum-live{flex:1 0 auto}
+.dbot-run-body[data-run-pane="summary"] .dbot-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}

@@ -1,5 +1,5 @@
 // ITC bot library: cards for Free Bots + the Load bot list. Bots are bundled in bots-data.js and only open inside the Bot Builder.
-// Bots can be exported as Deriv-style XML files (Export on each card and in the Bot Builder toolbar) and imported again.
+// Bots can be imported from Deriv-style XML files (Import). Exporting is intentionally not offered.
 (() => {
   'use strict';
   const grid = document.getElementById('botGrid');
@@ -25,7 +25,7 @@
       + '<header><span class="itc-bot-icon" aria-hidden="true">' + esc(bot.icon || '🤖') + '</span><h3>' + esc(bot.name) + '</h3></header>'
       + '<p class="itc-bot-desc">' + esc(bot.description || 'Ready to load on the Bot Builder canvas.') + '</p>'
       + '<div class="itc-bot-chips"><span>' + esc(bot.market || '') + '</span><span>' + esc(bot.contract || '') + '</span></div>'
-      + '<footer><button class="itc-load" type="button" data-bot-load="' + esc(bot.id) + '">Load bot</button><button class="itc-export" type="button" data-bot-export="' + esc(bot.id) + '" aria-label="Export ' + esc(bot.name) + ' as XML" title="Export as XML">Export</button>' + (bot.custom ? '<button class="itc-remove" type="button" data-bot-rm="' + esc(bot.id) + '" aria-label="Remove bot">✕</button>' : '') + '</footer>'
+      + '<footer><button class="itc-load" type="button" data-bot-load="' + esc(bot.id) + '">Load bot</button>' + (bot.custom ? '<button class="itc-remove" type="button" data-bot-rm="' + esc(bot.id) + '" aria-label="Remove bot">✕</button>' : '') + '</footer>'
       + '<div class="itc-bot-progress" aria-hidden="true"><i></i></div></article>';
   }
   const compact = (bot, id) => '<button type="button" class="picker-item itc-pick" data-pick="' + esc(id) + '"><span class="itc-bot-icon" aria-hidden="true">' + esc(bot.icon || '🤖') + '</span><span><strong>' + esc(bot.name) + '</strong><small>' + esc(bot.market) + ' · ' + esc(bot.contract) + '</small></span></button>';
@@ -47,7 +47,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast('Exported ' + safe + '.xml');
   }
-  document.getElementById('dbotExport')?.addEventListener('click', () => {
+  document.getElementById('dbotExport')?.addEventListener('click', () => { return; /* export is not offered */
     const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace();
     if (!ws || !window.Blockly || !ws.getAllBlocks(false).length) { toast('Load or build a bot on the canvas first.'); return; }
     const dom = window.Blockly.Xml.workspaceToDom(ws); dom.setAttribute('is_dbot', 'true'); dom.setAttribute('collection', 'false');
@@ -66,7 +66,7 @@
       if (!store()[bot.id]) { toast('Could not load this bot.'); return; }
       register(bot); window.ITC_APP.loadBot(bot.id); return;
     }
-    const ex = e.target.closest('[data-bot-export]');
+    const ex = null; /* export is not offered */
     if (ex) { const bot = library.concat(custom).find(x => x.id === ex.dataset.botExport), xml = bot && store()[bot.id]; if (!xml) { toast('Could not export this bot.'); return; } downloadXml(bot.name, xml); return; }
     const rm = e.target.closest('[data-bot-rm]');
     if (rm) { custom = custom.filter(b => b.id !== rm.dataset.botRm); delete store()[rm.dataset.botRm]; if (window.ITC_APP) delete window.ITC_APP.bots[rm.dataset.botRm]; writeCustom(); render(); toast('Bot removed from this browser.'); return; }
