@@ -399,7 +399,7 @@
   function loadImportedBotSettingsOnly(id) {
     const bot = importedBots[id];
     if (!bot) return;
-    loadedImportedBot = id;
+    loadedImportedBot = id; try { resetParamSync(); } catch (_) {}
     $('#marketSelect').value = bot.market;
     $('#contractSelect').value = bot.contract;
     setSharedMarket(bot.market);
@@ -418,7 +418,7 @@
     if (window.ITC_RUNNER) window.ITC_RUNNER.forced = null;
     const bot = importedBots[id];
     if (!bot) return;
-    loadedImportedBot = id;
+    loadedImportedBot = id; try { resetParamSync(); } catch (_) {}
     const desiredMarket = preserveSharedMarket ? ($('#analysisMarketSelect')?.value || $('#marketSelect').value) : bot.market;
     $('#marketSelect').value = desiredMarket;
     $('#contractSelect').value = bot.contract;
@@ -943,15 +943,73 @@
     }, 150);
   }
   let realRun = false;
-  const touchedBox = { stake: false, tp: false, sl: false }, lastBlock = {};
-  [['stake', '#stakeInput'], ['tp', '#takeProfitInput'], ['sl', '#stopLossInput']].forEach(([k, sel]) => { const el = $(sel); if (!el) return; ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { touchedBox[k] = true; })); });
-  // The box you edited last wins; if you edit the block on the canvas after that, the block wins instead.
-  const pickValue = (key, panelVal, blockVal) => {
-    if (!Number.isFinite(blockVal)) return panelVal;
-    const changed = blockVal !== lastBlock[key]; lastBlock[key] = blockVal;
-    if (changed) touchedBox[key] = false;
-    return touchedBox[key] ? panelVal : blockVal;
-  };
+  // ---- Trade parameters <-> canvas blocks ----
+  // Whatever you change last wins: edit a number block on the canvas (Initial Stake, Target Profit, Stop Loss,
+  // Consecutive Loss Limit, Multiplier, Entry Digit) and the matching Trade parameters box follows it at once;
+  // edit a box and the bot trades that value. Run always reads the boxes after a final sync, so nothing is ignored.
+  const touchedBox = { stake: false, tp: false, sl: false, losses: false, mult: false, mart: false, entry: false }, lastBlock = {}, predEdit = {};
+  const PARAM_BOX = { stake: '#stakeInput', tp: '#takeProfitInput', sl: '#stopLossInput', losses: '#maxRunsInput', mult: '#multiplierInput', entry: '#xEntry' };
+  Object.keys(PARAM_BOX).forEach(k => { const el = $(PARAM_BOX[k]); if (!el) return; ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { touchedBox[k] = true; })); });
+  { const mt = $('#martingaleToggle'); if (mt) mt.addEventListener('change', () => { touchedBox.mart = true; }); }
+  function resetParamSync() { Object.keys(touchedBox).forEach(k => { touchedBox[k] = false; }); Object.keys(lastBlock).forEach(k => { delete lastBlock[k]; }); Object.keys(predEdit).forEach(k => { delete predEdit[k]; }); }
+  const symbolToMarket = sym => { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.symbol === sym); return m && m.name; } catch (_) { return null; } };
+  const marketToSymbol = name => { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } };
+  function syncFromBlocks(baselineOnly) {
+    const P = window.ITC_CANVAS_PARAMS && window.ITC_CANVAS_PARAMS(); if (!P) return;
+    Object.keys(PARAM_BOX).forEach(k => {
+      const v = P[k]; if (!Number.isFinite(v)) return;
+      const el = $(PARAM_BOX[k]);
+      if (baselineOnly) { lastBlock[k] = v; return; }
+      if (lastBlock[k] === undefined) {   // first time we see this block: take it unless you already typed in the box
+        lastBlock[k] = v; if (el && !touchedBox[k]) el.value = String(v); return;
+      }
+      if (v !== lastBlock[k]) {   // you edited the block on the canvas: the box follows it
+        lastBlock[k] = v; if (el) el.value = String(v); touchedBox[k] = true;
+        try { if (k === 'mult') { const m = $('#martingaleToggle'); if (m && !m.checked) { m.checked = true; $('#martingaleOptions').classList.remove('hidden'); touchedBox.mart = true; } } } catch (_) {}
+      }
+    });
+    // Prediction digits (normal and recovery): remembered when you change them on the canvas, then used by the bot.
+    ['pred', 'rec'].forEach(k => {
+      const v = P[k]; if (!Number.isFinite(v)) return;
+      if (baselineOnly || lastBlock[k] === undefined) { lastBlock[k] = v; return; }
+      if (v !== lastBlock[k]) {
+        lastBlock[k] = v; predEdit[k] = v;
+        if (k === 'pred') { const xd = $('#xDigit'); if (xd && currentUi().includes('digit')) xd.value = String(v); }
+      }
+    });
+    // Market: the market block on the canvas and the Market box in Trade parameters follow each other; the last change wins.
+    if (P.symbol) {
+      if (baselineOnly || lastBlock.symbol === undefined) { lastBlock.symbol = P.symbol; return; }
+      if (P.symbol !== lastBlock.symbol) {
+        lastBlock.symbol = P.symbol;
+        const name = symbolToMarket(P.symbol), ms = $('#marketSelect');
+        if (name && ms && ms.value !== name) { ms.value = name; try { setSharedMarket(name); } catch (_) {} }
+      }
+    }
+  }
+  // Market box changed by you: write it onto the canvas market block too (so the blocks and the box always agree).
+  function pushMarketToBlock() {
+    try {
+      const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace(); if (!ws) return;
+      const sym = marketToSymbol($('#marketSelect').value); if (!sym) return;
+      const mk = ws.getAllBlocks(false).find(b => b.type === 'trade_definition_market'); const f = mk && mk.getField('SYMBOL_LIST');
+      lastBlock.symbol = sym; if (f && f.getValue() !== sym) f.setValue(sym);
+    } catch (_) {}
+  }
+  { const ms = $('#marketSelect'); if (ms) ms.addEventListener('change', () => setTimeout(pushMarketToBlock, 0)); }
+  let paramWs = null, paramTimer = null;
+  function hookParamSync() {
+    const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace();
+    if (!ws || ws === paramWs || !ws.addChangeListener) return;
+    paramWs = ws;
+    ws.addChangeListener(ev => {
+      if (!ev || ev.isUiEvent || (ev.type !== 'change' && ev.type !== 'var_rename')) return;
+      clearTimeout(paramTimer); paramTimer = setTimeout(() => { try { syncFromBlocks(false); } catch (_) {} }, 120);
+    });
+  }
+  // after a bot is loaded onto the canvas: remember its starting values, then start listening for your edits
+  const onBotLoadedParams = () => setTimeout(() => { try { hookParamSync(); syncFromBlocks(true); } catch (_) {} }, 150);
+  document.addEventListener('itc:bot-loaded', onBotLoadedParams); window.addEventListener('itc:bot-loaded', onBotLoadedParams);
   function stopBot() { if (window.ITC_RUNNER && window.ITC_RUNNER.running()) window.ITC_RUNNER.stop(); }
   function symbolFromMarket(name) { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } }
   function startBot() {
@@ -963,18 +1021,17 @@
       if (cs) { R.custom.__canvas = cs; id = '__canvas'; canvas = cs; }
     }
     const bot = importedBots[id] || (canvas ? { name: 'Canvas bot' } : {}), ui = currentUi(), forged = Boolean(R.forced) || Boolean(canvas);
-    // Stake: the Trade parameters box is what you set, so it wins. A canvas bot only uses the amount inside its own
-    // blocks when you edited that block after the box (or when the box was never touched), so your stake is never ignored.
-    let runStake = Number($('#stakeInput').value), runTp = Number($('#takeProfitInput').value || 0), runSl = Number($('#stopLossInput').value || 0);
-    if (canvas) {
-      runStake = pickValue('stake', runStake, canvas.stakeFromBlock ? canvas.stake : NaN);
-      runTp = pickValue('tp', runTp, canvas.tp); runSl = pickValue('sl', runSl, canvas.sl);
-    }
+    // Stake, take profit, stop loss, loss limit, multiplier: pick up any block you edited on the canvas, then trade
+    // exactly what the Trade parameters boxes show (they are what you set, from either place).
+    try { syncFromBlocks(false); } catch (_) {}
+    const runStake = Number($('#stakeInput').value), runTp = Number($('#takeProfitInput').value || 0), runSl = Number($('#stopLossInput').value || 0);
+    const useBoxMart = !forged || touchedBox.mart || touchedBox.mult;   // library bots always follow the boxes; forged/canvas bots keep their own unless you changed them
     if (!Number.isFinite(runStake) || runStake < 0.35) { showToast('Enter a stake of at least $0.35 in Trade parameters.'); return; }
     const res = R.start({
       botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: runStake, maxLosses: Number($('#maxRunsInput').value) || 3,
       tp: runTp, sl: runSl,
-      martingale: forged ? undefined : $('#martingaleToggle').checked, multiplier: forged ? bot.multiplier : (Number($('#multiplierInput').value) || 2),
+      martingale: useBoxMart ? $('#martingaleToggle').checked : undefined, multiplier: useBoxMart ? (Number($('#multiplierInput').value) || 2) : bot.multiplier,
+      prediction: !ui.includes('digit') && !canvas ? predEdit.pred : undefined, recoveryPrediction: !canvas ? predEdit.rec : undefined,
       contract: $('#contractSelect').value, side: ui.includes('side') ? $('#xSide').value : undefined, digit: ui.includes('digit') ? Number($('#xDigit').value) : undefined,
       entryDigit: ui.includes('entry') ? Number($('#xEntry').value) : undefined, bulk: ui.includes('bulk') && $('#xBulk').checked, bulkN: Number($('#xBulkN').value) || 3,
       log: (m, s) => addLog(m, s),
@@ -1109,6 +1166,9 @@
   function apply() {
     const show = want && onPage; board.classList.toggle('hidden', !show); if (btn) btn.setAttribute('aria-expanded', String(show));
     const main = document.querySelector('.main-area'); if (main) board.style.left = main.getBoundingClientRect().left + 'px';
+    // open FULL: from just under the top bars down to the top of the Run bar
+    const topH = (document.querySelector('.topbar')?.offsetHeight || 0) + (document.querySelector('.workspace-switcher')?.offsetHeight || 0), dockEl = document.getElementById('botDock');
+    board.style.top = topH + 'px'; board.style.bottom = ((dockEl && !dockEl.classList.contains('hidden')) ? dockEl.offsetHeight : 0) + 'px';
     clearInterval(timer); if (show) { paint(); timer = setInterval(paint, 500); }
   }
   board.querySelector('.run-board-tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; tab = b.dataset.t; board.querySelectorAll('.run-board-tabs button').forEach(x => x.classList.toggle('active', x === b)); paint(); });

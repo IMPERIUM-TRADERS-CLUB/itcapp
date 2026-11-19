@@ -48,6 +48,9 @@
       const k = KIND[o.contract] || 'evenodd'; spec.contract = k; spec.side = o.side || spec.side;
       spec.barrier = (k === 'overunder' || k === 'matchesdiffers') ? Number(o.digit) : undefined; spec.duration = k === 'risefall' ? 5 : 1;
     } else if (o.side && spec.ui && spec.ui.includes('side')) { spec.side = o.side; if (o.digit !== undefined) spec.barrier = Number(o.digit); }
+    // Prediction digits you changed on the canvas (normal and recovery) replace the bot's built-in ones.
+    if (Number.isFinite(o.prediction) && (spec.contract === 'overunder' || spec.contract === 'matchesdiffers')) { spec.barrier = o.prediction; delete spec.randomBarrier; }
+    if (Number.isFinite(o.recoveryPrediction) && spec.recovery) spec.recovery = { ...spec.recovery, barrier: o.recoveryPrediction };
     if (o.entryDigit !== undefined && spec.entry && spec.entry.kind === 'digit') spec.entry = { ...spec.entry, digit: Number(o.entryDigit) };
     const bulkN = o.bulk ? Math.max(2, Math.min(10, Math.floor(o.bulkN) || 3)) : 1;
     const rb = spec.randomBarrier; if (rb && !Array.isArray(rb)) spec.randomBarrier = [rb.from, rb.to];

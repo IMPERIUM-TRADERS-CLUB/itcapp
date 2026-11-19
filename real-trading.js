@@ -91,7 +91,7 @@
     const settled = new Promise(res => A.subscribe({ proposal_open_contract: 1, contract_id: info.id, subscribe: 1 }, m => {
       const c = m.proposal_open_contract; if (c && p.onUpdate) { try { p.onUpdate(c); } catch (_) {} }
       if (!c || !(c.is_sold || c.is_expired || c.status === 'won' || c.status === 'lost')) return false;
-      const out = { ...info, sell: Number(c.sell_price) || 0, profit: Number(c.profit), won: Number(c.profit) > 0, exitTick: c.exit_tick_display_value || c.exit_tick };
+      const out = { ...info, sell: Number(c.sell_price) || 0, profit: Number(c.profit), won: Number(c.profit) > 0, entryTick: c.entry_tick_display_value || c.entry_tick, exitTick: c.exit_tick_display_value || c.exit_tick };
       window.dispatchEvent(new CustomEvent('itc:trade-result', { detail: out })); res(out); return true;
     }));
     info.settled = settled; return info;

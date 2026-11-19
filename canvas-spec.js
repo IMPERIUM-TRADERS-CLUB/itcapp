@@ -40,6 +40,43 @@
   }
   window.ITC_CANVAS_SPEC = canvasSpec;
 
+  // Reads the numbers you can edit on the canvas (Initial Stake, Target Profit, Stop Loss, Consecutive Loss Limit,
+  // Multiplier, Entry Digit) so the app can keep the Trade parameters boxes and the blocks in step and trade what you set.
+  function allSetterValue(blocks, test) {
+    const s = blocks.filter(b => b.type === 'variables_set' && test(varName(b).toLowerCase())).sort((a, b) => (b.getRootBlock().type === 'trade_definition') - (a.getRootBlock().type === 'trade_definition'));
+    for (const b of s) { const v = valueOf(targetOf(b, 'VALUE'), blocks, 0); if (Number.isFinite(v)) return v; }
+    return NaN;
+  }
+  window.ITC_CANVAS_PARAMS = function () {
+    try {
+      const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace();
+      if (!ws) return null;
+      const blocks = ws.getAllBlocks(false); if (!blocks.length) return null;
+      const op = blocks.find(b => b.type === 'trade_definition_tradeoptions');
+      let stake = allSetterValue(blocks, n => n === 'initial stake'); if (!Number.isFinite(stake) && op) stake = num(op, 'AMOUNT', blocks);
+      const out = {
+        stake: Number.isFinite(stake) && stake >= 0.35 ? stake : NaN,
+        tp: allSetterValue(blocks, n => n === 'target profit' || n === 'take profit'),
+        sl: allSetterValue(blocks, n => n === 'stop loss'),
+        losses: allSetterValue(blocks, n => n === 'consecutive loss limit' || n === 'loss limit' || n === 'max losses'),
+        mult: allSetterValue(blocks, n => n.indexOf('multiplier') > -1),
+        entry: allSetterValue(blocks, n => n === 'entry digit')
+      };
+      // Prediction digits: the normal one, and the recovery one (set in the "else" / loss branch).
+      const preds = blocks.filter(b => b.type === 'variables_set' && varName(b).toLowerCase() === 'prediction');
+      const branchOf = b => { let cur = b; for (let i = 0; i < 40 && cur; i++) { const par = cur.getParent && cur.getParent(); if (!par) return ''; const inp = par.inputList.find(x => x.connection && x.connection.targetBlock() === cur); if (inp) return inp.name; cur = par; } return ''; };
+      const val = b => valueOf(targetOf(b, 'VALUE'), blocks, 0);
+      let pred = NaN, rec = NaN;
+      preds.filter(b => b.getRootBlock().type === 'trade_definition').forEach(b => { const v = val(b); if (!Number.isFinite(pred) && Number.isFinite(v)) pred = v; });
+      preds.filter(b => b.getRootBlock().type !== 'trade_definition').forEach(b => { const v = val(b); if (!Number.isFinite(v)) return; if (branchOf(b) === 'ELSE') { if (!Number.isFinite(rec)) rec = v; } else if (!Number.isFinite(pred)) pred = v; });
+      out.pred = pred; out.rec = rec;
+      Object.keys(out).forEach(k => { if (!Number.isFinite(out[k]) || out[k] < 0) out[k] = NaN; });
+      out.pred = Number.isFinite(out.pred) && out.pred <= 9 ? Math.floor(out.pred) : NaN; out.rec = Number.isFinite(out.rec) && out.rec <= 9 ? Math.floor(out.rec) : NaN;
+      const mk = blocks.find(b => b.type === 'trade_definition_market'); out.symbol = mk ? (mk.getFieldValue('SYMBOL_LIST') || '') : '';
+      return out;
+    } catch (_) { return null; }
+  };
+
   // small execution-speed chip in the builder toolbar (same switch the old big bar had)
   const chip = document.getElementById('dbotSpeed'), dock = document.getElementById('dockSpeed'), lbl = document.getElementById('dockSpeedLabel');
   if (chip && dock) {

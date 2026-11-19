@@ -1158,3 +1158,39 @@ body.on-tv .main-area{padding-bottom:0!important}
 .pf-actions{display:flex;gap:8px;margin-top:6px}.pf-actions .pf-save{flex:2}
 .pf-cancel{flex:1;padding:12px;border:1px solid #3a3320;border-radius:12px;background:transparent;color:#cfd6d9;font-weight:700;cursor:pointer}
 .pf-remove{display:block;margin:12px auto 0;background:none;border:0;color:#9aa6ab;font-size:12px;text-decoration:underline;cursor:pointer}
+
+/* v9.55: luminous green blocks, clearer (no grey) inner blocks on the Bot Builder canvas */
+.dbot .blocklyPath[fill="#22ff7a"],.dbot .blocklyPath[fill="#7dffab"]{filter:drop-shadow(0 0 5px rgba(34,255,122,.75))}
+.dbot .blocklyPath[fill="#ffffff"]{stroke:#0fbf5a!important;stroke-width:1.5px!important}
+.dbot .blocklyText{font-weight:700}
+.dbot .blocklyNonEditableText>text,.dbot .blocklyEditableText>text{font-weight:700}
+/* v9.56: dropdown / variable names were white-on-white (Blockly forces .blocklyDropdownText white) */
+.dbot .blocklyDropdownText,.dbot .blocklyText,.dbot .blocklyEditableText>text,.dbot .blocklyNonEditableText>text,.dbot .blocklyEditableField>text,.dbot .blocklyNonEditableField>text{fill:#04210f!important;font-weight:800!important}
+.dbot .blocklyFieldRect,.dbot .blocklyFieldRect.blocklyDropdownRect{fill:#d9ffe8!important;fill-opacity:1!important;stroke:#0fbf5a!important;stroke-width:1.5px!important}
+.dbot .blocklyArrow,.dbot .blocklyDropdownArrow,.dbot .blocklyFieldRect~.blocklyArrow{fill:#04210f!important}
+.dbot .blocklyHtmlInput{color:#04210f!important;background:#eafff2!important;font-weight:800}
+.blocklyDropDownDiv .blocklyMenuItem,.blocklyDropDownDiv .blocklyMenuItemContent{color:#04210f!important;font-weight:700}
+/* v9.57: run board opens full; Transactions laid out like Deriv Bot (Type | Entry/Exit spot | Buy price and P/L) */
+.run-board{top:110px;bottom:70px;height:auto!important;max-height:none!important;border-radius:0!important}
+.tx-wrap{display:block;max-height:none;overflow:visible;font-size:14px;color:#1b2430}
+.tx-tools{display:flex;gap:10px;padding:10px 4px 8px}
+.tx-btn{border:1.5px solid #9aa3a8;background:#fff;color:#1b2430;border-radius:6px;padding:9px 16px;font-weight:800;font-size:14px;cursor:pointer}
+.tx-head,.tx-row{display:grid;grid-template-columns:1.1fr 1.2fr 1.1fr;gap:8px;align-items:center;padding:10px 6px}
+.tx-head{font-weight:800;color:#3a4652;border-bottom:1px solid #d9dee3;position:sticky;top:0;background:#fff;z-index:1}
+.tx-head span:last-child,.tx-money{text-align:right}
+.tx-row{border-bottom:1px solid #e6eaee;position:relative}
+.tx-row.won{background:linear-gradient(90deg,#16a34a14,transparent)}.tx-row.lost{background:linear-gradient(90deg,#dc262614,transparent)}
+.tx-type{display:flex;align-items:center;gap:8px;min-width:0}
+.tx-ico{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:900;font-size:15px;color:#04210f;background:#22ff7a;box-shadow:0 0 8px #22ff7a88}
+.tx-ico.down{background:#ff5a5f;color:#fff;box-shadow:0 0 8px #ff5a5f66}
+.tx-name{font-weight:800;line-height:1.15}
+.tx-spots{display:flex;flex-direction:column;gap:6px}
+.tx-line{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.tx-dot{flex:none;width:12px;height:12px;border-radius:50%;box-sizing:border-box}
+.tx-dot.in{background:#ff444f}.tx-dot.out{border:2px solid #6b7886;background:transparent}
+.tx-sp u{text-decoration:none;color:#0e7a3c;font-size:1.1em}
+.tx-money{display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
+.tx-buy{font-weight:600}.tx-pl{font-weight:800;color:#6b7886}.tx-pl.g{color:#0f9d58}.tx-pl.r{color:#e03131}
+.tx-detail{display:none;grid-column:1/-1;font-size:12px;color:#6b7886;padding-top:2px}
+.tx-wrap.show-detail .tx-detail{display:block}
+.tx-empty{text-align:center;color:#6b7886;padding:30px 10px}.tx-empty strong{display:block;color:#1c2630;margin-bottom:4px}
