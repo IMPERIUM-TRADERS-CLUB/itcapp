@@ -1223,3 +1223,8 @@ body.on-tv .main-area{padding-bottom:0!important}
 .run-board-body .dbot-run-body[data-run-pane="summary"] .sum-live,.run-board-body .dbot-run-body[data-run-pane="summary"] .dbot-hint{flex:1 0 auto}
 .run-board-body .dbot-sumfoot{display:block!important;margin-top:auto}
 .run-board-body .dbot-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+/* v9.62: Market Hunter hedge mode */
+.mh-mode{width:100%;max-width:none;font-size:16px}
+.mh-stakebox{margin:6px 0 10px}.mh-stakebox .mh-input{width:100%}
+.mh-hedge-note{margin:10px 0;padding:11px 13px;border-radius:10px;background:#2a2410;border:1px solid #6b5a16;color:#f3e3a1;font-size:13px;line-height:1.5}
+.mh-hedge-note b{display:block;margin-bottom:3px;color:#ffd84a}

@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/itc-192.png">
   <title>Imperium Traders Club</title>
   <link rel="stylesheet" href="style.css?v=9.31">
-  <link rel="stylesheet" href="itc-theme.css?v=121">
+  <link rel="stylesheet" href="itc-theme.css?v=123">
   <link rel="stylesheet" href="theme.css?v=1">
 <link rel="preload" as="image" href="imperium-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
@@ -487,10 +487,13 @@
       </section>
 
       <section class="page" id="page-markethunter">
-        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p>Set only your take profit and stop loss. The hunter scans the 1-second volatility markets for the best Over 1, Over 2, Under 8 or Under 7 setup, stays on the market it finds, and chooses its own stake. After a loss, Over 1 recovers on Over 2 and Under 8 recovers on Under 7; Over 2 and Under 7 stay on themselves.</p></div>
+        <div class="page-heading"><div class="eyebrow"><span class="eyebrow-line"></span> MARKET HUNTER</div><h1>Market <span>Hunter.</span></h1><p id="mhIntro">Set only your take profit and stop loss. The hunter scans the 1-second volatility markets for the best Over 1, Over 2, Under 8 or Under 7 setup, stays on the market it finds, and chooses its own stake. After a loss, Over 1 recovers on Over 2 and Under 8 recovers on Under 7; Over 2 and Under 7 stay on themselves.</p></div>
         <article class="panel mh-card">
+          <div class="mh-row"><label class="mh-label" for="mhMode">Strategy</label><select id="mhMode" class="cp-in mh-input mh-mode"><option value="hedge">Hedge · Even / Odd</option><option value="ou">Over / Under hunter</option></select></div>
+          <div class="mh-stakebox" id="mhStakeBox"><label class="mh-label" for="mhStake">Stake on each side (USD)</label><input id="mhStake" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="1" inputmode="decimal"></div>
           <div class="mh-tpsl"><div><label class="mh-label" for="mhTP">Take profit (USD)</label><input id="mhTP" class="cp-in mh-input" type="number" min="0.01" step="0.01" value="5" inputmode="decimal"></div><div><label class="mh-label" for="mhSL">Stop loss (USD)</label><input id="mhSL" class="cp-in mh-input" type="number" min="0.35" step="0.01" value="10" inputmode="decimal"></div></div>
           <div class="mh-plan" id="mhPlan"></div>
+          <div class="mh-hedge-note" id="mhHedgeNote"><b>How the hedge works</b> It starts on the stronger side (Even or Odd) of the best market. After a win it stays on that side; after a loss it switches to the other side. The stake stays the same. The percentages come from the last 1,000 ticks and do not predict the next tick, and no strategy guarantees a profit.</div>
           <div class="mh-row"><label class="mh-label" for="mhMartingale">Martingale (stays on until you switch it off)</label><label class="cp-switch" aria-label="Martingale"><input type="checkbox" id="mhMartingale" checked><span></span></label></div>
           <div class="mh-row"><span class="mh-label">Markets</span><b>1-second volatilities only</b></div>
           <div class="mh-btns"><button class="cp-btn mh-go" id="mhStart" type="button">▶ Hunt</button><button class="cp-btn cp-danger" id="mhStop" type="button" disabled>■ Stop</button></div>
@@ -612,10 +615,10 @@
   <script src="real-trading.js?v=9.44"></script>
   <script src="bot-runner.js?v=9.51"></script>
   <script src="copy-trading.js?v=7.8"></script>
-  <script src="market-hunter.js?v=9.52"></script>
+  <script src="market-hunter.js?v=9.61"></script>
   <script src="sound.js?v=9.8"></script>
   <script src="enhancements.js?v=6"></script>
-  <script src="circle-ai.js?v=9.60"></script>
+  <script src="circle-ai.js?v=9.62"></script>
   <script src="install-app.js?v=5"></script>
   <script src="signal-alerts.js"></script>
   <script src="speedbot.js?v=9.9"></script>

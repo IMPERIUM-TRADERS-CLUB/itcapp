@@ -16,11 +16,12 @@
   const RATIO0 = { DIGITOVER1: 0.19, DIGITOVER2: 0.37, DIGITUNDER8: 0.19, DIGITUNDER7: 0.37 };   // first guess of profit per 1 staked; replaced by the real payout after a win
   const WIN_MIN = { over1: 0.75, over2: 0.65, under8: 0.75, under7: 0.65 };   // the last 100 ticks must also be at least this often winning digits for the setup
   const STAKE_PARTS = 4;                                  // the starting stake is the stop loss divided by this (never below 0.35)
-  const S = { martingale: store.get('itc_mh_martingale', true), running: false, plan: null, net: 0, cycle: 0, wins: 0, losses: 0, trades: 0,
+  const S = { mode: store.get('itc_mh_mode', 'hedge'), hedge: null, pairedN: 0, splitN: 0, martingale: store.get('itc_mh_martingale', true), running: false, plan: null, net: 0, cycle: 0, wins: 0, losses: 0, trades: 0,
     lastStake: 0, lastWon: false, lastKey: undefined, ratios: {}, lock: null, cool: new Map(), dots: [], lastEpoch: {}, errors: 0, currency: 'USD', scan: [] };
 
   const tpVal = () => Number($('mhTP').value) || 0, slVal = () => Number($('mhSL').value) || 0;
   function planFor(tp = tpVal(), sl = slVal()) {
+    if (S.mode === 'hedge') { const stake = R2(Number($('mhStake') && $('mhStake').value) || 0); return { tp: R2(tp), sl: R2(sl), base: stake, ok: tp > 0 && sl >= 0.35 && stake >= 0.35 }; }
     const base = Math.max(0.35, Math.floor(sl / STAKE_PARTS * 100) / 100);
     return { tp: R2(tp), sl: R2(sl), base, ok: tp > 0 && sl >= 0.35 };
   }
@@ -40,6 +41,10 @@
   }
   function paintPlan() {
     const p = planFor(); if (!S.running) S.plan = p;
+    if (S.mode === 'hedge') {
+      if (!p.ok) { $('mhPlan').textContent = 'Enter a stake of at least 0.35, a take profit above 0 and a stop loss of at least 0.35.'; return; }
+      $('mhPlan').innerHTML = `<div><span>Stake on each side</span><b>${p.base.toFixed(2)}</b></div><div><span>Staked per round</span><b>${(2 * p.base).toFixed(2)}</b></div><div><span>Take profit</span><b class=\"g\">+${p.tp.toFixed(2)}</b></div><div><span>Stop loss</span><b class=\"r\">-${p.sl.toFixed(2)}</b></div>`; return;
+    }
     if (!p.ok) { $('mhPlan').textContent = 'Set a take profit above 0 and a stop loss of at least 0.35. The stake is chosen for you.'; return; }
     const note = 'It scans for the best Over 1, Over 2, Under 8 or Under 7 market, then stays on that market. After a loss: Over 1 recovers on Over 2, Over 2 stays on Over 2, Under 8 recovers on Under 7, Under 7 stays on Under 7. Starting stake = stop loss ÷ 4.';
     $('mhPlan').innerHTML = `<div><span>Starting stake (auto)</span><b>${p.base.toFixed(2)}</b></div><div><span>Martingale</span><b>${S.martingale ? 'ON · recovers after a loss' : 'OFF · flat stake'}</b></div><div><span>Take profit</span><b class=\"g\">+${p.tp.toFixed(2)}</b></div><div><span>Stop loss</span><b class=\"r\">-${p.sl.toFixed(2)}</b></div>`
@@ -50,6 +55,7 @@
     $('mhW').textContent = S.wins; $('mhL').textContent = S.losses; $('mhT').textContent = S.trades;
     $('mhRate').textContent = S.wins + S.losses ? Math.round(S.wins / (S.wins + S.losses) * 100) + '%' : '-';
     const p = S.running ? S.plan : planFor();
+    if (S.mode === 'hedge') { $('mhStakeNow').textContent = p.ok ? p.base.toFixed(2) : '-'; $('mhDots').innerHTML = S.dots.slice(-16).map(d => `<i class="${d ? 'w' : 'l'}"></i>`).join(''); return; }
     $('mhStakeNow').textContent = S.running || S.trades ? nextStake(upcomingKey()).toFixed(2) : (p.ok ? p.base.toFixed(2) : '-');
     $('mhDots').innerHTML = S.dots.slice(-16).map(d => `<i class="${d ? 'w' : 'l'}"></i>`).join('');
   }
@@ -154,7 +160,54 @@
       await sleep(20);
     }
   }
-  const lockUi = on => { ['mhTP', 'mhSL', 'mhMartingale'].forEach(id => { if ($(id)) $(id).disabled = on; }); };
+  // ---- HEDGE (alternating Even / Odd) ----
+  // It scans the 1-second markets with the ITC AI Even / Odd rules, locks the market with the highest probability for one side and starts on that side.
+  // A win keeps the same side; a loss switches to the other side (Even -> Odd -> Even ...). Flat stake, until take profit or stop loss.
+  function bestEvenOdd() {
+    const md = window.ITC_MARKET_DATA, R = window.ITC_AI_RULES; if (!md || !R) return null; let best = null;
+    for (const mk of md.getMarkets(1000)) {
+      if (/^Jump /.test(mk.name || '') || !(R.is1s && R.is1s(mk.name)) || (mk.ticks || []).length < 300 || S.cool.get(mk.name) > Date.now()) continue;
+      const c = R.scanMarket(mk, 'evenodd', 1000).find(x => x.eligible && x.side); if (!c) continue;
+      const cand = { market: mk.name, symbol: mk.symbol, side: c.side, rules: c.rules || 1, score: c.score, why: c.label };
+      if (!best || cand.rules > best.rules || (cand.rules === best.rules && cand.score > best.score)) best = cand;
+    }
+    return best;
+  }
+  const sideName = x => (x === 'even' ? 'Even' : 'Odd');
+  async function loopHedge() {
+    const md = window.ITC_MARKET_DATA, T = window.ITC_TRADE;
+    while (S.running) {
+      if (!canTrade()) { stop('Log in with Deriv to trade.'); return; }
+      if (!S.hedge) {
+        const b = bestEvenOdd(); if (!b) { status('Scanning for the Even / Odd market with the highest probability…'); await sleep(300); continue; }
+        S.hedge = b; S.lastEpoch[b.symbol] = latest(b.symbol); status('Found ' + b.market + ' · starting on ' + sideName(b.side) + '. Staying on this market.');
+      }
+      const H = S.hedge, ticks = md.getTicks(H.symbol, 1), last = ticks[ticks.length - 1];
+      if (!last || last.epoch <= (S.lastEpoch[H.symbol] || 0)) { await sleep(25); continue; }   // one trade per new tick
+      S.lastEpoch[H.symbol] = last.epoch;
+      const stake = Math.max(0.35, Math.min(S.plan.base, R2(S.plan.sl + S.net)));   // never risks more than what is left before the stop loss
+      if (Number.isFinite(balance) && stake > balance + 1e-9) { stop('Stopped: the stake (' + stake.toFixed(2) + ') is more than your balance.', 'loss'); return; }
+      $('mhNow').textContent = 'Hedge · ' + H.market + ' · ' + sideName(H.side) + ' · switches to ' + sideName(H.side === 'even' ? 'odd' : 'even') + ' after a loss';
+      status('Trading ' + sideName(H.side) + ' on ' + H.market);
+      let r;
+      try { const c = await T.trade({ symbol: H.symbol, symbolName: H.market, contract_type: H.side === 'even' ? 'DIGITEVEN' : 'DIGITODD', amount: stake, duration: 1 }); S.lastStake = stake; r = await Promise.race([c.settled, sleep(25000).then(() => ({ profit: 0, timeout: true }))]); S.errors = 0; }
+      catch (e) {
+        if (!S.running || e.halt) return;
+        const msg = String(e.message || e);
+        if (/no return|ContractBuyValidation|not offered|not available|suspended|market is closed|unavailable/i.test(msg)) { S.cool.set(H.market, Date.now() + 120000); S.hedge = null; S.errors++; status('Skipped ' + H.market + ': ' + msg, 'warn'); if (S.errors >= 12) { stop('Stopped: Deriv refused the available contracts. ' + msg); return; } await sleep(300); continue; }
+        S.errors++; status('Retrying… ' + msg, 'warn'); if (S.errors >= 4) { stop('Stopped: ' + msg); return; } await sleep(1200); continue;
+      }
+      const profit = Number(r.profit) || 0, won = profit > 0;
+      S.net = R2(S.net + profit); S.cycle = S.net; S.trades++; S.dots.push(won); S.lastWon = won;
+      if (won) S.wins++; else { S.losses++; H.side = H.side === 'even' ? 'odd' : 'even'; }   // a loss switches the side
+      paintResults();
+      if (S.net >= S.plan.tp) { stop('Take profit reached', 'win'); return; }
+      if (S.net <= -S.plan.sl) { stop('Stop loss reached', 'loss'); return; }
+      if (R2(S.plan.sl + S.net) < 0.35) { stop('Stop loss reached: what is left before it is below the smallest stake (0.35).', 'loss'); return; }
+      await sleep(20);
+    }
+  }
+  const lockUi = on => { ['mhTP', 'mhSL', 'mhMartingale', 'mhStake', 'mhMode'].forEach(id => { if ($(id)) $(id).disabled = on; }); };
   function start() {
     if (S.running) return;
     { const chk = window.ITC_TRADE && window.ITC_TRADE.accountCheck && window.ITC_TRADE.accountCheck(); if (chk && !chk.ok) { status(chk.message, 'warn'); paintAcct(); return; } if (chk && Number.isFinite(chk.balance) && chk.balance < 0.35) { status('Balance too low to trade (' + chk.balance.toFixed(2) + '). Fund the account first.', 'warn'); return; } }
@@ -162,11 +215,12 @@
     const plan = planFor(); if (!plan.ok) { status('Set a take profit above 0 and a stop loss of at least 0.35.', 'warn'); return; }
     { const g = window.ITC_LOCK && window.ITC_LOCK.acquire('Market Hunter'); if (g && !g.ok) { status(g.by + ' is running. Stop it first: only one bot can trade at a time.', 'warn'); return; } }
     if (Number.isFinite(balance) && balance < plan.base) { if (window.ITC_LOCK) window.ITC_LOCK.release('Market Hunter'); status('Balance ' + balance.toFixed(2) + ' is below the starting stake of ' + plan.base.toFixed(2) + '. Lower the stop loss or fund the account.', 'warn'); return; }
-    store.set('itc_mh_tp', plan.tp); store.set('itc_mh_sl', plan.sl);
-    Object.assign(S, { running: true, plan, net: 0, cycle: 0, wins: 0, losses: 0, trades: 0, lastStake: 0, lastWon: false, lastKey: undefined, lock: null, errors: 0, dots: [], lastEpoch: {} });
-    rescan(); clearInterval(scanTimer); scanTimer = setInterval(rescan, 500);   // keeps hunting for a better market even while a trade is open
+    store.set('itc_mh_tp', plan.tp); store.set('itc_mh_sl', plan.sl); if (S.mode === 'hedge') store.set('itc_mh_stake', plan.base);
+    Object.assign(S, { hedge: null, pairedN: 0, splitN: 0, running: true, plan, net: 0, cycle: 0, wins: 0, losses: 0, trades: 0, lastStake: 0, lastWon: false, lastKey: undefined, lock: null, errors: 0, dots: [], lastEpoch: {} });
+    clearInterval(scanTimer); scanTimer = null;
+    if (S.mode !== 'hedge') { rescan(); scanTimer = setInterval(rescan, 500); }   // keeps hunting for a better market even while a trade is open
     $('mhStart').disabled = true; $('mhStop').disabled = false; lockUi(true);
-    paintResults(); status('Hunting…'); loop();
+    paintResults(); status(S.mode === 'hedge' ? 'Starting the hedge…' : 'Hunting…'); (S.mode === 'hedge' ? loopHedge : loop)();
   }
   function stop(why, kind) {
     if (window.ITC_LOCK) window.ITC_LOCK.release('Market Hunter');
@@ -185,5 +239,16 @@
   ['itc:deriv-accounts', 'itc:oauth-authorized'].forEach(ev => window.addEventListener(ev, () => { paintAcct(); paintPlan(); }));
   window.addEventListener('itc:trade-halt', e => { if (S.running) stop((e.detail && e.detail.message) || 'Stopped: trading halted.'); });
   document.getElementById('headerAccountMode')?.addEventListener('change', () => setTimeout(paintAcct, 600));
+  // ---- strategy switch: Hedge (Even + Odd) or the Over / Under hunter ----
+  const INTRO_OU = $('mhIntro') ? $('mhIntro').textContent : '';
+  function applyModeUi() {
+    const hedge = S.mode === 'hedge', mg = $('mhMartingale') && $('mhMartingale').closest('.mh-row');
+    $('mhMode').value = S.mode; $('mhStakeBox').style.display = hedge ? '' : 'none'; $('mhHedgeNote').style.display = hedge ? '' : 'none'; if (mg) mg.style.display = hedge ? 'none' : '';
+    if ($('mhIntro')) $('mhIntro').textContent = hedge ? 'Set your stake, take profit and stop loss. The hunter finds the 1-second market with the highest probability for Even or Odd and starts on that side. A win keeps the same side; a loss switches to the other side. It keeps going until take profit or stop loss.' : INTRO_OU;
+  }
+  $('mhStake').value = store.get('itc_mh_stake', 1);
+  $('mhMode').addEventListener('change', () => { if (S.running) { $('mhMode').value = S.mode; return; } S.mode = $('mhMode').value === 'ou' ? 'ou' : 'hedge'; store.set('itc_mh_mode', S.mode); applyModeUi(); S.plan = planFor(); paintPlan(); paintResults(); });
+  $('mhStake').addEventListener('input', () => { paintPlan(); paintResults(); });
+  applyModeUi(); paintPlan(); paintResults();
   window.ITC_HUNTER = { planFor, state: S, pick, candidates };
 })();

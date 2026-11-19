@@ -116,7 +116,7 @@
   $('#scannerSide')?.addEventListener('change', () => { $('#circleAISide').value = $('#scannerSide').value; updateRuleText(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
   let scanning = null;
-  const SCAN_MS = 30000, SCAN_STEP = 250, ENOUGH = 1;
+  const SCAN_MS = 30000, SCAN_STEP = 250, ENOUGH = 1, CONFIRM_MS = 4000, MIN_SCAN_MS = 3000;   // about 4 seconds to be sure of a market
   const entryText = p => p.entryDigits && p.entryDigits.length ? p.entryDigits.map(e => e.digit).join(' · ') : '';
   function scan() {
     const status = $('#circleAIStatus'), resultBox = $('#circleAIResult'), btn = $('#circleAIScan');
@@ -130,19 +130,24 @@
     if (!getMarkets().length) { status.className='circle-ai-status error'; status.textContent='No market feed is available yet. Wait a moment for the live ticks and try again.'; return; }
     const ctx = { stake, tp, sl, windowSize }, t0 = Date.now(), label = btn.textContent;
     scanning = { label, ctx, last: null, timer: null }; btn.textContent = '■ Stop scan';
+    const stable = { key: null, since: Date.now() };
     const step = () => {
       const evaluated = scanAll(state.contract, windowSize), good = evaluated.filter(x => x.eligible), secs = Math.round((Date.now() - t0) / 1000);
       if (scanning) scanning.last = evaluated;
-      if (good.length >= ENOUGH || Date.now() - t0 >= SCAN_MS) { clearInterval(scanning.timer); scanning = null; btn.textContent = label; finish(evaluated, ctx, ''); return; }
+      // Not the first hit: the best setup has to stay the best for CONFIRM_MS before the AI is "sure" and starts trading it.
+      const now = Date.now(), top = good.filter(x => Number.isFinite(x.score)).sort(sortSetups)[0], key = top ? top.market + '|' + top.entry : null;
+      if (key !== stable.key) { stable.key = key; stable.since = now; }
+      const sure = Boolean(top) && now - stable.since >= CONFIRM_MS && now - t0 >= MIN_SCAN_MS;
+      if (sure || now - t0 >= SCAN_MS) { clearInterval(scanning.timer); scanning = null; btn.textContent = label; finish(evaluated, ctx, ''); return; }
       status.className = 'circle-ai-status';
-      status.innerHTML = `<span>Scanning ${getMarkets().length} markets… ${secs}s · ${good.length} found</span><i class="scan-bar"><b style="width:${Math.min(100, (Date.now() - t0) / SCAN_MS * 100)}%"></b></i>`;
+      status.innerHTML = `<span>${top ? `Checking ${top.market} · ${top.entry}… making sure` : `Scanning ${getMarkets().length} markets…`} ${secs}s</span><i class="scan-bar"><b style="width:${Math.min(100, top ? Math.max((now - t0) / SCAN_MS * 100, (now - stable.since) / CONFIRM_MS * 100) : (now - t0) / SCAN_MS * 100)}%"></b></i>`;
     };
     window.ITC_SOUND?.startScan?.('ai');
     step(); if (scanning) scanning.timer = setInterval(step, SCAN_STEP);
   }
   function entryRuleText(p) {
-    if (p.side === 'over') return `wait for ${Array.from({ length: p.target + 1 }, (_, k) => k).join(' or ')}, then trade on the first digit above ${p.target}`;
-    if (p.side === 'under') return `wait for ${Array.from({ length: 10 - p.target }, (_, k) => p.target + k).join(' or ')}, then trade on the first digit below ${p.target}`;
+    if (p.side === 'over') return `wait for at least two of ${Array.from({ length: p.target + 1 }, (_, k) => k).join(' / ')} in a row, then trade on the first digit above ${p.target}`;
+    if (p.side === 'under') return `wait for at least two of ${Array.from({ length: 10 - p.target }, (_, k) => p.target + k).join(' / ')} in a row, then trade on the first digit below ${p.target}`;
     if (p.side === 'even' || p.side === 'odd') { const o = p.side === 'even' ? 'odd' : 'even'; return `wait for the least-seen ${o} digit (red or yellow bar), then another ${o}; the first ${p.side} that appears is the entry`; }
     return '';
   }
@@ -191,13 +196,17 @@
     return false;
   }
   // ---- ITC AI entry rules ----
-  // Over / Under: the market must first print one of the LOSING digits for that contract (Over 1: 0 or 1 · Over 2: 0, 1 or 2 ·
-  // Under 8: 8 or 9 · Under 7: 7, 8 or 9). Then the first WINNING digit that follows is the entry: the trade is placed right then.
+  // Over / Under: the market must first print at least TWO losing digits IN A ROW for that contract (Over 1: 0 or 1 · Over 2: 0, 1 or 2 ·
+  // Under 8: 8 or 9 · Under 7: 7, 8 or 9; more than two is fine, e.g. 7, 8, 9, 8). The first WINNING digit after that is the entry: the trade goes in right then.
   async function waitForOverUnder(pick, run, side, t) {
     const md = window.ITC_MARKET_DATA, lose = d => (side === 'over' ? d <= t : d >= t), win = d => (side === 'over' ? d > t : d < t);
-    const last = (md.getTicks(pick.symbol, 1) || [])[0]; let seen = last ? last.epoch : 0, armed = last ? lose(last.digit) : false;
+    const recent = md.getTicks(pick.symbol, 8) || []; let seen = recent.length ? recent[recent.length - 1].epoch : 0, streak = 0;
+    for (let i = recent.length - 1; i >= 0 && lose(recent[i].digit); i--) streak++;   // losing digits already in a row when the wait begins
     while (!run.stop) {
-      for (const k of (md.getTicks(pick.symbol, 8) || []).filter(x => x.epoch > seen)) { seen = k.epoch; if (armed && win(k.digit)) return true; armed = lose(k.digit); }
+      for (const k of (md.getTicks(pick.symbol, 8) || []).filter(x => x.epoch > seen)) {
+        seen = k.epoch;
+        if (lose(k.digit)) streak++; else { if (streak >= 2 && win(k.digit)) return true; streak = 0; }
+      }
       await sleepMs(30);
     }
     return false;
@@ -259,9 +268,9 @@
         if (!(await waitForPattern(pick, run))) return;
       }
       const useRec = inRec && pick.martingale && pick.recovery !== undefined, barrier = useRec ? pick.recovery : pick.target, entryNow = useRec ? (pick.side === 'over' ? 'Over ' : 'Under ') + pick.recovery + ' (recovery)' : pick.entry;
-      if (pick.side === 'over' || pick.side === 'under') {
+      if ((pick.side === 'over' || pick.side === 'under') && !useRec) {   // recovery trades (after a loss, martingale on) go in immediately; only a normal trade waits for the entry
         const o = pick.side === 'over', lz = o ? Array.from({ length: barrier + 1 }, (_, k) => k) : Array.from({ length: 10 - barrier }, (_, k) => barrier + k);
-        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for ' + lz.join(' or ') + ', then any digit ' + (o ? 'above ' : 'below ') + barrier + ' on ' + pick.market + ' \u00B7 will trade ' + entryNow + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
+        st.className = 'circle-ai-status success'; st.textContent = 'Waiting for 2 or more of ' + lz.join(' / ') + ' in a row, then any digit ' + (o ? 'above ' : 'below ') + barrier + ' on ' + pick.market + ' \u00B7 will trade ' + entryNow + ' \u00B7 net ' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' \u00B7 W' + wins + ' L' + losses;
         if (!(await waitForOverUnder(pick, run, pick.side, barrier))) return;
       } else if (pick.side === 'even' || pick.side === 'odd') {
         const t1 = pick.side === 'even' ? 'odd' : 'even';
