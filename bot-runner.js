@@ -4,6 +4,7 @@
   const O = (side, barrier, extra) => ({ contract: 'overunder', side, barrier, ...extra });
   // Strategy specs for the bundled bots (same rules as their descriptions).
   const SPECS = {
+    itc_runs: { contract: 'runs', hedge: true, side: 'RUNHIGH', duration: 5 },
     itc_diff: { contract: 'matchesdiffers', side: 'DIFFER', randomBarrier: [0, 9] },
     itc_under: O('UNDER', 8, { randomBarrier: [7, 9], recovery: { barrier: 6 } }),
     itc_over: O('OVER', 1, { randomBarrier: [0, 2], recovery: { barrier: 4 } }),
@@ -21,6 +22,35 @@
   const CT = { OVER: 'DIGITOVER', UNDER: 'DIGITUNDER', EVEN: 'DIGITEVEN', ODD: 'DIGITODD', MATCH: 'DIGITMATCH', DIFFER: 'DIGITDIFF', RISE: 'CALL', FALL: 'PUT' };
   const custom = {};
   let run = null;
+
+  // Market type / side the person changed on the builder (boxes or canvas blocks) apply to EVERY bot, not only the two scanner bots.
+  const SIDE_KIND = { OVER: 'overunder', UNDER: 'overunder', EVEN: 'evenodd', ODD: 'evenodd', MATCH: 'matchesdiffers', DIFFER: 'matchesdiffers', RISE: 'risefall', FALL: 'risefall' };
+  const FIRST_SIDE = { overunder: 'OVER', evenodd: 'EVEN', risefall: 'RISE', matchesdiffers: 'MATCH' };
+  const MIRROR = { OVER: 'UNDER', UNDER: 'OVER', EVEN: 'ODD', ODD: 'EVEN' };
+  function applyOverride(spec, ov) {
+    if (!ov || spec.contract === 'runs') return;
+    const m9 = d => 9 - d;
+    if (ov.kind && ov.kind !== spec.contract && FIRST_SIDE[ov.kind]) {   // different market type: start clean for that type
+      spec.contract = ov.kind;
+      ['recovery', 'recoveryEntry', 'randomBarrier', 'hedge'].forEach(k => { delete spec[k]; });
+      if (spec.entry && spec.entry.kind !== 'digit') delete spec.entry;
+      spec.side = ov.side && SIDE_KIND[ov.side] === ov.kind ? ov.side : FIRST_SIDE[ov.kind];
+      spec.duration = ov.kind === 'risefall' ? 5 : 1;
+      spec.barrier = ov.kind === 'overunder' ? (spec.side === 'UNDER' ? 8 : 1) : ov.kind === 'matchesdiffers' ? 5 : undefined;
+      return;
+    }
+    if (ov.side && SIDE_KIND[ov.side] === spec.contract && ov.side !== spec.side) {   // same type, other side (Over <-> Under, Even <-> Odd): mirror the bot's digits
+      if (MIRROR[ov.side] === spec.side) {
+        if (Number.isFinite(spec.barrier)) spec.barrier = m9(spec.barrier);
+        if (Array.isArray(spec.randomBarrier)) spec.randomBarrier = [m9(spec.randomBarrier[1]), m9(spec.randomBarrier[0])];
+        if (spec.recovery && Number.isFinite(spec.recovery.barrier)) spec.recovery = { ...spec.recovery, barrier: m9(spec.recovery.barrier) };
+        if (spec.recoveryEntry) spec.recoveryEntry = { ...spec.recoveryEntry, test: spec.recoveryEntry.test === 'above' ? 'below' : spec.recoveryEntry.test === 'below' ? 'above' : spec.recoveryEntry.test, threshold: Number.isFinite(spec.recoveryEntry.threshold) ? m9(spec.recoveryEntry.threshold) : spec.recoveryEntry.threshold };
+        if (spec.entry && spec.entry.kind === 'digit') spec.entry = { ...spec.entry, digit: m9(spec.entry.digit) };
+        if (spec.entry && spec.entry.kind === 'streak' && spec.contract === 'evenodd') { const f = t => (t === 'odd' ? 'even' : t === 'even' ? 'odd' : t); spec.entry = { ...spec.entry, test: f(spec.entry.test), then: spec.entry.then ? f(spec.entry.then) : spec.entry.then }; }
+      }
+      spec.side = ov.side;
+    }
+  }
 
   function entryOk(e, digits) {
     if (!e) return true;
@@ -48,14 +78,16 @@
       const k = KIND[o.contract] || 'evenodd'; spec.contract = k; spec.side = o.side || spec.side;
       spec.barrier = (k === 'overunder' || k === 'matchesdiffers') ? Number(o.digit) : undefined; spec.duration = k === 'risefall' ? 5 : 1;
     } else if (o.side && spec.ui && spec.ui.includes('side')) { spec.side = o.side; if (o.digit !== undefined) spec.barrier = Number(o.digit); }
+    if (o.override && o.botId !== 'my_markettype' && o.botId !== 'my_scannerbot') applyOverride(spec, o.override);
     // Prediction digits you changed on the canvas (normal and recovery) replace the bot's built-in ones.
+    if (Array.isArray(o.predictionRange) && (spec.contract === 'overunder' || spec.contract === 'matchesdiffers')) { spec.randomBarrier = [o.predictionRange[0], o.predictionRange[1]]; }
     if (Number.isFinite(o.prediction) && (spec.contract === 'overunder' || spec.contract === 'matchesdiffers')) { spec.barrier = o.prediction; delete spec.randomBarrier; }
     if (Number.isFinite(o.recoveryPrediction) && spec.recovery) spec.recovery = { ...spec.recovery, barrier: o.recoveryPrediction };
     if (o.entryDigit !== undefined && spec.entry && spec.entry.kind === 'digit') spec.entry = { ...spec.entry, digit: Number(o.entryDigit) };
     const bulkN = o.bulk ? Math.max(2, Math.min(10, Math.floor(o.bulkN) || 3)) : 1;
     const rb = spec.randomBarrier; if (rb && !Array.isArray(rb)) spec.randomBarrier = [rb.from, rb.to];
     const sym = o.symbol || spec.symbol || '1HZ100V';
-    const st = { spec, base: Math.max(0.35, Number(o.stake) || 1), mult: o.martingale === false ? 1 : (Number(o.multiplier) || spec.martingale || 2), entered: false, maxLosses: Math.max(1, Math.floor(Number(o.maxLosses)) || 3), lossRun: 0, tp: Number(o.tp) || 0, sl: Number(o.sl) || 0, stake: 0, profit: 0, n: 0, recovering: false, busy: false, stopped: false, digits: [] };
+    const st = { spec, base: Math.max(0.35, Number(o.stake) || 1), mult: (o.martingale === false || spec.contract === 'runs') ? 1 : (Number(o.multiplier) || spec.martingale || 2), entered: false, maxLosses: Math.max(1, Math.floor(Number(o.maxLosses)) || 3), lossRun: 0, tp: Number(o.tp) || 0, sl: Number(o.sl) || 0, stake: 0, profit: 0, n: 0, recovering: false, busy: false, stopped: false, digits: [] };
     st.stake = st.base;
     const log = (m, s) => o.log && o.log(m, s || 'LIVE');
     const finish = why => {
@@ -87,19 +119,21 @@
       st.busy = true;
       const { side, barrier } = pick();
       try {
+        // Only Ups / Only Downs: both contracts (5 ticks) are bought together right after a tick; the round ends when both have finished.
+        const runSides = sp.contract === 'runs' ? (sp.hedge ? ['RUNHIGH', 'RUNLOW'] : [sp.side]) : null, runDur = Math.max(2, Math.min(5, Math.floor(sp.duration) || 5));
         const params = { symbol: sym, contract_type: CT[side], amount: st.stake, duration: sp.duration || 1, barrier: sp.contract === 'evenodd' || sp.contract === 'risefall' ? undefined : barrier };
-        const settled = await Promise.allSettled(Array.from({ length: bulkN }, () => T.trade(params)));
+        const settled = runSides ? await Promise.allSettled(runSides.map(ct => T.trade({ symbol: sym, contract_type: ct, amount: st.stake, duration: runDur }))) : await Promise.allSettled(Array.from({ length: bulkN }, () => T.trade(params)));
         const placed = settled.filter(x => x.status === 'fulfilled').map(x => x.value);
         if (!placed.length) throw settled[0].reason;
         const results = await Promise.all(placed.map(c => c.settled));
         const runProfit = results.reduce((s, x) => s + x.profit, 0), won = runProfit > 0;
         st.n++; st.profit += runProfit;
-        log((won ? 'WIN ' : 'LOSS ') + runProfit.toFixed(2) + ' · ' + side + (sp.contract === 'evenodd' || sp.contract === 'risefall' ? '' : ' ' + barrier) + (bulkN > 1 ? ' · bulk ' + placed.length + '/' + bulkN : '') + ' · stake ' + st.stake.toFixed(2) + ' · total ' + st.profit.toFixed(2) + ' · run ' + st.n, won ? 'WON' : 'LOST');
+        log((won ? 'WIN ' : 'LOSS ') + runProfit.toFixed(2) + ' · ' + (runSides ? (runSides.length > 1 ? 'Only Ups + Only Downs · ' + runDur + ' ticks' : (runSides[0] === 'RUNHIGH' ? 'Only Ups' : 'Only Downs')) : side + (sp.contract === 'evenodd' || sp.contract === 'risefall' ? '' : ' ' + barrier)) + (bulkN > 1 ? ' · bulk ' + placed.length + '/' + bulkN : '') + ' · stake ' + st.stake.toFixed(2) + ' · total ' + st.profit.toFixed(2) + ' · run ' + st.n, won ? 'WON' : 'LOST');
         if (won) { st.stake = st.base; st.recovering = false; st.lossRun = 0; } else { st.lossRun++; st.stake = Math.round(st.stake * st.mult * 100) / 100; st.recovering = Boolean(sp.recovery) || st.recovering; }
         o.onResult && o.onResult(results[0], st);
         if (st.tp && st.profit >= st.tp) return finish('Take profit reached'), true;
         if (st.sl && st.profit <= -st.sl) return finish('Stop loss reached'), true;
-        if (st.lossRun >= st.maxLosses) return finish('Consecutive losses limit reached (' + st.maxLosses + ' in a row)'), true;
+        if (sp.contract !== 'runs' && st.lossRun >= st.maxLosses) return finish('Consecutive losses limit reached (' + st.maxLosses + ' in a row)'), true;
       } catch (err) { log('Error: ' + (err.message || err), 'ERROR'); finish('Stopped on error'); return true; }
       st.busy = false; return false;
     }
@@ -112,7 +146,8 @@
       A.subscribe({ ticks: sym, subscribe: 1 }, m => { onTick(m); return st.stopped; });
     }
     catch (e) { run = null; if (window.ITC_LOCK) window.ITC_LOCK.release('Bot Runner'); return { error: e.message || String(e) }; }
-    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' with ' + (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account') + ' · stake ' + st.base + ' · take profit ' + (st.tp || 'off') + ' · stop loss ' + (st.sl || 'off'), 'LIVE');
+    const desc = spec.contract === 'runs' ? 'Only Ups / Downs' : spec.side + (spec.contract === 'overunder' || spec.contract === 'matchesdiffers' ? ' ' + (spec.randomBarrier ? spec.randomBarrier[0] + '-' + spec.randomBarrier[1] : spec.barrier) + (spec.recovery && spec.recovery.barrier !== undefined ? ' (recovery ' + spec.recovery.barrier + ')' : '') : '');
+    log('Running ' + (o.name || o.botId) + ' on ' + sym + ' · ' + desc + ' with ' + (A.getStatus().account.account_type === 'real' ? 'REAL account' : 'DEMO account') + ' · stake ' + st.base + ' · take profit ' + (st.tp || 'off') + ' · stop loss ' + (st.sl || 'off'), 'LIVE');
     return { ok: true };
   }
   window.ITC_RUNNER = { start, stop: () => run && run.stop(), running: () => Boolean(run), togglePause: () => (run ? run.togglePause() : false), paused: () => Boolean(run && run.paused()), specs: SPECS, custom };

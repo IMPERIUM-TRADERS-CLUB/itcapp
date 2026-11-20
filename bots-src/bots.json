@@ -197,6 +197,23 @@
       "tp": 5,
       "sl": 20,
       "losses": 3
+    },
+    {
+      "id": "itc_runs",
+      "name": "ITC Ups & Downs Hedge",
+      "description": "Hedge bot: every round it buys Only Ups and Only Downs together on a 5-tick contract. You set the stake, take profit and stop loss.",
+      "contract": "Only Ups / Only Downs",
+      "martingale": false,
+      "multiplier": 1,
+      "file": "ITC Ups and Downs Hedge.xml",
+      "market": "Volatility 100 (1s) Index",
+      "symbol": "1HZ100V",
+      "stake": 1,
+      "tp": 5,
+      "sl": 20,
+      "section": "ai",
+      "icon": "⚖️",
+      "losses": 3
     }
   ]
 }

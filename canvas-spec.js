@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const SIDE = { DIGITOVER: 'OVER', DIGITUNDER: 'UNDER', DIGITEVEN: 'EVEN', DIGITODD: 'ODD', DIGITMATCH: 'MATCH', DIGITDIFF: 'DIFFER', CALL: 'RISE', PUT: 'FALL' };
-  const KIND = { overunder: 'overunder', evenodd: 'evenodd', matchesdiffers: 'matchesdiffers', risefall: 'risefall', callput: 'risefall' };
+  const KIND = { runs: 'runs', overunder: 'overunder', evenodd: 'evenodd', matchesdiffers: 'matchesdiffers', risefall: 'risefall', callput: 'risefall' };
   const targetOf = (block, input) => { try { const i = block && block.getInput(input); return i && i.connection && i.connection.targetBlock(); } catch (_) { return null; } };
   const varName = b => { try { const f = b.getField('VAR'); return f ? String(f.getText()).trim() : ''; } catch (_) { return ''; } };
   // A value block is either a plain number or a variable (e.g. Stake -> Initial Stake -> 1): follow variables back to the number you typed.
@@ -26,6 +26,13 @@
     if (!mk || !tt || !op) return { error: 'Add the Trade parameters blocks (market, trade type and trade options) to the canvas first.' };
     const kind = KIND[tt.getFieldValue('TRADETYPE_LIST')];
     if (!kind) return { error: 'This trade type is not supported yet. Use Rise/Fall, Even/Odd, Over/Under or Matches/Differs.' };
+    if (kind === 'runs') {   // Only Ups / Only Downs: both at once when the contract type is Both or both Purchase blocks are present
+      const codes = blocks.filter(b => b.type === 'purchase').map(b => b.getFieldValue('PURCHASE_LIST')), typeV = ct && ct.getFieldValue('TYPE_LIST');
+      const hedge = typeV === 'both' || (codes.includes('RUNHIGH') && codes.includes('RUNLOW')), only = codes.find(c => c === 'RUNHIGH' || c === 'RUNLOW') || (typeV === 'RUNLOW' ? 'RUNLOW' : 'RUNHIGH');
+      const st0 = num(op, 'AMOUNT', blocks), du0 = num(op, 'DURATION', blocks), tp0 = namedVar(blocks, 'target profit'), sl0 = namedVar(blocks, 'stop loss');
+      const sp0 = { contract: 'runs', hedge, side: hedge ? 'RUNHIGH' : only, symbol: mk.getFieldValue('SYMBOL_LIST') || '1HZ100V', duration: Number.isFinite(du0) ? Math.max(2, Math.min(5, Math.floor(du0))) : 5, stake: Number.isFinite(st0) && st0 >= 0.35 ? st0 : 1, stakeFromBlock: Number.isFinite(st0) && st0 >= 0.35 };
+      if (Number.isFinite(tp0) && tp0 >= 0) sp0.tp = tp0; if (Number.isFinite(sl0) && sl0 >= 0) sp0.sl = sl0; return sp0;
+    }
     let code = pu && pu.getFieldValue('PURCHASE_LIST'); if (!code || code === 'both') code = ct && ct.getFieldValue('TYPE_LIST');
     if (!code || String(code).toLowerCase() === 'both') code = kind === 'risefall' ? 'CALL' : kind === 'evenodd' ? 'DIGITEVEN' : kind === 'overunder' ? 'DIGITOVER' : 'DIGITDIFF';
     const side = SIDE[code]; if (!side) return { error: 'Choose a contract type in the Purchase conditions block.' };
@@ -72,6 +79,12 @@
       out.pred = pred; out.rec = rec;
       Object.keys(out).forEach(k => { if (!Number.isFinite(out[k]) || out[k] < 0) out[k] = NaN; });
       out.pred = Number.isFinite(out.pred) && out.pred <= 9 ? Math.floor(out.pred) : NaN; out.rec = Number.isFinite(out.rec) && out.rec <= 9 ? Math.floor(out.rec) : NaN;
+      // Every Prediction block (numbers or a random range) so an edit on any of them is noticed.
+      const rangeOf = b => { const t = targetOf(b, 'VALUE'); if (!t || t.type !== 'math_random_int') return null; const f = valueOf(targetOf(t, 'FROM'), blocks, 0), to = valueOf(targetOf(t, 'TO'), blocks, 0); if (!Number.isFinite(f) || !Number.isFinite(to)) return null; return [Math.max(0, Math.min(9, Math.floor(Math.min(f, to)))), Math.max(0, Math.min(9, Math.floor(Math.max(f, to))))]; };
+      const item = b => { const r = rangeOf(b); if (r) return r; const v = val(b); return Number.isFinite(v) && v >= 0 && v <= 9 ? Math.floor(v) : null; };
+      const ordered = preds.slice().sort((a, b) => (b.getRootBlock().type === 'trade_definition') - (a.getRootBlock().type === 'trade_definition'));
+      out.predList = ordered.filter(b => b.getRootBlock().type === 'trade_definition' || branchOf(b) !== 'ELSE').map(item);
+      out.recList = ordered.filter(b => b.getRootBlock().type !== 'trade_definition' && branchOf(b) === 'ELSE').map(item);
       const mk = blocks.find(b => b.type === 'trade_definition_market'); out.symbol = mk ? (mk.getFieldValue('SYMBOL_LIST') || '') : '';
       return out;
     } catch (_) { return null; }

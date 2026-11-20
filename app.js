@@ -888,7 +888,10 @@
   function currentUi() {
     const R = window.ITC_RUNNER; if (!R) return [];
     const spec = R.specs[R.forced || loadedImportedBot] || R.custom[R.forced || loadedImportedBot]; if (!spec) return [];
-    return spec.ui || (spec.entry && spec.entry.kind === 'digit' ? ['entry'] : []);
+    if (spec.ui) return spec.ui;
+    const ui = spec.entry && spec.entry.kind === 'digit' ? ['entry'] : [];
+    if (!R.forced && spec.contract && spec.contract !== 'runs') ui.push('side');   // Side (Over/Under, Even/Odd...) can be changed on any library bot
+    return ui;
   }
   function updateExtras() {
     try { setTimeout(() => document.dispatchEvent(new CustomEvent('itc:bot-loaded')), 0); } catch (_) {}
@@ -948,10 +951,12 @@
   // Consecutive Loss Limit, Multiplier, Entry Digit) and the matching Trade parameters box follows it at once;
   // edit a box and the bot trades that value. Run always reads the boxes after a final sync, so nothing is ignored.
   const touchedBox = { stake: false, tp: false, sl: false, losses: false, mult: false, mart: false, entry: false }, lastBlock = {}, predEdit = {};
+  // What you changed for the market, market type (contract type) and side, from the boxes OR the canvas blocks: the last change wins and is what the bot trades.
+  const ov = { kind: null, side: null, sym: null }; let ovMute = false;
   const PARAM_BOX = { stake: '#stakeInput', tp: '#takeProfitInput', sl: '#stopLossInput', losses: '#maxRunsInput', mult: '#multiplierInput', entry: '#xEntry' };
   Object.keys(PARAM_BOX).forEach(k => { const el = $(PARAM_BOX[k]); if (!el) return; ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { touchedBox[k] = true; })); });
   { const mt = $('#martingaleToggle'); if (mt) mt.addEventListener('change', () => { touchedBox.mart = true; }); }
-  function resetParamSync() { Object.keys(touchedBox).forEach(k => { touchedBox[k] = false; }); Object.keys(lastBlock).forEach(k => { delete lastBlock[k]; }); Object.keys(predEdit).forEach(k => { delete predEdit[k]; }); }
+  function resetParamSync() { Object.keys(touchedBox).forEach(k => { touchedBox[k] = false; }); Object.keys(lastBlock).forEach(k => { delete lastBlock[k]; }); Object.keys(predEdit).forEach(k => { delete predEdit[k]; }); ov.kind = null; ov.side = null; ov.sym = null; }
   const symbolToMarket = sym => { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.symbol === sym); return m && m.name; } catch (_) { return null; } };
   const marketToSymbol = name => { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } };
   function syncFromBlocks(baselineOnly) {
@@ -968,14 +973,20 @@
         try { if (k === 'mult') { const m = $('#martingaleToggle'); if (m && !m.checked) { m.checked = true; $('#martingaleOptions').classList.remove('hidden'); touchedBox.mart = true; } } } catch (_) {}
       }
     });
-    // Prediction digits (normal and recovery): remembered when you change them on the canvas, then used by the bot.
-    ['pred', 'rec'].forEach(k => {
-      const v = P[k]; if (!Number.isFinite(v)) return;
-      if (baselineOnly || lastBlock[k] === undefined) { lastBlock[k] = v; return; }
-      if (v !== lastBlock[k]) {
-        lastBlock[k] = v; predEdit[k] = v;
-        if (k === 'pred') { const xd = $('#xDigit'); if (xd && currentUi().includes('digit')) xd.value = String(v); }
-      }
+    // Prediction digits (normal and recovery): every Prediction block on the canvas is watched (a number or a random range);
+    // the one you change is remembered and the bot trades it.
+    ['predList', 'recList'].forEach(k => {
+      const cur = P[k]; if (!Array.isArray(cur)) return;
+      const base = lastBlock[k];
+      if (baselineOnly || base === undefined || base.length !== cur.length) { lastBlock[k] = cur; return; }
+      let at = -1; for (let i = 0; i < cur.length; i++) { if (JSON.stringify(cur[i]) !== JSON.stringify(base[i])) { at = i; break; } }
+      if (at < 0) return;
+      lastBlock[k] = cur; const v = cur[at], norm = k === 'predList' ? 'pred' : 'rec';
+      if (Array.isArray(v)) {
+        if (v[0] === v[1]) { predEdit[norm] = v[0]; if (norm === 'pred') delete predEdit.range; }
+        else if (norm === 'pred') { predEdit.range = v; delete predEdit.pred; }
+      } else if (Number.isFinite(v)) { predEdit[norm] = v; if (norm === 'pred') delete predEdit.range; }
+      if (norm === 'pred' && Number.isFinite(predEdit.pred)) { const xd = $('#xDigit'); if (xd && currentUi().includes('digit')) xd.value = String(predEdit.pred); }
     });
     // Market: the market block on the canvas and the Market box in Trade parameters follow each other; the last change wins.
     if (P.symbol) {
@@ -997,6 +1008,53 @@
     } catch (_) {}
   }
   { const ms = $('#marketSelect'); if (ms) ms.addEventListener('change', () => setTimeout(pushMarketToBlock, 0)); }
+  const KIND_LABEL = { overunder: 'Over / Under', evenodd: 'Even / Odd', risefall: 'Rise / Fall', matchesdiffers: 'Matches / Differs' };
+  const LABEL_KIND = { 'Over / Under': 'overunder', 'Even / Odd': 'evenodd', 'Rise / Fall': 'risefall', 'Matches / Differs': 'matchesdiffers' };
+  const TT_KIND = { overunder: 'overunder', evenodd: 'evenodd', matchesdiffers: 'matchesdiffers', risefall: 'risefall', callput: 'risefall' };
+  const CODE_INFO = { DIGITOVER: ['OVER', 'overunder'], DIGITUNDER: ['UNDER', 'overunder'], DIGITEVEN: ['EVEN', 'evenodd'], DIGITODD: ['ODD', 'evenodd'], DIGITMATCH: ['MATCH', 'matchesdiffers'], DIGITDIFF: ['DIFFER', 'matchesdiffers'], CALL: ['RISE', 'risefall'], PUT: ['FALL', 'risefall'] };
+  function showKindInBox(kind, side) {   // canvas -> boxes
+    const cs = $('#contractSelect'); if (!cs) return;
+    try {
+      if (KIND_LABEL[kind] && cs.value !== KIND_LABEL[kind]) cs.value = KIND_LABEL[kind];
+      fillSides(side);
+      const xs = $('#xSide'); if (side && xs && [...xs.options].some(o => o.value === side)) xs.value = side;
+    } catch (_) {}
+  }
+  function pushKindToBlocks(kind, side) {   // boxes -> canvas blocks (so the blocks show what will trade)
+    try {
+      const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace(); if (!ws) return;
+      const blocks = ws.getAllBlocks(false), tt = blocks.find(b => b.type === 'trade_definition_tradetype');
+      if (tt && kind) setField(tt, 'TRADETYPE_LIST', kind);
+      const code = Object.keys(CODE_INFO).find(c => CODE_INFO[c][0] === side && CODE_INFO[c][1] === kind);
+      if (code) blocks.forEach(b => { if (b.type === 'trade_definition_contracttype') setField(b, 'TYPE_LIST', code); else if (b.type === 'purchase') setField(b, 'PURCHASE_LIST', code); });
+    } catch (_) {}
+  }
+  function onCanvasField(ev, ws) {
+    if (ovMute || ev.element !== 'field') return;
+    const b = ws.getBlockById(ev.blockId); if (!b) return; const nv = ev.newValue;
+    if (b.type === 'trade_definition_tradetype' && ev.name === 'TRADETYPE_LIST' && TT_KIND[nv]) { ov.kind = TT_KIND[nv]; ov.side = null; showKindInBox(ov.kind); }
+    else if (((b.type === 'trade_definition_contracttype' && ev.name === 'TYPE_LIST') || (b.type === 'purchase' && ev.name === 'PURCHASE_LIST')) && CODE_INFO[nv]) { ov.side = CODE_INFO[nv][0]; ov.kind = CODE_INFO[nv][1]; showKindInBox(ov.kind, ov.side); }
+    else if (b.type === 'trade_definition_market' && ev.name === 'SYMBOL_LIST' && nv) {
+      ov.sym = nv;   // trade exactly the market picked on the block, even if the Market box does not list it
+      try {
+        const f = b.getField('SYMBOL_LIST'), ms = $('#marketSelect'), name = symbolToMarket(nv) || (f && f.getText());
+        if (ms && name) { if (![...ms.options].some(o => o.value === name || o.textContent.trim() === name)) ms.add(new Option(name, name)); ms.value = name; try { setSharedMarket(name); } catch (_) {} }
+      } catch (_) {}
+    }
+  }
+  { const ms = $('#marketSelect'); if (ms) ms.addEventListener('change', () => { ov.sym = marketToSymbol(ms.value) || null; }); }
+  window.addEventListener('itc:market-change', e => { const s = e.detail && e.detail.symbol; if (s) ov.sym = s; });
+  { const cs = $('#contractSelect'); if (cs) cs.addEventListener('change', () => {
+      const kind = LABEL_KIND[cs.value]; if (!kind) return;
+      ov.kind = kind; ov.side = null;
+      try {
+        fillSides();
+        const R = window.ITC_RUNNER, id = R && (R.forced || loadedImportedBot), spec = R && (R.specs[id] || R.custom[id]), xs = $('#xSide');
+        if (spec && spec.contract === kind && xs && [...xs.options].some(o => o.value === spec.side)) xs.value = spec.side;   // back to the bot's own type: show its own side again
+        pushKindToBlocks(kind, xs && xs.value);
+      } catch (_) {}
+    }); }
+  { const xs = $('#xSide'); if (xs) xs.addEventListener('change', () => { const kind = LABEL_KIND[$('#contractSelect').value] || ov.kind; ov.side = xs.value; if (kind) ov.kind = kind; pushKindToBlocks(kind, xs.value); }); }
   let paramWs = null, paramTimer = null;
   function hookParamSync() {
     const ws = window.ITC_BLOCKLY && window.ITC_BLOCKLY.getWorkspace && window.ITC_BLOCKLY.getWorkspace();
@@ -1004,11 +1062,12 @@
     paramWs = ws;
     ws.addChangeListener(ev => {
       if (!ev || ev.isUiEvent || (ev.type !== 'change' && ev.type !== 'var_rename')) return;
+      try { onCanvasField(ev, ws); } catch (_) {}
       clearTimeout(paramTimer); paramTimer = setTimeout(() => { try { syncFromBlocks(false); } catch (_) {} }, 120);
     });
   }
   // after a bot is loaded onto the canvas: remember its starting values, then start listening for your edits
-  const onBotLoadedParams = () => setTimeout(() => { try { hookParamSync(); syncFromBlocks(true); } catch (_) {} }, 150);
+  const onBotLoadedParams = () => setTimeout(() => { try { hookParamSync(); syncFromBlocks(true); ov.kind = null; ov.side = null; ov.sym = null; } catch (_) {} }, 150);
   document.addEventListener('itc:bot-loaded', onBotLoadedParams); window.addEventListener('itc:bot-loaded', onBotLoadedParams);
   function stopBot() { if (window.ITC_RUNNER && window.ITC_RUNNER.running()) window.ITC_RUNNER.stop(); }
   function symbolFromMarket(name) { try { const m = window.ITC_MARKET_DATA.getMarkets().find(x => x.name === name); return m && m.symbol; } catch (_) { return null; } }
@@ -1028,10 +1087,12 @@
     const useBoxMart = !forged || touchedBox.mart || touchedBox.mult;   // library bots always follow the boxes; forged/canvas bots keep their own unless you changed them
     if (!Number.isFinite(runStake) || runStake < 0.35) { showToast('Enter a stake of at least $0.35 in Trade parameters.'); return; }
     const res = R.start({
-      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: runStake, maxLosses: Number($('#maxRunsInput').value) || 3,
+      botId: id, name: bot.name || 'Bot', symbol: forged ? undefined : (ov.sym || symbolFromMarket($('#marketSelect').value) || bot.symbol), stake: runStake, maxLosses: Number($('#maxRunsInput').value) || 3,
       tp: runTp, sl: runSl,
       martingale: useBoxMart ? $('#martingaleToggle').checked : undefined, multiplier: useBoxMart ? (Number($('#multiplierInput').value) || 2) : bot.multiplier,
       prediction: !ui.includes('digit') && !canvas ? predEdit.pred : undefined, recoveryPrediction: !canvas ? predEdit.rec : undefined,
+      predictionRange: !ui.includes('digit') && !canvas ? predEdit.range : undefined,
+      override: forged ? undefined : { kind: ov.kind, side: ov.side },
       contract: $('#contractSelect').value, side: ui.includes('side') ? $('#xSide').value : undefined, digit: ui.includes('digit') ? Number($('#xDigit').value) : undefined,
       entryDigit: ui.includes('entry') ? Number($('#xEntry').value) : undefined, bulk: ui.includes('bulk') && $('#xBulk').checked, bulkN: Number($('#xBulkN').value) || 3,
       log: (m, s) => addLog(m, s),

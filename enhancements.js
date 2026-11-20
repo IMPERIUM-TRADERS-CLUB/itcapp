@@ -231,9 +231,9 @@
   const CONTRACTS = [['Both','both'],['Rise','CALL'],['Fall','PUT'],['Matches','DIGITMATCH'],['Differs','DIGITDIFF'],['Even','DIGITEVEN'],['Odd','DIGITODD'],['Over','DIGITOVER'],['Under','DIGITUNDER']];
   const dd = (opts) => new Blockly.FieldDropdown(opts);
   // Contract choices follow the trade type: Over/Under shows Over and Under, Even/Odd shows Even and Odd, and so on.
-  const SIDE_BY_TRADE = { evenodd: ['DIGITEVEN', 'DIGITODD'], overunder: ['DIGITOVER', 'DIGITUNDER'], matchesdiffers: ['DIGITMATCH', 'DIGITDIFF'], risefall: ['CALL', 'PUT'] };
-  const SIDE_LABEL = { both: 'Both', CALL: 'Rise', PUT: 'Fall', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITOVER: 'Over', DIGITUNDER: 'Under' };
-  const ALL_SIDES = ['CALL', 'PUT', 'DIGITMATCH', 'DIGITDIFF', 'DIGITEVEN', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER'];
+  const SIDE_BY_TRADE = { runs: ['RUNHIGH', 'RUNLOW'], evenodd: ['DIGITEVEN', 'DIGITODD'], overunder: ['DIGITOVER', 'DIGITUNDER'], matchesdiffers: ['DIGITMATCH', 'DIGITDIFF'], risefall: ['CALL', 'PUT'] };
+  const SIDE_LABEL = { RUNHIGH: 'Only Ups', RUNLOW: 'Only Downs', both: 'Both', CALL: 'Rise', PUT: 'Fall', DIGITMATCH: 'Matches', DIGITDIFF: 'Differs', DIGITEVEN: 'Even', DIGITODD: 'Odd', DIGITOVER: 'Over', DIGITUNDER: 'Under' };
+  const ALL_SIDES = ['RUNHIGH', 'RUNLOW', 'CALL', 'PUT', 'DIGITMATCH', 'DIGITDIFF', 'DIGITEVEN', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER'];
   const firstOf = (ws, type) => ws && ws.getAllBlocks(false).find(b => b.type === type);
   const tradeTypeOf = ws => { const b = firstOf(ws, 'trade_definition_tradetype'); return b ? b.getFieldValue('TRADETYPE_LIST') : ''; };
   function sideOptions(field, withSingle) {
@@ -260,7 +260,7 @@
       this.appendStatementInput('SUBMARKET').appendField('Trade options:');
     });
     inner('trade_definition_market', function () { this.appendDummyInput().appendField('Market:').appendField(dd([['Derived','synthetic_index']]), 'MARKET_LIST').appendField('>').appendField(dd([['Continuous Indices','random_index'],['Daily Reset Indices','random_daily'],['Crash/Boom Indices','crash_index'],['Jump Indices','jump_index']]), 'SUBMARKET_LIST').appendField('>').appendField(dd(SYMBOLS), 'SYMBOL_LIST'); });
-    inner('trade_definition_tradetype', function () { this.appendDummyInput().appendField('Trade Type:').appendField(dd([['Up/Down','callput'],['Digits','digits'],['In/Out','inout'],['Asians','asian'],['Touch/No Touch','touchnotouch']]), 'TRADETYPECAT_LIST').appendField('>').appendField(dd([['Rise/Fall','risefall'],['Higher/Lower','higherlower'],['Even/Odd','evenodd'],['Over/Under','overunder'],['Matches/Differs','matchesdiffers'],['Ends Between/Outside','endsinout'],['Stays Between/Goes Outside','staysinout'],['Asians','asians'],['Touch/No Touch','touchnotouch']]), 'TRADETYPE_LIST'); });
+    inner('trade_definition_tradetype', function () { this.appendDummyInput().appendField('Trade Type:').appendField(dd([['Up/Down','callput'],['Digits','digits'],['In/Out','inout'],['Asians','asian'],['Touch/No Touch','touchnotouch']]), 'TRADETYPECAT_LIST').appendField('>').appendField(dd([['Rise/Fall','risefall'],['Only Ups/Only Downs','runs'],['Higher/Lower','higherlower'],['Even/Odd','evenodd'],['Over/Under','overunder'],['Matches/Differs','matchesdiffers'],['Ends Between/Outside','endsinout'],['Stays Between/Goes Outside','staysinout'],['Asians','asians'],['Touch/No Touch','touchnotouch']]), 'TRADETYPE_LIST'); });
     inner('trade_definition_contracttype', function () { this.appendDummyInput().appendField('Contract Type:').appendField(sideDropdown(false), 'TYPE_LIST'); });
     inner('trade_definition_candleinterval', function () { this.appendDummyInput().appendField('Default Candle Interval:').appendField(dd([['1 minute','60'],['2 minutes','120'],['3 minutes','180'],['5 minutes','300'],['10 minutes','600'],['15 minutes','900'],['30 minutes','1800'],['1 hour','3600'],['2 hours','7200'],['4 hours','14400'],['8 hours','28800'],['1 day','86400']]), 'CANDLEINTERVAL_LIST'); });
     inner('trade_definition_restartbuysell', function () { this.appendDummyInput().appendField('Restart buy/sell on error (disable for better performance):').appendField(new Blockly.FieldCheckbox('FALSE'), 'TIME_MACHINE_ENABLED'); });
